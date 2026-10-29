@@ -5,7 +5,7 @@ export const MAX_EXTRA_H = 160;   // tall screens: extra logical height added ab
 export const MAX_CROP_H = 140;    // short portrait screens: how much of the top may be cropped to reach full width
 export const SHOT_SPEED = 420;        // px/s, soldiers fired from the turret
 export const MAXB = 9000, MAXR = 5000;   // over MAXB the rear of the blue column is culled; the turret never stops
-export const FIRE_INTERVAL = 0.12;   // never changes; rewards multiply soldiers per shot instead
+export const FIRE_INTERVAL = 0.2;    // seconds between shots (5/s); never changes, rewards multiply soldiers per shot instead
 export const GATE_RESPAWN = 2.0;   // seconds a broken gate stays open before it rebuilds
 export const GATE_X0 = 16, GATE_GAP = 14, GATE_MIN = 44, GATE_STEP = 40;
 // sprites: Kenney "Tiny Dungeon", CC0 (kenney.nl), 16x16 tiles, 12 columns

@@ -73,15 +73,17 @@ export function useGame({ canvasRef, appRef, stageRef }) {
     }
     raf = requestAnimationFrame(frame);
 
-    // ---- input: finger/cursor x maps directly to the turret x; pointer + touch both handled ----
-    let dragging = false, hintT = 0;
-    const clientToGame = cx => { const r = cv.getBoundingClientRect(); return (cx - r.left) / r.width * W; };
-    const begin = cx => { dragging = true; setHint(false); game.setTurretX(clientToGame(cx)); };
+    // ---- input: relative drag only. The turret follows how far the finger/cursor slides from where it
+    // went down; a tap without movement does nothing. Pointer + touch are both handled (idempotent). ----
+    let dragging = false, hintT = 0, dragCx = 0, dragTx = 0;
+    const pxToGame = dx => dx * W / cv.getBoundingClientRect().width;
+    const begin = cx => { dragging = true; setHint(false); dragCx = cx; dragTx = S.turret.x; };
+    const drag = cx => { if (dragging) game.setTurretX(dragTx + pxToGame(cx - dragCx)); };
     const stop = () => { dragging = false; };
     const onPointerDown = e => { begin(e.clientX); try { cv.setPointerCapture(e.pointerId); } catch (_) { /* older WebKit */ } e.preventDefault(); };
-    const onPointerMove = e => { if (dragging) { game.setTurretX(clientToGame(e.clientX)); e.preventDefault(); } };
+    const onPointerMove = e => { if (dragging) { drag(e.clientX); e.preventDefault(); } };
     const onTouchStart = e => { begin(e.touches[0].clientX); e.preventDefault(); };
-    const onTouchMove = e => { if (dragging) game.setTurretX(clientToGame(e.touches[0].clientX)); e.preventDefault(); };
+    const onTouchMove = e => { if (dragging) drag(e.touches[0].clientX); e.preventDefault(); };
     const onTouchEnd = e => { stop(); e.preventDefault(); };
     cv.addEventListener('pointerdown', onPointerDown);
     cv.addEventListener('pointermove', onPointerMove);
