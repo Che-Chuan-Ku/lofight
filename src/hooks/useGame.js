@@ -4,7 +4,7 @@ import { render } from '../game/render.js';
 import { loadSprites } from '../game/tiles.js';
 import { W, H, MAX_EXTRA_H, MAX_CROP_H } from '../game/constants.js';
 
-const phaseOf = S => !S.started ? 'intro' : S.over ? 'end' : S.choosing ? 'choice' : S.resting ? 'rest' : 'play';
+const phaseOf = S => !S.started ? 'intro' : S.over ? 'end' : S.paused ? 'paused' : S.choosing ? 'choice' : S.resting ? 'rest' : 'play';
 const snapshot = S => ({ phase: phaseOf(S), result: S.result, time: S.t.toFixed(0), choiceCards: S.choiceCards });
 
 // Owns the engine instance, the canvas loop, sizing and input. React only sees a small `ui` snapshot.
@@ -140,6 +140,7 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef }) {
   return {
     ui, hint,
     start: () => startRef.current && startRef.current(),
+    pause: v => gameRef.current && gameRef.current.setPaused(v),
     pickChoice: i => gameRef.current && gameRef.current.pickChoice(i),
     pickRest: i => gameRef.current && gameRef.current.pickRest(i)
   };

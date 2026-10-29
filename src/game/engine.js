@@ -57,7 +57,7 @@ export function createGame(onChange) {
     S.bossQueue = BOSS_PLAN.map(b => ({ ...b }));
     S.shake = 0;
     S.choosing = false; S.choice = null; S.cannon = { level: 0, t: 0, flash: 0 }; S.shells = []; S.booms = [];
-    S.resting = false; S.bossCount = 0; S.choiceCards = null;
+    S.resting = false; S.bossCount = 0; S.choiceCards = null; S.paused = false;
   }
   const rnd = (a, b) => a + Math.random() * (b - a);
   function addPop(text, x, y, color, sub) { const p = { text, sub: sub || '', x, y, color, t: 0, t0: S.t, n: 0 }; S.pops.push(p); return p; }
@@ -106,7 +106,7 @@ export function createGame(onChange) {
     S.booms.push({ x, y, t: 0, R });
   }
   function update(dt) {
-    if (S.over || !S.started || S.choosing || S.resting) return;
+    if (S.over || !S.started || S.choosing || S.resting || S.paused) return;
     S.t += dt;
     const T = S.turret;
     const gates = S.gates;
@@ -324,9 +324,10 @@ export function createGame(onChange) {
 
 
   function startGame() { reset(); S.started = true; notify(); }
+  function setPaused(v) { if (S.started && !S.over && S.paused !== !!v) { S.paused = !!v; notify(); } }
   function setTurretX(x) { if (Number.isFinite(x)) S.turret.x = Math.max(22, Math.min(W - 22, x)); }
 
-  const api = { S, reset, update, startGame, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss };
+  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss };
   reset();
   return api;
 }

@@ -84,6 +84,14 @@
   #choice .ct { font-family: var(--font-display); font-size: 30px; letter-spacing: 1px; text-shadow: 0 2px 0 #000; }
   #choice .cd { font-size: 13px; font-weight: 700; line-height: 1.4; text-shadow: 0 1px 2px #000; }
   @media (prefers-reduced-motion: reduce) { #hint { transition: none; } }
+  #confirm { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px; text-align: center; }
+  #confirm h2 { font-family: var(--font-display); font-size: 32px; margin: 0; color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
+  #confirm p { margin: 0; font-size: 14px; font-weight: 700; }
+  #confirm .row { display: flex; gap: 12px; margin-top: 6px; }
+  #confirm button { touch-action: manipulation; font-family: var(--font-body); font-weight: 700; font-size: 16px; color: #fff; border: 0; border-radius: 10px; padding: 10px 22px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  #confirm .yes { background: var(--red); box-shadow: 0 4px 0 #7a1016; }
+  #confirm .no { background: #3a3f4a; box-shadow: 0 4px 0 #1a1c22; }
+  #confirm button:active { transform: translateY(3px); box-shadow: none; }
   /* nickname + leaderboard */
   #overlay input { font: 700 18px var(--font-body); text-align: center; width: 200px; max-width: 80%; padding: 10px 12px; border-radius: 10px;
     border: 2px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; outline: none; }

@@ -4,11 +4,12 @@ import Hud from './components/Hud.jsx';
 import Overlay from './components/Overlay.jsx';
 import ChoiceBox from './components/ChoiceBox.jsx';
 import RestBox from './components/RestBox.jsx';
+import ConfirmBox from './components/ConfirmBox.jsx';
 import { leaderboardEnabled, fetchTop, submitScore, cleanName, loadName, saveName, defaultName } from './leaderboard.js';
 
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
-  const { ui, hint, start, pickChoice, pickRest } = useGame({ canvasRef, appRef, stageRef, startKeyRef });
+  const { ui, hint, start, pause, pickChoice, pickRest } = useGame({ canvasRef, appRef, stageRef, startKeyRef });
   const playing = ui.phase !== 'intro' && ui.phase !== 'end';
 
   // ---- nickname + leaderboard ----
@@ -33,6 +34,8 @@ export default function App() {
     start();
   };
   startKeyRef.current = tryStart;
+  // restart button: pause and ask first; confirming resets the run with the same nickname
+  const restartNow = () => { submittedRef.current = false; setSubmitNote(null); start(); };
 
   // submit once per finished game, then show the fresh top list
   useEffect(() => {
@@ -60,8 +63,9 @@ export default function App() {
         <div id="hint" style={{ opacity: hint ? 1 : 0 }}>左右拖曳移動砲台</div>
         {playing && (
           <button id="restart" type="button" aria-label="重新開始" title="重新開始"
-            onClick={e => { tryStart(); e.currentTarget.blur(); }}>&#8635;</button>
+            onClick={e => { pause(true); e.currentTarget.blur(); }}>&#8635;</button>
         )}
+        {ui.phase === 'paused' && <ConfirmBox onYes={restartNow} onNo={() => pause(false)} />}
         {ui.phase === 'rest' && <RestBox onPick={pickRest} />}
         {ui.phase === 'choice' && <ChoiceBox cards={ui.choiceCards} onPick={pickChoice} />}
         {!playing && (
