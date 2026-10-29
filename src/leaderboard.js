@@ -1,5 +1,5 @@
-// Leaderboard client. Scores are per app version: a new release shows an empty board.
-import { LEADERBOARD_URL, APP_VERSION, NAME_MAX } from './config.js';
+// Leaderboard client. Scores are keyed by BOARD_VERSION (major.minor), so only a minor release clears the board.
+import { LEADERBOARD_URL, BOARD_VERSION, NAME_MAX } from './config.js';
 
 export const leaderboardEnabled = () => !!LEADERBOARD_URL;
 export const cleanName = s => String(s || '').replace(/[\u0000-\u001f]/g, '').replace(/^[=+\-@]+/, '').trim().slice(0, NAME_MAX);
@@ -16,7 +16,7 @@ async function call(url, init) {
 }
 
 export function fetchTop() {
-  return call(LEADERBOARD_URL + (LEADERBOARD_URL.includes('?') ? '&' : '?') + 'version=' + encodeURIComponent(APP_VERSION) + '&_=' + Date.now());
+  return call(LEADERBOARD_URL + (LEADERBOARD_URL.includes('?') ? '&' : '?') + 'version=' + encodeURIComponent(BOARD_VERSION) + '&_=' + Date.now());
 }
 
 // text/plain keeps the request "simple" (no CORS preflight), which is what Apps Script web apps support.
@@ -24,7 +24,7 @@ export function submitScore({ name, seconds, win }) {
   return call(LEADERBOARD_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ name: cleanName(name), seconds: Math.round(seconds), win: !!win, version: APP_VERSION })
+    body: JSON.stringify({ name: cleanName(name), seconds: Math.round(seconds), win: !!win, version: BOARD_VERSION })
   });
 }
 

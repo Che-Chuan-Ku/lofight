@@ -27,7 +27,7 @@ Render 靜態網站，設定在 `render.yaml`（Blueprint）。推到 `main` 就
 4. 複製產生的網頁應用程式網址（`https://script.google.com/macros/s/.../exec`）。
 5. 在 Render 的 lofight 服務 → Environment 新增 `VITE_LEADERBOARD_URL` = 那個網址，存檔後 Render 會自動重新 build。
 
-沒設定網址時遊戲不會顯示排行榜。每個版本（`package.json` 的 `version`）各自一份榜單，改版號就等於重置；舊資料仍留在試算表。
+沒設定網址時遊戲不會顯示排行榜。榜單以 `package.json` 的 `version` 前兩碼（例如 18.6）分組：改第三碼（18.6.3 → 18.6.4）榜單延續，改第二碼（18.6 → 18.7）就重新開始；舊資料仍留在試算表。畫面顯示前 15 名。
 排名規則：通關者在前（秒數少者優先），未通關者在後（撐越久越前），同一暱稱只留最佳成績。
 
 ### 素材

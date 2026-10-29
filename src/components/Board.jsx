@@ -1,6 +1,8 @@
 // Top list. `status`: loading | ok | error. `me` highlights the player's own row.
+import { BOARD_SHOW } from '../config.js';
+
 export default function Board({ status, rows, me, note }) {
-  const list = (rows || []).slice(0, 10);
+  const list = (rows || []).slice(0, BOARD_SHOW);
   return (
     <div className="board">
       <h3>排行榜</h3>
