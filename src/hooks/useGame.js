@@ -8,7 +8,7 @@ const phaseOf = S => !S.started ? 'intro' : S.over ? 'end' : S.choosing ? 'choic
 const snapshot = S => ({ phase: phaseOf(S), result: S.result, time: S.t.toFixed(0), choiceCards: S.choiceCards });
 
 // Owns the engine instance, the canvas loop, sizing and input. React only sees a small `ui` snapshot.
-export function useGame({ canvasRef, appRef, stageRef }) {
+export function useGame({ canvasRef, appRef, stageRef, startKeyRef }) {
   const gameRef = useRef(null), startRef = useRef(null);
   const [ui, setUi] = useState({ phase: 'intro', result: null, time: '0', choiceCards: null });
   const [hint, setHint] = useState(true);
@@ -99,7 +99,13 @@ export function useGame({ canvasRef, appRef, stageRef }) {
     }
     startRef.current = start;
     const keys = {};
-    const onKeyDown = e => { keys[e.key] = true; if ((e.key === ' ' || e.key === 'Enter') && (!S.started || S.over)) start(); };
+    const onKeyDown = e => {
+      keys[e.key] = true;
+      if ((e.key === ' ' || e.key === 'Enter') && (!S.started || S.over)) {
+        if (e.target && e.target.tagName === 'INPUT' && e.key === ' ') return;   // typing a nickname
+        if (startKeyRef && startKeyRef.current) startKeyRef.current(); else start();
+      }
+    };
     const onKeyUp = e => { keys[e.key] = false; };
     window.addEventListener('keydown', onKeyDown); window.addEventListener('keyup', onKeyUp);
     const kb = setInterval(() => {
@@ -108,7 +114,8 @@ export function useGame({ canvasRef, appRef, stageRef }) {
       if (v) game.setTurretX(S.turret.x + v * 5);
     }, 16);
 
-    if (location.search.includes('debug')) window.__game = {
+    // dev-only inspection hook; stripped from production builds so scores cannot be forged through it
+    if (import.meta.env.MODE !== 'production' && location.search.includes('debug')) window.__game = {
       start() { game.reset(); S.started = true; sync(); },
       step(sec, turretX) { if (turretX != null) S.turret.x = turretX; const n = Math.round(sec / (1 / 60)); for (let i = 0; i < n && !S.over; i++) game.update(1 / 60); render(ctx, S, SPR, lite, view); updateHud(); sync(); },
       turretX() { return S.turret.x; }, lite() { return lite; }, choose(i) { game.pickChoice(i); }, mystery(a, b) { game.openChoice(a && b ? [a, b] : null); }, choice() { return S.choosing ? S.choice : null; }, rest(i) { game.pickRest(i); }, openRest() { game.openRest(); }, hurt(idx, dmg) { for (const b of S.bosses) if (b.alive && b.idx === idx) { b.hp -= dmg; if (b.hp <= 0) game.killBoss(b); } }, cannon() { return S.cannon.level; },

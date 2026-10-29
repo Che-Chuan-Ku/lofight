@@ -8,3 +8,6 @@ services:
     staticPublishPath: ./dist
     previews:
       generation: off
+    envVars:
+      - key: VITE_LEADERBOARD_URL
+        sync: false

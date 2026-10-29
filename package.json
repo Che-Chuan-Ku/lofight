@@ -1,7 +1,7 @@
 {
   "name": "crowd-siege",
   "private": true,
-  "version": "18.0.0",
+  "version": "18.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
