@@ -407,7 +407,8 @@
         const p = pathPos(Math.max(bo.s, 0), 0); bo.x = p[0]; bo.y = p[1];
       } else {
         const dx = T.x - bo.x, dy = T.y - bo.y, d = Math.hypot(dx, dy) || 1;
-        bo.x += dx / d * 30 * dt; bo.y += dy / d * 30 * dt;
+        const sp = bo.minion ? 36 : 30;
+        bo.x += dx / d * sp * dt; bo.y += dy / d * sp * dt;
         if (d < 10 + bo.r) { endGame(false); return; }
       }
       if (bo.summon) { bo.cd -= dt; if (bo.cd <= 0) { bo.cd = bo.summon.cd; for (let i = 0; i < bo.summon.n; i++) spawnMinion(bo); addFx(bo.x, bo.y, '#ff4b4b', 16, 160); } }
@@ -527,8 +528,8 @@
     if (S.bossQueue.length === 0 && S.bosses.length && S.bosses.every(b => !b.alive)) endGame(true);
   }
   function spawnMinion(bo) {
-    const m = { hp: bo.summon.hp, max: bo.summon.hp, alive: true, v: 24, r: 11, hitT: 0, idx: 0, minion: true, summon: null, cd: 0, mode: bo.mode };
-    if (bo.mode === 1) { m.s = Math.min(PATH_LEN - 1, bo.s + rnd(6, 40)); const p = pathPos(m.s, rnd(-PATH_HW + 8, PATH_HW - 8)); m.x = p[0]; m.y = p[1]; }
+    const m = { hp: bo.summon.hp, max: bo.summon.hp, alive: true, v: 25, r: 11, hitT: 0, idx: 0, minion: true, summon: null, cd: 0, mode: bo.mode };
+    if (bo.mode === 1) { m.s = Math.max(1, bo.s - rnd(8, 36)); const p = pathPos(m.s, rnd(-PATH_HW + 8, PATH_HW - 8)); m.x = p[0]; m.y = p[1]; }
     else { m.s = 0; m.x = bo.x + rnd(-24, 24); m.y = bo.y + rnd(-10, 10); }
     S.bosses.push(m); addFx(m.x, m.y, '#ff8a8a', 6, 90);
   }
