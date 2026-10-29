@@ -1,0 +1,82 @@
+  /* Layout: one portrait playfield (390x780 logical) letterboxed in the viewport; HUD overlays the canvas. */
+  :root {
+    --bg: #1b1d22;        /* cliff night */
+    --fg: #f3ead6;        /* parchment text */
+    --sand: #d9b97c;      /* arena ground */
+    --gold: #f2c233;      /* gate bars */
+    --blue: #2f66e0;      /* player army */
+    --red: #d6242c;       /* enemy army */
+    --font-display: "Luckiest Guy", "Arial Black", "PingFang TC", sans-serif;
+    --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  html, body, #root { height: 100%; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body);
+    overflow: hidden; user-select: none; -webkit-user-select: none;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0; box-sizing: border-box;
+  }
+  #app { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
+  #stage { position: relative; }
+  canvas { display: block; touch-action: none; border-radius: 12px; box-shadow: 0 0 0 3px #0a0b0d, 0 20px 60px rgba(0,0,0,.6); }
+  #hud {
+    position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between;
+    padding: 10px 12px; pointer-events: none; font-family: var(--font-display); font-size: 20px;
+    background: linear-gradient(rgba(0,0,0,.6), rgba(0,0,0,0)); border-radius: 12px 12px 0 0;
+    letter-spacing: .5px; text-shadow: 0 2px 0 #000, 0 0 8px rgba(0,0,0,.6);
+    font-variant-numeric: tabular-nums;
+  }
+  #hud .b { color: #8fb3ff; } #hud .r { color: #ff8a8a; } #hud .t { color: var(--gold); } #hud .k { color: #ffb0b0; }
+  #status { position: absolute; left: 0; right: 0; top: 58px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .5px;
+    color: rgba(255,255,255,.9); text-shadow: 0 1px 2px #000; pointer-events: none; font-variant-numeric: tabular-nums; }
+  #hud small { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 700; letter-spacing: 1px; opacity: .9; }
+  #overlay {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; background: rgba(10,11,14,.72); border-radius: 12px; text-align: center; padding: 24px; overflow: auto; -webkit-overflow-scrolling: touch;
+  }
+  #overlay h1 { font-family: var(--font-display); font-size: 44px; margin: 0; line-height: 1.05; text-wrap: balance;
+    color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
+  #overlay h1.lose { color: #cfd4de; text-shadow: 0 3px 0 #3a3f4a, 0 6px 18px rgba(0,0,0,.8); }
+  #overlay p { margin: 0; max-width: 30ch; line-height: 1.6; font-size: 14px; }
+  #overlay button {
+    touch-action: manipulation; font-family: var(--font-display); font-size: 22px; letter-spacing: 1px; color: #fff; background: var(--red);
+    border: 0; border-radius: 10px; padding: 12px 36px; cursor: pointer; box-shadow: 0 4px 0 #7a1016;
+  }
+  #overlay button:active { transform: translateY(3px); box-shadow: 0 1px 0 #7a1016; }
+  #overlay button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  #hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; color: rgba(255,255,255,.8); text-shadow: 0 1px 2px #000; pointer-events: none; transition: opacity .6s; }
+  #restart {
+    position: absolute; right: 12px; bottom: 12px; width: 44px; height: 44px; border-radius: 50%; border: 0;
+    background: rgba(10,11,14,.72); color: #fff; font-size: 24px; line-height: 44px; padding: 0; cursor: pointer;
+    box-shadow: 0 2px 0 #000, 0 0 0 2px rgba(255,255,255,.25); touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  #restart:active { transform: translateY(2px); box-shadow: 0 0 0 #000, 0 0 0 2px rgba(255,255,255,.25); }
+  #restart:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+  #choice {
+    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px;
+  }
+  #rest { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px; }
+  #rest h2 { font-family: var(--font-display); font-size: 34px; margin: 0; color: #8fb3ff; text-shadow: 0 3px 0 #1d3f8f, 0 6px 18px rgba(0,0,0,.8); }
+  #rest .cards { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 240px; }
+  #rest .card { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 3px solid #8fb3ff; border-radius: 14px; padding: 12px 8px; color: #fff; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; background: #1d3f8f; box-shadow: 0 5px 0 #0d1f4a; }
+  #rest .card:active { transform: translateY(4px); box-shadow: none; }
+  #rest .ct { font-family: var(--font-body); font-size: 20px; font-weight: 700; text-shadow: 0 2px 0 #000; }
+  #rest .cd { font-size: 12px; font-weight: 700; opacity: .9; }
+  #choice h2 { font-family: var(--font-display); font-size: 34px; margin: 0; color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
+  #choice .cards { display: flex; gap: 14px; width: 100%; justify-content: center; }
+  #choice .card {
+    flex: 1 1 0; max-width: 150px; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+    border: 3px solid #fff; border-radius: 14px; padding: 14px 8px; color: #fff; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    background: #3a3f4a; box-shadow: 0 5px 0 #1a1c22;
+  }
+  #choice .card.good { background: #1f6b3a; border-color: #7dffa7; box-shadow: 0 5px 0 #0f3a1f; }
+  #choice .card.bad { background: #6b1f2a; border-color: #ff8a8a; box-shadow: 0 5px 0 #3a0f15; }
+  #choice .card:active { transform: translateY(4px); box-shadow: none; }
+  #choice .ct { font-family: var(--font-display); font-size: 30px; letter-spacing: 1px; text-shadow: 0 2px 0 #000; }
+  #choice .cd { font-size: 13px; font-weight: 700; line-height: 1.4; text-shadow: 0 1px 2px #000; }
+  @media (prefers-reduced-motion: reduce) { #hint { transition: none; } }
