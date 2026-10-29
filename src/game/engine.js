@@ -1,6 +1,6 @@
 // Simulation: state, spawning, movement, combat, gates, bosses, rest/choice pauses.
 // Copied from the single-file v17 game; UI changes are reported through `onChange` instead of touching the DOM.
-import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, BOSS_PLAN, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP } from './constants.js';
+import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, BOSS_PLAN, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP } from './constants.js';
 import { PATH_LEN, pathPos } from './path.js';
 import { ABILITIES, CHOICES, cardFor } from './abilities.js';
 
@@ -51,7 +51,7 @@ export function createGame(onChange) {
     S.t = 0; S.over = false; S.result = null; S.started = false;
     S.gates = makeGates();
     S.blue = []; S.red = []; S.bosses = []; S.pops = []; S.fx = []; S.multPop = null;
-    S.spread = 1; S.blueHp = 1; S.blueSpeed = 62; S.bossKills = 0;
+    S.spread = 1; S.blueHp = 1; S.blueSpeed = 62; S.bossKills = 0; S.fireMul = 1;
     S.turret = { x: W / 2, y: 700, fireT: 0, flash: 0 };
     S.redReserve = 1e9; S.redRate = 70; S.redRamp = 2.5; S.redAcc = 0;
     S.bossQueue = BOSS_PLAN.map(b => ({ ...b }));
@@ -114,7 +114,7 @@ export function createGame(onChange) {
     // turret fire
     T.fireT -= dt; T.flash = Math.max(0, T.flash - dt); S.cannon.flash = Math.max(0, S.cannon.flash - dt);
     while (T.fireT <= 0) {
-      T.fireT += FIRE_INTERVAL; T.flash = 0.06;
+      T.fireT += Math.max(FIRE_MIN, FIRE_INTERVAL * S.fireMul); T.flash = 0.06;
       const n = S.spread, gap = Math.min(6, 70 / n);
       for (let k = 0; k < n; k++) {
         const c = k - (n - 1) / 2;
