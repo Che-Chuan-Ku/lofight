@@ -285,7 +285,7 @@ export function createGame(onChange) {
     if (S.bossQueue.length === 0 && S.bosses.length && S.bosses.every(b => !b.alive)) endGame(true);
   }
   function spawnMinion(bo) {
-    const m = { hp: bo.summon.hp, max: bo.summon.hp, alive: true, v: 25, r: 11, hitT: 0, idx: 0, minion: true, summon: null, cd: 0, mode: bo.mode };
+    const m = { hp: bo.summon.hp, max: bo.summon.hp, alive: true, v: bo.summon.v, r: 11, hitT: 0, idx: 0, minion: true, summon: null, cd: 0, mode: bo.mode };
     if (bo.mode === 1) { m.s = Math.max(1, bo.s - rnd(8, 36)); const p = pathPos(m.s, rnd(-PATH_HW + 8, PATH_HW - 8)); m.x = p[0]; m.y = p[1]; }
     else { m.s = 0; m.x = bo.x + rnd(-24, 24); m.y = bo.y + rnd(-10, 10); }
     S.bosses.push(m); addFx(m.x, m.y, '#ff8a8a', 6, 90);

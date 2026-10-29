@@ -22,5 +22,5 @@ export const BOSS_PLAN = [
   { at: 70, hp: 38000, v: 18, r: 24 },
   { at: 84, hp: 70000, v: 20, r: 27 },
   { at: 98, hp: 90000, v: 21, r: 30 },
-  { at: Infinity, hp: 120000, v: 21, r: 32, summon: { n: 5, hp: 3000, cd: 5 } }
+  { at: Infinity, hp: 120000, v: 21, r: 32, summon: { n: 5, hp: 2000, v: 26, cd: 5 } }
 ];
