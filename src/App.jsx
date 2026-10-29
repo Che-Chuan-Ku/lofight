@@ -4,7 +4,7 @@ import Hud from './components/Hud.jsx';
 import Overlay from './components/Overlay.jsx';
 import ChoiceBox from './components/ChoiceBox.jsx';
 import RestBox from './components/RestBox.jsx';
-import { leaderboardEnabled, fetchTop, submitScore, cleanName, loadName, saveName } from './leaderboard.js';
+import { leaderboardEnabled, fetchTop, submitScore, cleanName, loadName, saveName, defaultName } from './leaderboard.js';
 
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
@@ -13,7 +13,7 @@ export default function App() {
 
   // ---- nickname + leaderboard ----
   const enabled = leaderboardEnabled();
-  const [name, setName] = useState(loadName);
+  const [name, setName] = useState(() => loadName() || defaultName());
   const [nameErr, setNameErr] = useState(false);
   const [showBoard, setShowBoard] = useState(false);
   const [board, setBoard] = useState({ status: 'loading', rows: [] });

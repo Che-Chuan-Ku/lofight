@@ -13,8 +13,10 @@ export default function Overlay({ phase, result, time, onStart, name, onName, na
       <p>{sub}</p>
       {!ended && !showBoard && (
         <>
-          <input type="text" value={name} maxLength={NAME_MAX} placeholder="輸入暱稱" autoComplete="off" enterKeyHint="go"
-            className={nameErr ? 'err' : ''} aria-label="暱稱" onChange={e => onName(e.target.value)} />
+          <label className="nick"><span>暱稱</span>
+            <input type="text" value={name} maxLength={NAME_MAX} placeholder="輸入暱稱" autoComplete="off" enterKeyHint="go"
+              className={nameErr ? 'err' : ''} aria-label="暱稱" onChange={e => onName(e.target.value)} onFocus={e => e.target.select()} />
+          </label>
           {nameErr && <small className="err">請先輸入暱稱（1 到 {NAME_MAX} 字）</small>}
         </>
       )}

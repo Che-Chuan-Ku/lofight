@@ -28,6 +28,10 @@ export function submitScore({ name, seconds, win }) {
   });
 }
 
+// first visit: a random default such as 砲手482; the player can edit it before starting
+const DEFAULT_TITLES = ['砲手', '勇者', '守城人', '指揮官', '老兵', '新兵'];
+export function defaultName() { return DEFAULT_TITLES[(Math.random() * DEFAULT_TITLES.length) | 0] + (100 + ((Math.random() * 900) | 0)); }
+
 const STORE_KEY = 'lofight.name';
 export function loadName() { try { return cleanName(localStorage.getItem(STORE_KEY) || ''); } catch (_) { return ''; } }
 export function saveName(n) { try { localStorage.setItem(STORE_KEY, cleanName(n)); } catch (_) { /* private mode */ } }
