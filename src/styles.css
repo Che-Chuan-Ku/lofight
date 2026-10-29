@@ -15,10 +15,14 @@
   body {
     margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body);
     overflow: hidden; user-select: none; -webkit-user-select: none;
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    padding-block: 0; box-sizing: border-box;
+    padding: 0; box-sizing: border-box;
   }
+  /* Full-bleed: the stage fills the viewport on phones, so drop the card chrome there. */
+  #stage[data-full] canvas { border-radius: 0; box-shadow: none; }
+  #stage[data-full] #hud { border-radius: 0; padding-top: max(10px, env(safe-area-inset-top, 0px)); }
+  #stage[data-full] #hint { bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
+  #stage[data-full] #restart { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+  #stage[data-full] #overlay, #stage[data-full] #choice, #stage[data-full] #rest { border-radius: 0; }
   #app { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
   #stage { position: relative; }
   canvas { display: block; touch-action: none; border-radius: 12px; box-shadow: 0 0 0 3px #0a0b0d, 0 20px 60px rgba(0,0,0,.6); }

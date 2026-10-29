@@ -13,7 +13,7 @@ export default function App() {
     <div id="app" ref={appRef}>
       <div id="stage" ref={stageRef}>
         <canvas id="c" ref={canvasRef} />
-        <Hud hud={ui.hud} />
+        <Hud />
         <div id="hint" style={{ opacity: hint ? 1 : 0 }}>左右拖曳移動砲台</div>
         {playing && (
           <button id="restart" type="button" aria-label="重新開始" title="重新開始"

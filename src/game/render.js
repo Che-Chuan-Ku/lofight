@@ -1,9 +1,11 @@
 // Canvas drawing for one frame. Pure function of the state; `lite` drops sprites for slow devices.
+// `view.oy` shifts the world: positive adds red sea above the battlefield (tall screens), negative crops the top.
 import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX } from './constants.js';
 import { PL, PATH_LEN, pathPos } from './path.js';
 import { ABILITIES } from './abilities.js';
 
-export function render(ctx, S, SPR, lite) {
+export function render(ctx, S, SPR, lite, view) {
+  const oy = view ? view.oy : 0;
   function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
   function drawCrowd(list, color, shade, spr) {
     // The path column saturates long before the unit cap, so above `target` only every
@@ -21,9 +23,9 @@ export function render(ctx, S, SPR, lite) {
     for (const u of list) { if (!pick(u)) continue; const f = (ft + ((u.x + u.y) * 0.37 | 0)) & 1; ctx.drawImage(spr[f], (u.x - h) | 0, (u.y - h) | 0); }
   }
   const sx = S.shake ? (Math.random() - 0.5) * 6 * S.shake : 0, sy = S.shake ? (Math.random() - 0.5) * 6 * S.shake : 0;
-  ctx.save(); ctx.translate(sx, sy);
+  ctx.save(); ctx.translate(sx, sy + oy);
   // cliffs
-  ctx.fillStyle = '#3d4148'; ctx.fillRect(-10, -10, W + 20, GATE_Y + 20);
+  ctx.fillStyle = '#3d4148'; ctx.fillRect(-10, -10 - oy, W + 20, GATE_Y + 20 + oy);
   ctx.fillStyle = '#2d3036';
   for (let i = 0; i < 9; i++) ctx.fillRect(-10, i * 52 - 10, W + 20, 6);
   // arena ground with grass rim
@@ -39,9 +41,9 @@ export function render(ctx, S, SPR, lite) {
   ctx.strokeStyle = '#6f9a44'; ctx.lineWidth = PATH_HW * 2 + 7; ctx.stroke();
   ctx.strokeStyle = '#cdb67e'; ctx.lineWidth = PATH_HW * 2; ctx.stroke();
   // red sea at the top edge (reserve)
-  ctx.fillStyle = '#c21f28'; ctx.fillRect(-10, -10, W + 20, 36);
+  ctx.fillStyle = '#c21f28'; ctx.fillRect(-10, -10 - oy, W + 20, 36 + oy);
   ctx.fillStyle = '#e03a42';
-  for (let x = 0; x < W; x += 5) for (let y = 2; y < 24; y += 5) if (((x * 7 + y * 13) % 11) < 5) ctx.fillRect(x, y, 2, 2);
+  for (let x = 0; x < W; x += 5) for (let y = 2 - oy; y < 24; y += 5) if (((x * 7 + y * 13) % 11) < 5) ctx.fillRect(x, y, 2, 2);
   ctx.fillStyle = '#7a0f15';
   for (let x = 0; x < W; x += 9) ctx.fillRect(x, 26 + (x % 3), 5, 2);
 
@@ -191,7 +193,8 @@ export function render(ctx, S, SPR, lite) {
     ctx.globalAlpha = Math.max(0, a);
     ctx.font = 'bold 30px "Luckiest Guy", "Arial Black", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.lineWidth = 5; ctx.strokeStyle = '#2b1d00'; ctx.fillStyle = p.color;
-    const y = p.y - p.t * 70;
+    // popups spawned near the top stay below the HUD when the top is cropped
+    const y = (p.y < GATE_Y ? p.y + Math.max(0, -oy) : p.y) - p.t * 70;
     ctx.strokeText(p.text, p.x, y); ctx.fillText(p.text, p.x, y);
     if (p.sub) {
       ctx.font = 'bold 15px "Noto Sans TC", "PingFang TC", sans-serif'; ctx.lineWidth = 4; ctx.fillStyle = '#fff';
