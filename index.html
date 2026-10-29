@@ -65,6 +65,13 @@
     position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
     gap: 16px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px;
   }
+  #rest { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px; }
+  #rest h2 { font-family: var(--font-display); font-size: 34px; margin: 0; color: #8fb3ff; text-shadow: 0 3px 0 #1d3f8f, 0 6px 18px rgba(0,0,0,.8); }
+  #rest .cards { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 240px; }
+  #rest .card { display: flex; flex-direction: column; align-items: center; gap: 4px; border: 3px solid #8fb3ff; border-radius: 14px; padding: 12px 8px; color: #fff; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; background: #1d3f8f; box-shadow: 0 5px 0 #0d1f4a; }
+  #rest .card:active { transform: translateY(4px); box-shadow: none; }
+  #rest .ct { font-family: var(--font-body); font-size: 20px; font-weight: 700; text-shadow: 0 2px 0 #000; }
+  #rest .cd { font-size: 12px; font-weight: 700; opacity: .9; }
   #choice h2 { font-family: var(--font-display); font-size: 34px; margin: 0; color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
   #choice .cards { display: flex; gap: 14px; width: 100%; justify-content: center; }
   #choice .card {
@@ -91,6 +98,14 @@
     </div>
         <div id="hint">左右拖曳移動砲台</div>
     <button id="restart" type="button" aria-label="重新開始" title="重新開始" hidden>&#8635;</button>
+    <div id="rest" hidden>
+      <h2>休息</h2>
+      <div class="cards">
+        <button class="card" type="button" data-i="1"><span class="ct">中門加大</span><span class="cd">左右兩門縮小</span></button>
+        <button class="card" type="button" data-i="0"><span class="ct">左門加大</span><span class="cd">右門縮小</span></button>
+        <button class="card" type="button" data-i="2"><span class="ct">右門加大</span><span class="cd">左門縮小</span></button>
+      </div>
+    </div>
     <div id="choice" hidden>
       <h2>二選一</h2>
       <div class="cards">
@@ -118,8 +133,9 @@
   const TILE_B64 = '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';
   const UNIT_PX = 11;
   const BLUE_TILE = 96, RED_TILE = 111;
-  const BOSS_TILES = [110, 112, 122, 120, 124, 109, 121];
-  const SPR = { ready: false, blue: null, red: null, bosses: [] };
+  const BOSS_TILES = [110, 112, 122, 120, 124, 109, 121, 123];
+  const MINION_TILE = 108;
+  const SPR = { ready: false, blue: null, red: null, bosses: [], minion: null };
   const tileImg = new Image();
   function tileCanvas(idx, size, tint, flip) {
     const c = document.createElement('canvas'); c.width = size; c.height = size;
@@ -132,6 +148,7 @@
   tileImg.onload = () => {
     SPR.blue = [tileCanvas(BLUE_TILE, UNIT_PX, 'rgba(47,102,224,.5)', false), tileCanvas(BLUE_TILE, UNIT_PX, 'rgba(47,102,224,.5)', true)];
     SPR.red = [tileCanvas(RED_TILE, UNIT_PX, 'rgba(214,36,44,.6)', false), tileCanvas(RED_TILE, UNIT_PX, 'rgba(214,36,44,.6)', true)];
+    SPR.minion = [tileCanvas(MINION_TILE, 30, 'rgba(214,36,44,.55)', false), tileCanvas(MINION_TILE, 30, 'rgba(255,255,255,.85)', false)];
     SPR.bosses = BOSS_PLAN.map((b, i) => { const sz = b.r * 2 + 12; return [tileCanvas(BOSS_TILES[i], sz, null, false), tileCanvas(BOSS_TILES[i], sz, 'rgba(255,255,255,.85)', false)]; });
     SPR.ready = true;
   };
@@ -142,6 +159,7 @@
   const btn = document.getElementById('btn'), hint = document.getElementById('hint'), stage = document.getElementById('stage');
   const restartBtn = document.getElementById('restart');
   const choiceBox = document.getElementById('choice'), choiceBtns = [...choiceBox.querySelectorAll('.card')];
+  const restBox = document.getElementById('rest'), restBtns = [...restBox.querySelectorAll('.card')];
 
   // ---------- path (Catmull-Rom through control points, bottom mouth at the x99 gate) ----------
   const CP = [[195, 436], [118, 388], [70, 322], [108, 256], [212, 222], [302, 168], [292, 102], [222, 52], [150, 14], [112, -40]];
@@ -245,7 +263,6 @@
     g.gen++; g.hp = g.max = gateHp(g, g.gen); g.ability = pickAbility(g, otherHpGates(S.gates, g)); g.dead = false; g.respawnT = 0;
     addFx((g.x0 + g.x1) / 2, GATE_Y + 10, '#ffffff', 14, 120);
   }
-  const MULT_GATE_CX = 195;
 
   // ---------- state ----------
   const S = {};
@@ -259,6 +276,7 @@
     S.bossQueue = BOSS_PLAN.map(b => ({ ...b }));
     S.shake = 0;
     S.choosing = false; S.choice = null; S.cannon = { level: 0, t: 0, flash: 0 }; S.shells = []; S.booms = [];
+    S.resting = false; S.bossCount = 0;
   }
   const FIRE_INTERVAL = 0.12;   // never changes; rewards multiply soldiers per shot instead
   const BOSS_PLAN = [
@@ -268,7 +286,8 @@
     { at: 56, hp: 30000, v: 17, r: 22 },
     { at: 70, hp: 48000, v: 18, r: 24 },
     { at: 84, hp: 80000, v: 20, r: 27 },
-    { at: 98, hp: 100000, v: 21, r: 30 }
+    { at: 98, hp: 100000, v: 21, r: 30 },
+    { at: Infinity, hp: 130000, v: 21, r: 32, summon: { n: 5, hp: 3000, cd: 5 } }
   ];
   reset();
 
@@ -295,7 +314,8 @@
   }
   function spawnBoss(b) {
     const p = pathPos(PATH_LEN - 1, 0);
-    S.bosses.push({ x: p[0], y: p[1], s: PATH_LEN - 1, hp: b.hp, max: b.hp, mode: 1, alive: true, v: b.v, r: b.r, hitT: 0, idx: S.bosses.length + 1 });
+    S.bossCount++;
+    S.bosses.push({ x: p[0], y: p[1], s: PATH_LEN - 1, hp: b.hp, max: b.hp, mode: 1, alive: true, v: b.v, r: b.r, hitT: 0, idx: S.bossCount, minion: false, summon: b.summon || null, cd: b.summon ? 2.5 : 0 });
     addPop('BOSS!', W / 2, 120, '#ff6b6b');
   }
   function endGame(win) {
@@ -306,7 +326,7 @@
       ? '用了 ' + S.t.toFixed(0) + ' 秒。'
       : '撐了 ' + S.t.toFixed(0) + ' 秒。';
     btn.textContent = '再來一局';
-    overlay.hidden = false; restartBtn.hidden = true; choiceBox.hidden = true; S.choosing = false;
+    overlay.hidden = false; restartBtn.hidden = true; choiceBox.hidden = true; S.choosing = false; restBox.hidden = true; S.resting = false;
   }
 
   // ---------- update ----------
@@ -329,7 +349,7 @@
     S.booms.push({ x, y, t: 0, R });
   }
   function update(dt) {
-    if (S.over || !S.started || S.choosing) return;
+    if (S.over || !S.started || S.choosing || S.resting) return;
     S.t += dt;
     const T = S.turret;
     const gates = S.gates;
@@ -390,7 +410,9 @@
         bo.x += dx / d * 30 * dt; bo.y += dy / d * 30 * dt;
         if (d < 10 + bo.r) { endGame(false); return; }
       }
+      if (bo.summon) { bo.cd -= dt; if (bo.cd <= 0) { bo.cd = bo.summon.cd; for (let i = 0; i < bo.summon.n; i++) spawnMinion(bo); addFx(bo.x, bo.y, '#ff4b4b', 16, 160); } }
     }
+    if (S.bosses.some(b => b.minion && !b.alive)) S.bosses = S.bosses.filter(b => b.alive || !b.minion);
     const pathBosses = S.bosses.filter(b => b.alive && b.mode === 1), arenaBosses = S.bosses.filter(b => b.alive && b.mode === 0);
 
     // blue movement + gate crossing
@@ -403,7 +425,7 @@
         // fired soldier flying straight up the arena
         u.x += u.vx * dt; u.y -= SHOT_SPEED * dt;
         if (u.y <= GATE_Y + GATE_H) {
-          const g = u.x < 127 ? gates[0] : u.x < 263 ? gates[1] : gates[2];
+          const g = u.x < gates[0].x1 + GATE_GAP / 2 ? gates[0] : u.x < gates[1].x1 + GATE_GAP / 2 ? gates[1] : gates[2];
           if (g.kind === 'mult') {
             u.mode = 1; u.s = rnd(0, 10); u.lat = rnd(-PATH_HW + 3, PATH_HW - 3);
             const n = g.mult - 1;
@@ -443,7 +465,7 @@
     if (multCount) {
       const mp = S.multPop;
       if (mp && S.t - mp.t0 < 0.6 && mp.t < 1.2) { mp.n += multCount; }
-      else { S.multPop = addPop('x' + mg.mult, MULT_GATE_CX, GATE_Y - 50, '#ffe066'); S.multPop.n = multCount; }
+      else { S.multPop = addPop('x' + mg.mult, (mg.x0 + mg.x1) / 2, GATE_Y - 50, '#ffe066'); S.multPop.n = multCount; }
     }
 
     // combat on path: bucket reds by s
@@ -504,10 +526,37 @@
     // victory
     if (S.bossQueue.length === 0 && S.bosses.length && S.bosses.every(b => !b.alive)) endGame(true);
   }
+  function spawnMinion(bo) {
+    const m = { hp: bo.summon.hp, max: bo.summon.hp, alive: true, v: 24, r: 11, hitT: 0, idx: 0, minion: true, summon: null, cd: 0, mode: bo.mode };
+    if (bo.mode === 1) { m.s = Math.min(PATH_LEN - 1, bo.s + rnd(6, 40)); const p = pathPos(m.s, rnd(-PATH_HW + 8, PATH_HW - 8)); m.x = p[0]; m.y = p[1]; }
+    else { m.s = 0; m.x = bo.x + rnd(-24, 24); m.y = bo.y + rnd(-10, 10); }
+    S.bosses.push(m); addFx(m.x, m.y, '#ff8a8a', 6, 90);
+  }
   function killBoss(bo) {
     if (!bo || !bo.alive) return;
-    bo.alive = false; bo.hp = 0; S.shake = 1; S.bossKills++;
+    bo.alive = false; bo.hp = 0;
+    if (bo.minion) { addFx(bo.x, bo.y, '#ff8a8a', 10, 120); return; }
+    S.shake = 1; S.bossKills++;
     addFx(bo.x, bo.y, '#ff4b4b', 40, 220); addPop('BOSS DOWN', W / 2, 200, '#ffe066');
+    if (bo.summon) for (const m of S.bosses) if (m.minion && m.alive) killBoss(m);
+    // a manually-spawned boss waits in the queue: pause for the rest choice before it enters
+    if (S.bossQueue.length && S.bossQueue[0].at === Infinity && !S.bosses.some(b => b.alive && !b.minion)) openRest();
+  }
+  // ---- rest: widen one gate, total width stays the same ----
+  const GATE_X0 = 16, GATE_GAP = 14, GATE_MIN = 44, GATE_STEP = 40;
+  function resizeGates(which) {
+    const gs = S.gates, w = gs.map(g => g.x1 - g.x0);
+    if (which === 1) { const d = Math.min(GATE_STEP / 2, w[0] - GATE_MIN, w[2] - GATE_MIN); w[0] -= d; w[2] -= d; w[1] += 2 * d; }
+    else { const o = which === 0 ? 2 : 0, d = Math.min(GATE_STEP, w[o] - GATE_MIN); w[o] -= d; w[which] += d; }
+    let x = GATE_X0;
+    gs.forEach((g, i) => { g.x0 = x; g.x1 = x + w[i]; x = g.x1 + GATE_GAP; });
+  }
+  function openRest() { S.resting = true; restBox.hidden = false; }
+  function pickRest(i) {
+    if (!S.resting) return;
+    resizeGates(i); S.resting = false; restBox.hidden = true;
+    addFx((S.gates[i].x0 + S.gates[i].x1) / 2, GATE_Y + 10, '#ffe066', 24, 160);
+    if (S.bossQueue.length && S.bossQueue[0].at === Infinity) spawnBoss(S.bossQueue.shift());
   }
   function onReward(g) {
     const ab = ABILITIES[g.ability];
@@ -623,7 +672,7 @@
     for (const bo of S.bosses) {
       if (!bo.alive) continue;
       const R = bo.r;
-      const bset = SPR.bosses[bo.idx - 1];   // idx is 1-based
+      const bset = bo.minion ? SPR.minion : SPR.bosses[bo.idx - 1];   // idx is 1-based
       if (SPR.ready && !lite && bset) {
         const im = bset[bo.hitT > 0 ? 1 : 0];
         const bob = Math.abs(Math.sin(S.t * 9)) * 3;
@@ -640,7 +689,7 @@
       for (let i = 0; i < spikes; i++) { const a = i / spikes * 6.28 + S.t * 2; ctx.beginPath(); ctx.moveTo(Math.cos(a) * R, Math.sin(a) * R); ctx.lineTo(Math.cos(a) * (R + 8), Math.sin(a) * (R + 8)); ctx.lineTo(Math.cos(a + .4) * (R - 1), Math.sin(a + .4) * (R - 1)); ctx.fill(); }
       ctx.restore();
       }
-      const bw = 40 + bo.idx * 4;
+      const bw = bo.minion ? 22 : 40 + bo.idx * 4;
       ctx.fillStyle = '#111'; roundRect(bo.x - bw / 2 - 2, bo.y - R - 20, bw + 4, 9, 3); ctx.fill();
       ctx.fillStyle = '#ff3b3b'; roundRect(bo.x - bw / 2, bo.y - R - 18, bw * (bo.hp / bo.max), 5, 2); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = 'bold 11px "Luckiest Guy", "Arial Black", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
@@ -772,20 +821,21 @@
   }, 16);
 
   function startGame() {
-    choiceBox.hidden = true;
+    choiceBox.hidden = true; restBox.hidden = true;
     reset(); S.started = true; overlay.hidden = true; restartBtn.hidden = false; hint.style.opacity = 1;
     setTimeout(() => { hint.style.opacity = 0; }, 3500);
   }
   btn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', () => { startGame(); restartBtn.blur(); });
   choiceBtns.forEach(el => el.addEventListener('click', () => pickChoice(+el.dataset.i)));
+  restBtns.forEach(el => el.addEventListener('click', () => pickRest(+el.dataset.i)));
 
   if (location.search.includes('debug')) window.__game = {
     start() { reset(); S.started = true; overlay.hidden = true; },
     step(sec, turretX) { if (turretX != null) S.turret.x = turretX; const n = Math.round(sec / (1 / 60)); for (let i = 0; i < n && !S.over; i++) update(1 / 60); render(); updateHud(); },
-    turretX() { return S.turret.x; }, lite() { return lite; }, choose(i) { pickChoice(i); }, mystery(a, b) { openChoice(a && b ? [a, b] : null); }, choice() { return S.choosing ? S.choice : null; }, cannon() { return S.cannon.level; },
+    turretX() { return S.turret.x; }, lite() { return lite; }, choose(i) { pickChoice(i); }, mystery(a, b) { openChoice(a && b ? [a, b] : null); }, choice() { return S.choosing ? S.choice : null; }, rest(i) { pickRest(i); }, openRest() { openRest(); }, hurt(idx, dmg) { for (const b of S.bosses) if (b.alive && b.idx === idx) { b.hp -= dmg; if (b.hp <= 0) killBoss(b); } }, cannon() { return S.cannon.level; },
     bench(n) { let t0 = performance.now(); for (let i = 0; i < n; i++) update(1 / 60); const up = (performance.now() - t0) / n; t0 = performance.now(); for (let i = 0; i < n; i++) render(); return { update: +up.toFixed(2), render: +((performance.now() - t0) / n).toFixed(2) }; },
-    state() { let minS = 1e9, arena = 0, maxB = -1; for (const r of S.red) { if (r.mode === 0) arena++; else if (r.s < minS) minS = r.s; } for (const u of S.blue) if (u.mode === 1 && u.s > maxB) maxB = u.s; return { minRedS: Math.round(minS), redArena: arena, maxBlueS: Math.round(maxB), shots: S.blue.filter(u => u.mode === 2).length, t: S.t, over: S.over, result: S.result, blue: S.blue.length, red: S.red.length, reserve: S.redReserve, spread: S.spread, armor: S.blueHp, speed: S.blueSpeed, kills: S.bossKills, choosing: S.choosing, cannon: S.cannon.level, gates: S.gates.map(g => g.kind === 'hp' ? g.hp + '/' + g.max + ':' + g.ability + ':g' + g.gen : 'x' + g.mult), bosses: S.bosses.filter(b => b.alive).map(b => [b.idx, b.hp, b.mode, Math.round(b.s)]) }; }
+    state() { let minS = 1e9, arena = 0, maxB = -1; for (const r of S.red) { if (r.mode === 0) arena++; else if (r.s < minS) minS = r.s; } for (const u of S.blue) if (u.mode === 1 && u.s > maxB) maxB = u.s; return { minRedS: Math.round(minS), redArena: arena, maxBlueS: Math.round(maxB), shots: S.blue.filter(u => u.mode === 2).length, t: S.t, over: S.over, result: S.result, blue: S.blue.length, red: S.red.length, reserve: S.redReserve, spread: S.spread, armor: S.blueHp, speed: S.blueSpeed, kills: S.bossKills, choosing: S.choosing, resting: S.resting, cannon: S.cannon.level, gateX: S.gates.map(g => [g.x0, g.x1]), minions: S.bosses.filter(b => b.minion && b.alive).length, gates: S.gates.map(g => g.kind === 'hp' ? g.hp + '/' + g.max + ':' + g.ability + ':g' + g.gen : 'x' + g.mult), bosses: S.bosses.filter(b => b.alive && !b.minion).map(b => [b.idx, b.hp, b.mode, Math.round(b.s)]) }; }
   };
 })();
 </script>
