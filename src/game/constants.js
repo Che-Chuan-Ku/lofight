@@ -4,7 +4,7 @@ export const GATE_MULT = 10;
 export const MAX_EXTRA_H = 160;   // tall screens: extra logical height added above the battlefield (more red sea)
 export const MAX_CROP_H = 140;    // short portrait screens: how much of the top may be cropped to reach full width
 export const SHOT_SPEED = 420;        // px/s, soldiers fired from the turret
-export const MAXB = 9000, MAXR = 4500;   // over MAXB the rear of the blue column is culled; the turret never stops
+export const MAXB = 9999, MAXR = 4500;   // over MAXB the rear of the blue column is culled; the turret never stops
 export const FIRE_INTERVAL = 0.18;   // base seconds between shots (~5.6/s); SPD rewards shorten it via S.fireMul
 export const FIRE_MIN = 0.1;         // fastest allowed fire interval
 export const GATE_RESPAWN = 2.0;   // seconds a broken gate stays open before it rebuilds
