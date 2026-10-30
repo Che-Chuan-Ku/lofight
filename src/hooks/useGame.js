@@ -128,7 +128,7 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef }) {
           if (S.resting) game.pickRest(1);
           if (S.choosing) game.pickChoice(0);
         }
-        if (strong) { S.spread = 24; S.blueHp = 4; S.blueSpeed = 140; S.fireMul = 0.5; S.gates[1].mult = 60; S.cannon.level = 2; }
+        if (strong) { S.spread = 24; S.blueHp = 4; S.blueSpeed = 140; S.fireMul = 0.5; S.gates[1].mult = 60; }
         S.redReserve = reserve; S.red = []; render(ctx, S, SPR, lite, view); updateHud(); sync();
       },
       turretX() { return S.turret.x; }, lite() { return lite; }, choose(i) { game.pickChoice(i); }, mystery(a, b) { game.openChoice(a && b ? [a, b] : null); }, choice() { return S.choosing ? S.choice : null; }, rest(i) { game.pickRest(i); }, openRest() { game.openRest(); }, offer(yes) { yes ? game.acceptOffer() : game.declineOffer(); }, bonus(i) { game.pickBonus(i); }, bonusCards() { return S.bonusing ? S.bonus : null; }, hits(x) { return S.beams.some(b => game.beamHits(b, x, S.turret.y, 16)); }, hurt(idx, dmg) { for (const b of S.bosses) if (b.alive && b.idx === idx) { b.hp -= dmg; if (b.hp <= 0) game.killBoss(b); } }, cannon() { return S.cannon.level; },

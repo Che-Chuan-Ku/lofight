@@ -16,8 +16,7 @@ export const CHOICES = {
   gateP2: { title: 'GATE+2', desc: '中門倍率 +2', good: false, apply: S => { S.gates[1].mult += 2; } },
   gateP10: { title: 'GATE+10', desc: '中門倍率 +10', good: true, apply: S => { S.gates[1].mult += 10; } },
   spdP6: { title: 'SPD+6', desc: '士兵速度 +6、攻速 +5%', good: false, apply: S => { S.blueSpeed += 6; S.fireMul *= 0.95; } },
-  spdP40: { title: 'SPD+40', desc: '士兵速度 +40、攻速 +25%', good: true, apply: S => { S.blueSpeed += 40; S.fireMul *= 0.8; } },
-  cannon: { title: '砲擊', desc: '砲台加裝砲彈，範圍爆破', good: true, apply: S => { S.cannon.level += 1; S.cannon.t = 0.5; } }
+  spdP40: { title: 'SPD+40', desc: '士兵速度 +40、攻速 +25%', good: true, apply: S => { S.blueSpeed += 40; S.fireMul *= 0.8; } }
 };
 
 // Pick-one-of-three offered before the hidden stage: the ordinary crate rewards (no "?" picks), with card text.
@@ -29,9 +28,8 @@ export const BONUS = {
   speed: { title: 'SPD+', desc: '士兵速度 +18、攻速 +15%', good: true, apply: ABILITIES.speed.apply }
 };
 
-// Card text shown on the choice screen; a repeated cannon pick reads as an upgrade.
+// Card text shown on the choice screen.
 export function cardFor(k, S, pool = CHOICES) {
-const c = pool[k];
-if (k === 'cannon' && S.cannon.level > 0) return { title: '砲擊+', desc: '砲彈更強、更快', good: c.good };
-return { title: c.title, desc: c.desc, good: c.good };
+  const c = pool[k];
+  return { title: c.title, desc: c.desc, good: c.good };
 }

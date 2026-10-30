@@ -48,9 +48,10 @@ export default function App() {
     if (!enabled) return;
     setSubmitNote('上傳成績中…'); setBoard(b => ({ ...b, status: 'loading' }));
     const me = cleanName(name);
-    // any stage-8 clear counts as a win and keeps its clear time; the hidden stage only adds the secret mark
-    const won = ui.result !== 'lose';
-    submitScore({ name: me, seconds: Number(won ? ui.clearTime : ui.time), win: won, secret: ui.result === 'secret' })
+    // any stage-8 clear counts as a win. Seconds: a secret clear reports the full run (hidden boss included);
+    // a stage-8 clear that then fell to the hidden boss keeps its stage-8 clear time; a loss reports survival time.
+    const won = ui.result !== 'lose', secret = ui.result === 'secret';
+    submitScore({ name: me, seconds: Number(ui.result === 'secretfail' ? ui.clearTime : ui.time), win: won, secret })
       .then(rows => {
         const rank = rows.findIndex(r => r.name === me);
         setBoard({ status: 'ok', rows });
