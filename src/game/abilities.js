@@ -20,14 +20,13 @@ export const CHOICES = {
   cannon: { title: '砲擊', desc: '砲台加裝砲彈，範圍爆破', good: true, apply: S => { S.cannon.level += 1; S.cannon.t = 0.5; } }
 };
 
-// Pick-one-of-three offered before the hidden stage; every card is a strong buff.
+// Pick-one-of-three offered before the hidden stage: the ordinary crate rewards (no "?" picks), with card text.
 export const BONUS = {
-  shotX4: CHOICES.shotX4,
-  gateP10: CHOICES.gateP10,
-  spdP40: CHOICES.spdP40,
-  cannon: CHOICES.cannon,
-  atkP3: { title: 'ATK+3', desc: '每個士兵攻擊 +3', good: true, apply: S => { S.blueHp += 3; } },
-  rapid: { title: 'RAPID', desc: '攻速 +40%', good: true, apply: S => { S.fireMul *= 0.6; } }
+  shot2: { title: 'x2', desc: '每發士兵 x2', good: true, apply: ABILITIES.shot2.apply },
+  shot3: { title: 'x3', desc: '每發士兵 x3', good: true, apply: ABILITIES.shot3.apply },
+  armor: { title: 'ATK+1', desc: '士兵攻擊 +1', good: true, apply: ABILITIES.armor.apply },
+  gate: { title: 'GATE+5', desc: '中門倍率 +5', good: true, apply: ABILITIES.gate.apply },
+  speed: { title: 'SPD+', desc: '士兵速度 +18、攻速 +15%', good: true, apply: ABILITIES.speed.apply }
 };
 
 // Card text shown on the choice screen; a repeated cannon pick reads as an upgrade.

@@ -118,5 +118,5 @@
   .board .rk { width: 1.6em; opacity: .7; }
   .board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .board .w { font-size: 10px; color: #7dffa7; letter-spacing: 1px; }
-  .board .w.s { color: #e9a6ff; }
+  .board .nm .s { color: #e9a6ff; }
   .board .msg { text-align: center; opacity: .85; padding: 6px 0; font-weight: 700; }

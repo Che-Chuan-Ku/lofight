@@ -15,8 +15,8 @@ export default function Board({ status, rows, me, note }) {
           {list.map((r, i) => (
             <li key={r.name + i} className={r.name === me ? 'me' : ''}>
               <span className="rk">{i + 1}</span>
-              <span className="nm">{r.name}</span>
-              {r.secret ? <span className="w s">㊙ 通關</span> : r.win ? <span className="w">通關</span> : null}
+              <span className="nm">{r.secret ? <span className="s">㊙ </span> : null}{r.name}</span>
+              {r.win ? <span className="w">通關</span> : null}
               <span className="sc">{r.seconds} 秒</span>
             </li>
           ))}
