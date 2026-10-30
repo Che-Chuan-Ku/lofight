@@ -24,3 +24,14 @@ export const BOSS_PLAN = [
   { at: 98, hp: 90000, v: 21, r: 30 },
   { at: Infinity, hp: 120000, v: 21, r: 32, summon: { n: 5, hp: 2000, v: 26, cd: 5 } }
 ];
+// Hidden stage 9, offered once boss 8 falls. Every beam telegraphs for `warn` seconds before it
+// `fire`s; a turret inside a firing beam ends the run. `hw` is the beam half-width.
+export const SECRET_TILE = 84;
+export const SECRET_BOSS = {
+  hp: 150000, v: 19, r: 34,
+  solo: { cd: 5, warn: 1.2, fire: 0.6, hw: 14 },      // down from the boss: straight pillar or S-curve, picked at random
+  wide: { cd: 10, warn: 1.5, fire: 0.7, hw: 11 },     // from half hp: ten-ray star through the boss
+  scurve: { amp: 60, wl: 260, triGap: 90 },            // lateral offset = amp * sin(2π * dy / wl); triGap spaces the enraged triple cast
+  rays: 10                                             // star beams (lines through the boss = rays / 2)
+};
+export const BEAM_HIT_R = 16;   // turret radius for beam hits

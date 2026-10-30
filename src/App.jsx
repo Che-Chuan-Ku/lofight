@@ -5,11 +5,12 @@ import Overlay from './components/Overlay.jsx';
 import ChoiceBox from './components/ChoiceBox.jsx';
 import RestBox from './components/RestBox.jsx';
 import ConfirmBox from './components/ConfirmBox.jsx';
+import OfferBox from './components/OfferBox.jsx';
 import { leaderboardEnabled, fetchTop, submitScore, cleanName, loadName, saveName, defaultName } from './leaderboard.js';
 
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
-  const { ui, hint, start, pause, pickChoice, pickRest } = useGame({ canvasRef, appRef, stageRef, startKeyRef });
+  const { ui, hint, start, pause, pickChoice, pickRest, acceptOffer, declineOffer, pickBonus } = useGame({ canvasRef, appRef, stageRef, startKeyRef });
   const playing = ui.phase !== 'intro' && ui.phase !== 'end';
 
   // ---- nickname + leaderboard ----
@@ -19,6 +20,9 @@ export default function App() {
   const [showBoard, setShowBoard] = useState(false);
   const [board, setBoard] = useState({ status: 'loading', rows: [] });
   const [submitNote, setSubmitNote] = useState(null);
+  // the bonus cards appear where the offer buttons were: ignore taps for a moment so a double tap cannot pick one
+  const [bonusLock, setBonusLock] = useState(false);
+  const acceptSecret = () => { setBonusLock(true); setTimeout(() => setBonusLock(false), 400); acceptOffer(); };
   const submittedRef = useRef(false);
 
   const loadBoard = () => {
@@ -44,14 +48,16 @@ export default function App() {
     if (!enabled) return;
     setSubmitNote('上傳成績中…'); setBoard(b => ({ ...b, status: 'loading' }));
     const me = cleanName(name);
-    submitScore({ name: me, seconds: Number(ui.time), win: ui.result === 'win' })
+    // any stage-8 clear counts as a win and keeps its clear time; the hidden stage only adds the secret mark
+    const won = ui.result !== 'lose';
+    submitScore({ name: me, seconds: Number(won ? ui.clearTime : ui.time), win: won, secret: ui.result === 'secret' })
       .then(rows => {
         const rank = rows.findIndex(r => r.name === me);
         setBoard({ status: 'ok', rows });
         setSubmitNote(rank >= 0 ? '你的最佳成績：第 ' + (rank + 1) + ' 名' : '成績已上傳');
       })
       .catch(() => { setBoard(b => ({ ...b, status: 'error' })); setSubmitNote('成績上傳失敗'); });
-  }, [ui.phase, ui.time, ui.result, name, enabled]);
+  }, [ui.phase, ui.time, ui.clearTime, ui.result, name, enabled]);
 
   const toggleBoard = () => { const next = !showBoard; setShowBoard(next); if (next) loadBoard(); };
 
@@ -68,8 +74,10 @@ export default function App() {
         {ui.phase === 'paused' && <ConfirmBox onYes={restartNow} onNo={() => pause(false)} />}
         {ui.phase === 'rest' && <RestBox onPick={pickRest} />}
         {ui.phase === 'choice' && <ChoiceBox cards={ui.choiceCards} onPick={pickChoice} />}
+        {ui.phase === 'offer' && <OfferBox onYes={acceptSecret} onNo={declineOffer} />}
+        {ui.phase === 'bonus' && <ChoiceBox title="三選一" cards={ui.bonusCards} onPick={bonusLock ? () => {} : pickBonus} />}
         {!playing && (
-          <Overlay phase={ui.phase} result={ui.result} time={ui.time} onStart={tryStart}
+          <Overlay phase={ui.phase} result={ui.result} time={ui.time} clearTime={ui.clearTime} onStart={tryStart}
             name={name} onName={v => { setName(v); setNameErr(false); }} nameErr={nameErr}
             board={enabled ? board : null} showBoard={showBoard} onToggleBoard={toggleBoard} submitNote={submitNote} />
         )}

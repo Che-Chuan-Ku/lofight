@@ -1,6 +1,6 @@
 // Canvas drawing for one frame. Pure function of the state; `lite` drops sprites for slow devices.
 // `view.oy` shifts the world: positive adds red sea above the battlefield (tall screens), negative crops the top.
-import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX } from './constants.js';
+import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS } from './constants.js';
 import { PL, PATH_LEN, pathPos } from './path.js';
 import { ABILITIES } from './abilities.js';
 
@@ -186,6 +186,36 @@ export function render(ctx, S, SPR, lite, view) {
   ctx.globalAlpha = 1;
   // fx
   for (const f of S.fx) { ctx.globalAlpha = 1 - f.t / f.life; ctx.fillStyle = f.color; ctx.fillRect(f.x - 1.5, f.y - 1.5, 3, 3); }
+  ctx.globalAlpha = 1;
+  // hidden-boss beams: a pulsing dashed telegraph while warning, then a glowing beam. Each kind is a path:
+  // pillar (straight down), scurve (sinusoidal down), cross (star of lines through the boss).
+  const L = 1400, TAU = Math.PI * 2, SB = SECRET_BOSS;
+  function beamPath(b) {
+    ctx.beginPath();
+    if (b.kind === 'pillar') { ctx.moveTo(b.x, b.y); ctx.lineTo(b.x, H + 20); }
+    else if (b.kind === 'scurve') {
+      ctx.moveTo(b.x, b.y);
+      for (let y = b.y + 6; y <= H + 20; y += 6) ctx.lineTo(b.x + SB.scurve.amp * Math.sin((y - b.y) / SB.scurve.wl * TAU + b.ph), y);
+    } else {
+      const lines = SB.rays / 2;
+      for (let i = 0; i < lines; i++) { const a = b.a + i * Math.PI / lines, c = Math.cos(a) * L, sn = Math.sin(a) * L; ctx.moveTo(b.x - c, b.y - sn); ctx.lineTo(b.x + c, b.y + sn); }
+    }
+  }
+  ctx.lineCap = 'butt';
+  for (const b of S.beams) {
+    const firing = b.t >= b.warn, k = firing ? 1 - (b.t - b.warn) / b.fire : b.t / b.warn, hw = b.hw;
+    beamPath(b);
+    if (!firing) {
+      ctx.globalAlpha = 0.12 * k; ctx.strokeStyle = '#ff3b3b'; ctx.lineWidth = hw * 2; ctx.stroke();
+      ctx.globalAlpha = 0.35 + 0.5 * Math.abs(Math.sin(S.t * 14)); ctx.lineWidth = 2 + 2 * k; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -S.t * 40; ctx.stroke(); ctx.setLineDash([]);
+    } else {
+      ctx.globalAlpha = 0.3 + 0.6 * k;
+      ctx.strokeStyle = 'rgba(255,40,40,.5)'; ctx.lineWidth = hw * 2 + 16; ctx.stroke();
+      ctx.strokeStyle = '#ff4040'; ctx.lineWidth = hw * 2; ctx.stroke();
+      ctx.strokeStyle = '#fff0f0'; ctx.lineWidth = hw * 0.7; ctx.stroke();
+    }
+  }
+  ctx.lineCap = 'round';
   ctx.globalAlpha = 1;
   // popups
   for (const p of S.pops) {

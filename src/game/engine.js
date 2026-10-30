@@ -1,8 +1,8 @@
 // Simulation: state, spawning, movement, combat, gates, bosses, rest/choice pauses.
 // Copied from the single-file v17 game; UI changes are reported through `onChange` instead of touching the DOM.
-import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, BOSS_PLAN, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP } from './constants.js';
+import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, BOSS_PLAN, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R } from './constants.js';
 import { PATH_LEN, pathPos } from './path.js';
-import { ABILITIES, CHOICES, cardFor } from './abilities.js';
+import { ABILITIES, CHOICES, BONUS, cardFor } from './abilities.js';
 
 export function createGame(onChange) {
   const notify = () => { if (onChange) onChange(); };
@@ -58,6 +58,8 @@ export function createGame(onChange) {
     S.shake = 0;
     S.choosing = false; S.choice = null; S.cannon = { level: 0, t: 0, flash: 0 }; S.shells = []; S.booms = [];
     S.resting = false; S.bossCount = 0; S.choiceCards = null; S.paused = false;
+    // hidden stage: `stage` is 8 until the player accepts the offer; `clearT` is the stage-8 clear time (the leaderboard seconds)
+    S.stage = 8; S.clearT = 0; S.offering = false; S.bonusing = false; S.bonus = null; S.bonusCards = null; S.beams = [];
   }
   const rnd = (a, b) => a + Math.random() * (b - a);
   function addPop(text, x, y, color, sub) { const p = { text, sub: sub || '', x, y, color, t: 0, t0: S.t, n: 0 }; S.pops.push(p); return p; }
@@ -81,9 +83,12 @@ export function createGame(onChange) {
     S.bosses.push({ x: p[0], y: p[1], s: PATH_LEN - 1, hp: b.hp, max: b.hp, mode: 1, alive: true, v: b.v, r: b.r, hitT: 0, idx: S.bossCount, minion: false, summon: b.summon || null, cd: b.summon ? 2.5 : 0 });
     addPop('BOSS!', W / 2, 120, '#ff6b6b');
   }
+  // result: win | lose for stage 8; secret (hidden boss killed) | secretfail (died in stage 9, stage-8 clear still counts)
   function endGame(win) {
-    S.over = true; S.result = win ? 'win' : 'lose';
+    S.over = true;
+    S.result = win ? (S.stage === 9 ? 'secret' : 'win') : (S.stage === 9 ? 'secretfail' : 'lose');
     S.choosing = false; S.resting = false; S.choiceCards = null;
+    S.offering = false; S.bonusing = false; S.bonusCards = null; S.beams = [];
     notify();
   }
 
@@ -106,7 +111,7 @@ export function createGame(onChange) {
     S.booms.push({ x, y, t: 0, R });
   }
   function update(dt) {
-    if (S.over || !S.started || S.choosing || S.resting || S.paused) return;
+    if (S.over || !S.started || S.choosing || S.resting || S.paused || S.offering || S.bonusing) return;
     S.t += dt;
     const T = S.turret;
     const gates = S.gates;
@@ -169,6 +174,15 @@ export function createGame(onChange) {
         if (d < 10 + bo.r) { endGame(false); return; }
       }
       if (bo.summon) { bo.cd -= dt; if (bo.cd <= 0) { bo.cd = bo.summon.cd; for (let i = 0; i < bo.summon.n; i++) spawnMinion(bo); addFx(bo.x, bo.y, '#ff4b4b', 16, 160); } }
+      if (bo.secret) secretSkills(bo, dt);
+    }
+    // beams: the warn phase is harmless; while firing, a turret inside the beam loses the run and soldiers in flight burn
+    for (let i = S.beams.length - 1; i >= 0; i--) {
+      const b = S.beams[i]; b.t += dt;
+      if (b.t >= b.warn + b.fire) { S.beams.splice(i, 1); continue; }
+      if (b.t < b.warn) continue;
+      if (beamHits(b, T.x, T.y, BEAM_HIT_R)) { addFx(T.x, T.y, '#ff3b3b', 40, 220); S.shake = 1; endGame(false); return; }
+      for (const u of S.blue) if (u.alive && u.mode === 2 && beamHits(b, u.x, u.y, 2)) u.alive = false;
     }
     if (S.bosses.some(b => b.minion && !b.alive)) S.bosses = S.bosses.filter(b => b.alive || !b.minion);
     const pathBosses = S.bosses.filter(b => b.alive && b.mode === 1), arenaBosses = S.bosses.filter(b => b.alive && b.mode === 0);
@@ -282,7 +296,71 @@ export function createGame(onChange) {
     S.shake = Math.max(0, S.shake - dt * 3);
 
     // victory
-    if (S.bossQueue.length === 0 && S.bosses.length && S.bosses.every(b => !b.alive)) endGame(true);
+    if (S.bossQueue.length === 0 && S.bosses.length && S.bosses.every(b => !b.alive)) { if (S.stage === 9) endGame(true); else openOffer(); }
+  }
+  // ---- hidden stage 9 ----
+  function openOffer() { S.clearT = S.t; S.offering = true; notify(); }
+  function declineOffer() { if (!S.offering) return; S.offering = false; endGame(true); }
+  function acceptOffer() { if (!S.offering) return; S.offering = false; openBonus(); }
+  function openBonus() {
+    const keys = Object.keys(BONUS), pick = [];
+    while (pick.length < 3) { const k = keys[(Math.random() * keys.length) | 0]; if (!pick.includes(k)) pick.push(k); }
+    S.bonus = pick; S.bonusing = true; S.bonusCards = pick.map(k => cardFor(k, S, BONUS)); notify();
+  }
+  function pickBonus(i) {
+    if (!S.bonusing) return;
+    const k = S.bonus[i], c = BONUS[k];
+    S.bonusing = false; S.bonusCards = null;
+    c.apply(S, api); addPop(c.title, W / 2, 560, '#ffe066');
+    S.stage = 9; spawnSecretBoss(); notify();
+  }
+  function spawnSecretBoss() {
+    const p = pathPos(PATH_LEN - 1, 0), b = SECRET_BOSS;
+    S.bossCount++;
+    S.bosses.push({ x: p[0], y: p[1], s: PATH_LEN - 1, hp: b.hp, max: b.hp, mode: 1, alive: true, v: b.v, r: b.r, hitT: 0, idx: S.bossCount, minion: false, summon: null, cd: 0,
+      secret: true, soloCd: 4, wideCd: 0, enraged: false });
+    addPop('㊙ BOSS', W / 2, 120, '#ff3b3b'); S.shake = 1;
+  }
+  // solo beam every solo.cd from wherever the boss stands: pillar or S-curve at random, and once enraged
+  // also a triple of parallel S-curves; from half hp a ten-ray star every wide.cd.
+  // The star and the triple never overlap: the triple is not picked while a star is up, and the star waits for the triple to end.
+  function secretSkills(bo, dt) {
+    const B = SECRET_BOSS, TAU = Math.PI * 2;
+    const starUp = S.beams.some(b => b.kind === 'cross'), tripleUp = S.beams.some(b => b.tri);
+    bo.soloCd -= dt;
+    if (bo.soloCd <= 0) {
+      bo.soloCd = B.solo.cd;
+      const pick = (Math.random() * (bo.enraged && !starUp ? 3 : 2)) | 0, ph = Math.random() * TAU;
+      const solo = (kind, dx, tri) => S.beams.push({ kind, x: bo.x + dx, y: bo.y, ph, tri: !!tri, t: 0, warn: B.solo.warn, fire: B.solo.fire, hw: B.solo.hw });
+      if (pick === 0) solo('pillar', 0);
+      else if (pick === 1) solo('scurve', 0);
+      else for (const dx of [-B.scurve.triGap, 0, B.scurve.triGap]) solo('scurve', dx, true);
+    }
+    if (!bo.enraged && bo.hp <= bo.max / 2) { bo.enraged = true; bo.wideCd = 1.5; S.shake = Math.max(S.shake, 0.8); addPop('ENRAGE', W / 2, 200, '#ff3b3b'); }
+    if (bo.enraged) {
+      bo.wideCd -= dt;
+      if (bo.wideCd <= 0 && !tripleUp) {
+        bo.wideCd = B.wide.cd;
+        S.beams.push({ kind: 'cross', x: bo.x, y: bo.y, a: Math.random() * TAU / B.rays, t: 0, warn: B.wide.warn, fire: B.wide.fire, hw: B.wide.hw });
+      }
+    }
+  }
+  // point (x, y) with radius r touches the beam. Curved beams use the perpendicular distance
+  // (offset divided by sqrt(1 + slope²)) so steep stretches are not wider than straight ones.
+  function beamHits(b, x, y, r) {
+    const B = SECRET_BOSS, TAU = Math.PI * 2, R = b.hw + r;
+    if (b.kind === 'pillar') return y > b.y && Math.abs(x - b.x) < R;
+    if (b.kind === 'scurve') {
+      if (y <= b.y) return false;
+      const u = (y - b.y) / B.scurve.wl * TAU, cx = b.x + B.scurve.amp * Math.sin(u + b.ph), slope = B.scurve.amp * TAU / B.scurve.wl * Math.cos(u + b.ph);
+      return Math.abs(x - cx) / Math.sqrt(1 + slope * slope) < R;
+    }
+    const lines = B.rays / 2;
+    for (let k = 0; k < lines; k++) {
+      const a = b.a + k * Math.PI / lines;
+      if (Math.abs((x - b.x) * Math.sin(a) - (y - b.y) * Math.cos(a)) < R) return true;
+    }
+    return false;
   }
   function spawnMinion(bo) {
     const m = { hp: bo.summon.hp, max: bo.summon.hp, alive: true, v: bo.summon.v, r: 11, hitT: 0, idx: 0, minion: true, summon: null, cd: 0, mode: bo.mode };
@@ -295,6 +373,7 @@ export function createGame(onChange) {
     bo.alive = false; bo.hp = 0;
     if (bo.minion) { addFx(bo.x, bo.y, '#ff8a8a', 10, 120); return; }
     S.shake = 1; S.bossKills++;
+    if (bo.secret) S.beams = [];
     addFx(bo.x, bo.y, '#ff4b4b', 40, 220); addPop('BOSS DOWN', W / 2, 200, '#ffe066');
     if (bo.summon) for (const m of S.bosses) if (m.minion && m.alive) killBoss(m);
     // a manually-spawned boss waits in the queue: pause for the rest choice before it enters
@@ -327,7 +406,7 @@ export function createGame(onChange) {
   function setPaused(v) { if (S.started && !S.over && S.paused !== !!v) { S.paused = !!v; notify(); } }
   function setTurretX(x) { if (Number.isFinite(x)) S.turret.x = Math.max(22, Math.min(W - 22, x)); }
 
-  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss };
+  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits };
   reset();
   return api;
 }

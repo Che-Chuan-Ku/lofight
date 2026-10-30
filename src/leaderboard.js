@@ -20,11 +20,11 @@ export function fetchTop() {
 }
 
 // text/plain keeps the request "simple" (no CORS preflight), which is what Apps Script web apps support.
-export function submitScore({ name, seconds, win }) {
+export function submitScore({ name, seconds, win, secret }) {
   return call(LEADERBOARD_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ name: cleanName(name), seconds: Math.round(seconds), win: !!win, version: BOARD_VERSION })
+    body: JSON.stringify({ name: cleanName(name), seconds: Math.round(seconds), win: !!win, secret: !!secret, version: BOARD_VERSION })
   });
 }
 

@@ -22,7 +22,7 @@
   #stage[data-full] #hud { border-radius: 0; padding-top: max(10px, env(safe-area-inset-top, 0px)); }
   #stage[data-full] #hint { bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
   #stage[data-full] #restart { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
-  #stage[data-full] #overlay, #stage[data-full] #choice, #stage[data-full] #rest { border-radius: 0; }
+  #stage[data-full] #overlay, #stage[data-full] #choice, #stage[data-full] #rest, #stage[data-full] #offer { border-radius: 0; }
   #app { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
   #stage { position: relative; }
   canvas { display: block; touch-action: none; border-radius: 12px; box-shadow: 0 0 0 3px #0a0b0d, 0 20px 60px rgba(0,0,0,.6); }
@@ -83,15 +83,22 @@
   #choice .card:active { transform: translateY(4px); box-shadow: none; }
   #choice .ct { font-family: var(--font-display); font-size: 30px; letter-spacing: 1px; text-shadow: 0 2px 0 #000; }
   #choice .cd { font-size: 13px; font-weight: 700; line-height: 1.4; text-shadow: 0 1px 2px #000; }
+  #choice .cards.three { gap: 10px; }
+  #choice .cards.three .card { max-width: 110px; min-height: 110px; padding: 12px 4px; }
+  #choice .cards.three .ct { font-size: 22px; }
+  #choice .cards.three .cd { font-size: 12px; }
   @media (prefers-reduced-motion: reduce) { #hint { transition: none; } }
-  #confirm { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px; text-align: center; }
-  #confirm h2 { font-family: var(--font-display); font-size: 32px; margin: 0; color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
-  #confirm p { margin: 0; font-size: 14px; font-weight: 700; }
-  #confirm .row { display: flex; gap: 12px; margin-top: 6px; }
-  #confirm button { touch-action: manipulation; font-family: var(--font-body); font-weight: 700; font-size: 16px; color: #fff; border: 0; border-radius: 10px; padding: 10px 22px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  #confirm, #offer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px; text-align: center; }
+  #confirm h2, #offer h2 { font-family: var(--font-display); font-size: 32px; margin: 0; color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
+  #confirm p, #offer p { margin: 0; font-size: 14px; font-weight: 700; }
+  #confirm .row, #offer .row { display: flex; gap: 12px; margin-top: 6px; }
+  #confirm button, #offer button { touch-action: manipulation; font-family: var(--font-body); font-weight: 700; font-size: 16px; color: #fff; border: 0; border-radius: 10px; padding: 10px 22px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   #confirm .yes { background: var(--red); box-shadow: 0 4px 0 #7a1016; }
-  #confirm .no { background: #3a3f4a; box-shadow: 0 4px 0 #1a1c22; }
-  #confirm button:active { transform: translateY(3px); box-shadow: none; }
+  #offer h2 { color: #e9a6ff; text-shadow: 0 3px 0 #4a1060, 0 6px 18px rgba(0,0,0,.8); }
+  #offer p { line-height: 1.6; }
+  #offer .yes { background: #7a1a8f; box-shadow: 0 4px 0 #3d0a48; }
+  #confirm .no, #offer .no { background: #3a3f4a; box-shadow: 0 4px 0 #1a1c22; }
+  #confirm button:active, #offer button:active { transform: translateY(3px); box-shadow: none; }
   /* nickname + leaderboard */
   #overlay input { font: 700 18px var(--font-body); text-align: center; width: 200px; max-width: 80%; padding: 10px 12px; border-radius: 10px;
     border: 2px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; outline: none; }
@@ -111,4 +118,5 @@
   .board .rk { width: 1.6em; opacity: .7; }
   .board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .board .w { font-size: 10px; color: #7dffa7; letter-spacing: 1px; }
+  .board .w.s { color: #e9a6ff; }
   .board .msg { text-align: center; opacity: .85; padding: 6px 0; font-weight: 700; }

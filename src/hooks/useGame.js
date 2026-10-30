@@ -4,13 +4,13 @@ import { render } from '../game/render.js';
 import { loadSprites } from '../game/tiles.js';
 import { W, H, MAX_EXTRA_H, MAX_CROP_H } from '../game/constants.js';
 
-const phaseOf = S => !S.started ? 'intro' : S.over ? 'end' : S.paused ? 'paused' : S.choosing ? 'choice' : S.resting ? 'rest' : 'play';
-const snapshot = S => ({ phase: phaseOf(S), result: S.result, time: S.t.toFixed(0), choiceCards: S.choiceCards });
+const phaseOf = S => !S.started ? 'intro' : S.over ? 'end' : S.paused ? 'paused' : S.choosing ? 'choice' : S.resting ? 'rest' : S.offering ? 'offer' : S.bonusing ? 'bonus' : 'play';
+const snapshot = S => ({ phase: phaseOf(S), result: S.result, time: S.t.toFixed(0), clearTime: S.clearT.toFixed(0), choiceCards: S.choiceCards, bonusCards: S.bonusCards });
 
 // Owns the engine instance, the canvas loop, sizing and input. React only sees a small `ui` snapshot.
 export function useGame({ canvasRef, appRef, stageRef, startKeyRef }) {
   const gameRef = useRef(null), startRef = useRef(null);
-  const [ui, setUi] = useState({ phase: 'intro', result: null, time: '0', choiceCards: null });
+  const [ui, setUi] = useState({ phase: 'intro', result: null, time: '0', clearTime: '0', choiceCards: null, bonusCards: null });
   const [hint, setHint] = useState(true);
 
   useEffect(() => {
@@ -118,9 +118,22 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef }) {
     if (import.meta.env.MODE !== 'production' && location.search.includes('debug')) window.__game = {
       start() { game.reset(); S.started = true; sync(); },
       step(sec, turretX) { if (turretX != null) S.turret.x = turretX; const n = Math.round(sec / (1 / 60)); for (let i = 0; i < n && !S.over; i++) game.update(1 / 60); render(ctx, S, SPR, lite, view); updateHud(); sync(); },
-      turretX() { return S.turret.x; }, lite() { return lite; }, choose(i) { game.pickChoice(i); }, mystery(a, b) { game.openChoice(a && b ? [a, b] : null); }, choice() { return S.choosing ? S.choice : null; }, rest(i) { game.pickRest(i); }, openRest() { game.openRest(); }, hurt(idx, dmg) { for (const b of S.bosses) if (b.alive && b.idx === idx) { b.hp -= dmg; if (b.hp <= 0) game.killBoss(b); } }, cannon() { return S.cannon.level; },
+      // jump straight to the hidden-stage offer: fast-forwards a run with every boss killed on spawn and no red infantry.
+      // `strong` gives an end-game build so the 150k boss can actually be fought.
+      secret(strong) {
+        game.reset(); S.started = true; const reserve = S.redReserve; S.redReserve = 0;
+        for (let i = 0; i < 20000 && !S.offering && !S.over; i++) {
+          game.update(1 / 60);
+          for (const b of S.bosses) if (b.alive && !b.minion) game.killBoss(b);
+          if (S.resting) game.pickRest(1);
+          if (S.choosing) game.pickChoice(0);
+        }
+        if (strong) { S.spread = 24; S.blueHp = 4; S.blueSpeed = 140; S.fireMul = 0.5; S.gates[1].mult = 60; S.cannon.level = 2; }
+        S.redReserve = reserve; S.red = []; render(ctx, S, SPR, lite, view); updateHud(); sync();
+      },
+      turretX() { return S.turret.x; }, lite() { return lite; }, choose(i) { game.pickChoice(i); }, mystery(a, b) { game.openChoice(a && b ? [a, b] : null); }, choice() { return S.choosing ? S.choice : null; }, rest(i) { game.pickRest(i); }, openRest() { game.openRest(); }, offer(yes) { yes ? game.acceptOffer() : game.declineOffer(); }, bonus(i) { game.pickBonus(i); }, bonusCards() { return S.bonusing ? S.bonus : null; }, hits(x) { return S.beams.some(b => game.beamHits(b, x, S.turret.y, 16)); }, hurt(idx, dmg) { for (const b of S.bosses) if (b.alive && b.idx === idx) { b.hp -= dmg; if (b.hp <= 0) game.killBoss(b); } }, cannon() { return S.cannon.level; },
       bench(n) { let t0 = performance.now(); for (let i = 0; i < n; i++) game.update(1 / 60); const up = (performance.now() - t0) / n; t0 = performance.now(); for (let i = 0; i < n; i++) render(ctx, S, SPR, lite, view); return { update: +up.toFixed(2), render: +((performance.now() - t0) / n).toFixed(2) }; },
-      state() { let minS = 1e9, arena = 0, maxB = -1; for (const r of S.red) { if (r.mode === 0) arena++; else if (r.s < minS) minS = r.s; } for (const u of S.blue) if (u.mode === 1 && u.s > maxB) maxB = u.s; return { minRedS: Math.round(minS), redArena: arena, maxBlueS: Math.round(maxB), shots: S.blue.filter(u => u.mode === 2).length, t: S.t, over: S.over, result: S.result, blue: S.blue.length, red: S.red.length, reserve: S.redReserve, spread: S.spread, armor: S.blueHp, speed: S.blueSpeed, fireMul: +S.fireMul.toFixed(3), kills: S.bossKills, choosing: S.choosing, resting: S.resting, cannon: S.cannon.level, gateX: S.gates.map(g => [g.x0, g.x1]), minions: S.bosses.filter(b => b.minion && b.alive).length, gates: S.gates.map(g => g.kind === 'hp' ? g.hp + '/' + g.max + ':' + g.ability + ':g' + g.gen : 'x' + g.mult), bosses: S.bosses.filter(b => b.alive && !b.minion).map(b => [b.idx, b.hp, b.mode, Math.round(b.s)]) }; }
+      state() { let minS = 1e9, arena = 0, maxB = -1; for (const r of S.red) { if (r.mode === 0) arena++; else if (r.s < minS) minS = r.s; } for (const u of S.blue) if (u.mode === 1 && u.s > maxB) maxB = u.s; return { minRedS: Math.round(minS), redArena: arena, maxBlueS: Math.round(maxB), shots: S.blue.filter(u => u.mode === 2).length, t: S.t, over: S.over, result: S.result, blue: S.blue.length, red: S.red.length, reserve: S.redReserve, spread: S.spread, armor: S.blueHp, speed: S.blueSpeed, fireMul: +S.fireMul.toFixed(3), kills: S.bossKills, choosing: S.choosing, resting: S.resting, cannon: S.cannon.level, stage: S.stage, clearT: +S.clearT.toFixed(1), beams: S.beams.map(b => b.kind + ':' + b.t.toFixed(2)), gateX: S.gates.map(g => [g.x0, g.x1]), minions: S.bosses.filter(b => b.minion && b.alive).length, gates: S.gates.map(g => g.kind === 'hp' ? g.hp + '/' + g.max + ':' + g.ability + ':g' + g.gen : 'x' + g.mult), bosses: S.bosses.filter(b => b.alive && !b.minion).map(b => [b.idx, b.hp, b.mode, Math.round(b.s)]) }; }
     };
 
     return () => {
@@ -142,6 +155,9 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef }) {
     start: () => startRef.current && startRef.current(),
     pause: v => gameRef.current && gameRef.current.setPaused(v),
     pickChoice: i => gameRef.current && gameRef.current.pickChoice(i),
-    pickRest: i => gameRef.current && gameRef.current.pickRest(i)
+    pickRest: i => gameRef.current && gameRef.current.pickRest(i),
+    acceptOffer: () => gameRef.current && gameRef.current.acceptOffer(),
+    declineOffer: () => gameRef.current && gameRef.current.declineOffer(),
+    pickBonus: i => gameRef.current && gameRef.current.pickBonus(i)
   };
 }

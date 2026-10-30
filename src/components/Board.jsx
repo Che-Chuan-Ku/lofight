@@ -16,7 +16,7 @@ export default function Board({ status, rows, me, note }) {
             <li key={r.name + i} className={r.name === me ? 'me' : ''}>
               <span className="rk">{i + 1}</span>
               <span className="nm">{r.name}</span>
-              {r.win ? <span className="w">通關</span> : null}
+              {r.secret ? <span className="w s">㊙ 通關</span> : r.win ? <span className="w">通關</span> : null}
               <span className="sc">{r.seconds} 秒</span>
             </li>
           ))}

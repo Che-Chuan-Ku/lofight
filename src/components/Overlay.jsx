@@ -2,10 +2,14 @@ import Board from './Board.jsx';
 import { NAME_MAX, APP_VERSION } from '../config.js';
 
 // Intro and end screens share one panel; `phase` is 'intro' or 'end'.
-export default function Overlay({ phase, result, time, onStart, name, onName, nameErr, board, showBoard, onToggleBoard, submitNote }) {
-  const ended = phase === 'end', win = result === 'win';
-  const title = !ended ? '人海攻城' : win ? 'Victory!' : 'Defeat in Battle';
-  const sub = !ended ? '左右移動砲台，守住陣地。' : (win ? '用了 ' : '撐了 ') + time + ' 秒。';
+// `result`: win | lose | secret (hidden boss killed) | secretfail (stage 8 cleared, died to the hidden boss).
+export default function Overlay({ phase, result, time, clearTime, onStart, name, onName, nameErr, board, showBoard, onToggleBoard, submitNote }) {
+  const ended = phase === 'end', win = ended && result !== 'lose', secret = result === 'secret';
+  const title = !ended ? '人海攻城' : secret ? '㊙ Secret Clear!' : result === 'secretfail' ? 'Secret Boss Wins' : win ? 'Victory!' : 'Defeat in Battle';
+  const sub = !ended ? '左右移動砲台，守住陣地。'
+    : secret ? '通關 ' + clearTime + ' 秒，隱藏魔王也倒下了（總計 ' + time + ' 秒）。'
+    : result === 'secretfail' ? '通關 ' + clearTime + ' 秒，隱藏魔王下次再戰。'
+    : (win ? '用了 ' : '撐了 ') + time + ' 秒。';
   const hasBoard = !!board;
   return (
     <div id="overlay">
