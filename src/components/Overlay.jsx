@@ -5,10 +5,10 @@ import { NAME_MAX, APP_VERSION } from '../config.js';
 // `result`: win | lose | secret (hidden boss killed) | secretfail (stage 8 cleared, died to the hidden boss).
 export default function Overlay({ phase, result, time, clearTime, onStart, name, onName, nameErr, board, showBoard, onToggleBoard, submitNote }) {
   const ended = phase === 'end', win = ended && result !== 'lose', secret = result === 'secret';
-  const title = !ended ? '人海攻城' : secret ? '㊙ Secret Clear!' : result === 'secretfail' ? 'Secret Boss Wins' : win ? 'Victory!' : 'Defeat in Battle';
+  const title = !ended ? '人海攻城' : secret ? '㊙ Secret Clear!' : result === 'secretfail' ? '第八關通關' : win ? 'Victory!' : 'Defeat in Battle';
   const sub = !ended ? '左右移動砲台，守住陣地。'
     : secret ? '隱藏魔王也倒下了，用了 ' + time + ' 秒。'
-    : result === 'secretfail' ? '通關 ' + clearTime + ' 秒，隱藏魔王下次再戰。'
+    : result === 'secretfail' ? '成績 ' + clearTime + ' 秒已計入排行榜，隱藏魔王下次再戰。'
     : (win ? '用了 ' : '撐了 ') + time + ' 秒。';
   const hasBoard = !!board;
   return (
