@@ -14,6 +14,9 @@ export const UNIT_PX = 11;
 export const BLUE_TILE = 96, RED_TILE = 111;
 export const BOSS_TILES = [110, 112, 122, 120, 124, 109, 121, 123];
 export const MINION_TILE = 108;
+// Stages 1-8. `at`: game second the boss spawns (Infinity = held until the rest pick after boss 7),
+// `hp`, `v`: speed along the path in px/s (arena speed is fixed at 30 in the engine), `r`: body radius,
+// `summon`: minions (count, hp, speed, cooldown). Unchanged since v18.6.5.
 export const BOSS_PLAN = [
   { at: 14, hp: 2000, v: 14, r: 16 },
   { at: 28, hp: 5000, v: 15, r: 18 },
@@ -28,10 +31,10 @@ export const BOSS_PLAN = [
 // `fire`s; a turret inside a firing beam ends the run. `hw` is the beam half-width.
 export const SECRET_TILE = 84;
 export const SECRET_BOSS = {
-  hp: 150000, v: 19, r: 34,
+  hp: 150000, v: 19, r: 34,   // same fields as a BOSS_PLAN entry (boss 8 is 120000 / 21 / 32); no minions
   solo: { cd: 5, warn: 1.2, fire: 0.6, hw: 14 },      // down from the boss: straight pillar or S-curve, picked at random
-  wide: { cd: 10, warn: 1.5, fire: 0.7, hw: 11 },     // from half hp: ten-ray star through the boss
+  wide: { cd: 10, warn: 1.5, fire: 0.7, hw: 11 },     // from half hp: twelve-ray star through the boss
   scurve: { amp: 60, wl: 260, triGap: 90 },            // lateral offset = amp * sin(2π * dy / wl); triGap spaces the enraged triple cast
-  rays: 10                                             // star beams (lines through the boss = rays / 2)
+  rays: 12                                             // star beams (lines through the boss = rays / 2)
 };
 export const BEAM_HIT_R = 16;   // turret radius for beam hits

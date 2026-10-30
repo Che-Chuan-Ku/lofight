@@ -322,7 +322,7 @@ export function createGame(onChange) {
     addPop('㊙ BOSS', W / 2, 120, '#ff3b3b'); S.shake = 1;
   }
   // solo beam every solo.cd from wherever the boss stands: pillar or S-curve at random, and once enraged
-  // also a triple of parallel S-curves; from half hp a ten-ray star every wide.cd.
+  // also a triple of parallel S-curves; from half hp a twelve-ray star every wide.cd.
   // The star and the triple never overlap: the triple is not picked while a star is up, and the star waits for the triple to end.
   function secretSkills(bo, dt) {
     const B = SECRET_BOSS, TAU = Math.PI * 2;
