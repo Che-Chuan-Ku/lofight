@@ -8,8 +8,15 @@ export const BUFF_ORDER = ['ATTACK_SPEED', 'CANNON', 'LASER'];
 // Boss sprite per appearance order (src/game/constants.js BOSS_TILES)
 export const NETWORK_MSG = '連線不穩，請再試一次';
 
+// D26: player-visible tier names. API / data keep BRONZE / SILVER; the screen only ever shows NORMAL / EXTRA, and the
+// difference between them is carried by the badge and colors (D27), never by descriptive words.
+export const TIER_NAME = { BRONZE: 'NORMAL', SILVER: 'EXTRA', bronze: 'NORMAL', silver: 'EXTRA' };
+export const tierName = t => TIER_NAME[t] || '';
+// gam001 / shp002 carry the old tier name in the backend message: the screen uses this copy instead (INF-1)
+export const EXTRA_LOCKED_MSG = 'EXTRA 尚未解鎖';
+
 export function lockLine(seq, best) {
-  return '擊敗 bronze 第 ' + (seq ?? 8) + ' 王解鎖（目前最佳：第 ' + (best ?? 0) + ' 王）';
+  return '擊敗 NORMAL 第 ' + (seq ?? 8) + ' 王解鎖（目前最佳：第 ' + (best ?? 0) + ' 王）';
 }
 
 export function nicknameError(code) {
@@ -19,13 +26,13 @@ export function nicknameError(code) {
   return NETWORK_MSG;
 }
 
-/** Result-screen "next goal" line (G09) while silver is locked; null once unlocked (FE-22: no coin target). */
+/** Result-screen "next goal" line (G09) while EXTRA is locked; null once unlocked (FE-22: no coin target). */
 export function nextGoal(progress) {
   if (!progress) return null;
   if (!progress.isSilverUnlocked) {
     const best = progress.bronzeBestBossesKilled ?? 0;
     const seq = progress.silverUnlockBossSeq ?? 8;
-    if (best >= seq - 1) return { text: '挑戰 bronze 第 ' + seq + ' 王，解鎖 SILVER' };
+    if (best >= seq - 1) return { text: '挑戰 NORMAL 第 ' + seq + ' 王，解鎖 EXTRA' };
     return { pre: '擊敗第 ', num: best + 1, post: ' 王就破紀錄' };
   }
   return null;

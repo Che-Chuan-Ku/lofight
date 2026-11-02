@@ -37,6 +37,7 @@ public class PlayerEventThenSteps {
             actual.put("isSilverUnlocked", event.isSilverUnlocked());
             actual.put("buffItem", Objects.toString(event.getBuffItem(), null));
             actual.put("paidCoins", event.getPaidCoins());
+            actual.put("deviceId", event.getDeviceId());
             actual.put("occurredAt", event.getCreatedAt());
             CellValues.assertRowMatches(expected, actual);
         }

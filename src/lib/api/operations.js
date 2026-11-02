@@ -13,6 +13,7 @@ export const OPERATIONS = {
   updateMyNickname: { method: 'PATCH', path: '/players/me', auth: 'required', request: T.PlayerUpdateRequestSchema, response: T.PlayerDetailResponseSchema, errorCodes: ['400001', '400008', 'acc002'] },
   getMyWallet: { method: 'GET', path: '/players/me/wallet', auth: 'required', response: T.WalletDetailResponseSchema, errorCodes: [] },
   listMyCoinLedgerEntries: { method: 'GET', path: '/players/me/coin-ledger-entries', auth: 'required', query: ['page'], response: T.CoinLedgerPageDataSchema, errorCodes: ['400007', '400009'] },
+  claimAdReward: { method: 'POST', path: '/players/me/ad-rewards', auth: 'required', request: T.AdRewardCreateRequestSchema, response: T.AdRewardDetailResponseSchema, successStatus: 201, errorCodes: ['400001', 'eco001', 'eco002', 'eco003'] },
   listMyBuffInventories: { method: 'GET', path: '/players/me/buff-inventories', auth: 'required', response: T.BuffInventoryItemsDataSchema, errorCodes: [] },
   listShopItems: { method: 'GET', path: '/shop-items', auth: 'required', response: T.ShopItemsDataSchema, errorCodes: [] },
   purchaseShopItem: { method: 'POST', path: '/shop-items/{shopItemId}/actions/purchase', auth: 'required', pathParams: ['shopItemId'], response: T.BuffPurchaseDetailResponseSchema, errorCodes: ['404001', 'shp001', 'shp002'] },

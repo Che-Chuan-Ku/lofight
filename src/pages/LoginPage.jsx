@@ -2,12 +2,14 @@
 // Flow: Google id_token -> getMergePreview (nothing written) -> 確認合併 -> loginGoogle with the guest token (merge).
 import { useEffect, useRef, useState } from 'react';
 import { PageHeader, PrimaryButton } from '../components/ui/Common.jsx';
-import { GLogo } from '../components/ui/Icons.jsx';
+import { GLogo, TierBadge } from '../components/ui/Icons.jsx';
 import { getMergePreview, loginGoogle } from '../lib/api/index.js';
 import { ensureSession, getAccessToken, recover } from '../lib/session.js';
 import { MOCK_API } from '../lib/env.js';
 import { renderGoogleButton } from '../lib/googleIdentity.js';
 import { BUFFS, BUFF_ORDER, NETWORK_MSG } from '../lib/labels.js';
+
+const TierLabel = ({ tier, size }) => <span className="tname"><TierBadge tier={tier} size={size} />{tier === 'silver' ? 'EXTRA' : 'NORMAL'}</span>;
 
 const FAIL_MSG = '登入驗證失敗，請再試一次';
 
@@ -29,8 +31,8 @@ function MergeCard({ preview }) {
           <div className="row"><dt>目標帳號</dt><dd><span className="tag acct">{existing ? '已有帳號' : '新帳號'}</span></dd></div>
           <div className="row"><dt>金幣</dt><dd className="gold">{preview.guestCoins || '無'}</dd></div>
           <div className="row"><dt>buff</dt><dd>{buffs.length ? buffs.map(([b, q]) => <span key={b} className="tag buff">{BUFFS[b].name} ×{q}</span>) : '無'}</dd></div>
-          <div className="row"><dt>SILVER 解鎖</dt><dd>{preview.guestIsSilverUnlocked ? '是' : '否'}</dd></div>
-          <div className="row"><dt>成績</dt><dd>bronze {bestText(preview.guestBestScores, 'BRONZE')}・silver {bestText(preview.guestBestScores, 'SILVER')}</dd></div>
+          <div className="row"><dt><TierLabel tier="silver" size={16} /> 解鎖</dt><dd>{preview.guestIsSilverUnlocked ? '是' : '否'}</dd></div>
+          <div className="row"><dt>成績</dt><dd><TierLabel tier="bronze" size={14} /> {bestText(preview.guestBestScores, 'BRONZE')}・<TierLabel tier="silver" size={14} /> {bestText(preview.guestBestScores, 'SILVER')}</dd></div>
         </dl>
       </section>
       {existing && <p className="msg info">這個 Google 帳號已有進度，上面的內容會加進去。</p>}

@@ -2,8 +2,7 @@ package com.crowdsiege.api.controller;
 
 import com.crowdsiege.api.common.dto.ManageResponse;
 import com.crowdsiege.api.dto.response.BuffPurchaseDetailResponse;
-import com.crowdsiege.api.dto.response.ItemsResponse;
-import com.crowdsiege.api.dto.response.ShopItemListResponse;
+import com.crowdsiege.api.dto.response.ShopItemsResponse;
 import com.crowdsiege.api.security.CurrentUser;
 import com.crowdsiege.api.service.ShopService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +23,7 @@ public class ShopController {
     }
 
     @GetMapping
-    public ManageResponse<ItemsResponse<ShopItemListResponse>> listShopItems(HttpServletRequest httpRequest) {
+    public ManageResponse<ShopItemsResponse> listShopItems(HttpServletRequest httpRequest) {
         return ManageResponse.ok(shopService.listItems(CurrentUser.getId(httpRequest)));
     }
 

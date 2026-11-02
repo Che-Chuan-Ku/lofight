@@ -1,9 +1,9 @@
-// 排行榜頁 (specs/ui/排行榜頁.md; prototype board()). Tabs BRONZE / SILVER, top 15, my rank with 2 above / 2 below.
+// 排行榜頁 (specs/ui/排行榜頁.md; prototype board()). Tabs NORMAL / EXTRA (API tiers BRONZE / SILVER), top 15, my rank with 2 above / 2 below.
 import { useRef, useState } from 'react';
 import { PageHeader, RetryBox, Skeletons, useLoad } from '../components/ui/Common.jsx';
-import { IcEmptyBoard } from '../components/ui/Icons.jsx';
+import { IcEmptyBoard, TierBadge } from '../components/ui/Icons.jsx';
 import { getLeaderboard } from '../lib/api/index.js';
-import { BUFFS } from '../lib/labels.js';
+import { BUFFS, tierName } from '../lib/labels.js';
 
 function Row({ e, me, i }) {
   const isMe = me && e.rank === me.rank;
@@ -61,7 +61,7 @@ export default function LeaderboardPage({ onBack, onPlay }) {
           <span className="thumb" aria-hidden="true" />
           {['BRONZE', 'SILVER'].map(k => (
             <button key={k} type="button" role="tab" id={'tab-' + k.toLowerCase()} aria-controls="lb-panel" aria-selected={tab === k} tabIndex={tab === k ? 0 : -1}
-              onClick={() => setTab(k)}>{k}</button>
+              onClick={() => setTab(k)}><TierBadge tier={k} size={18} />{tierName(k)}</button>
           ))}
         </div>
       </div>

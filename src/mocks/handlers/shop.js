@@ -1,6 +1,6 @@
 // Shop tag handlers (browse, purchase).
 import { route, ok, fail, authenticate } from './util.js';
-import { persist, addLedger, SHOP_PRICES, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
+import { persist, addLedger, adRewardStatus, SHOP_PRICES, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
 
 export const shopHandlers = [
   route('listShopItems', ({ request }) => {
@@ -11,7 +11,7 @@ export const shopHandlers = [
       shopItemId: b, buffItem: b, price: SHOP_PRICES[b], isPurchasable: p.isSilverUnlocked,
       silverUnlockBossSeq: p.isSilverUnlocked ? null : SILVER_UNLOCK_BOSS_SEQ,
       bronzeBestBossesKilled: p.isSilverUnlocked ? null : p.bronzeBest
-    })) });
+    })), adReward: adRewardStatus(p.playerId) });
   }),
 
   route('purchaseShopItem', ({ request, params }) => {

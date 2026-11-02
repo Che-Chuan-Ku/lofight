@@ -2,7 +2,8 @@ package com.crowdsiege.api.model;
 
 public enum EventKind implements CodedEnum {
     SHOP_VIEW((short) 0),
-    BUFF_PURCHASE((short) 1);
+    BUFF_PURCHASE((short) 1),
+    AD_REWARD((short) 2);
 
     private final short code;
 

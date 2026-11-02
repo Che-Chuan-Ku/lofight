@@ -1,6 +1,6 @@
 // Canvas drawing for one frame. Pure function of the state; `lite` drops sprites for slow devices.
 // `view.oy` shifts the world: positive adds red sea above the battlefield (tall screens), negative crops the top.
-import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS, LASER, MAX_EXTRA_H } from './constants.js';
+import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS, LASER, MAX_EXTRA_H, STORM } from './constants.js';
 import { PL, PATH_LEN, pathPos } from './path.js';
 import { ABILITIES, spreadMaxed } from './abilities.js';
 
@@ -232,6 +232,47 @@ export function render(ctx, S, SPR, lite, view) {
   }
   ctx.lineCap = 'round';
   ctx.globalAlpha = 1;
+  // EXTRA boss 6 lightning (_ui-spec.md §5.3): columns already hit this round are darker (no collision); the warned
+  // column pulses with a light fill and dashed edges; the firing column is a three-layer violet bolt. No text.
+  if (S.scorch && S.scorch.length) {
+    const w = W / STORM.sweep.strips;
+    ctx.fillStyle = 'rgba(24,12,48,.22)';
+    for (const k of S.scorch) ctx.fillRect(k * w, -MAX_EXTRA_H, w, H + MAX_EXTRA_H + 20);
+  }
+  for (const bl of S.bolts || []) {
+    const top = -MAX_EXTRA_H, bot = H + 20, bw = bl.x1 - bl.x0, cx = (bl.x0 + bl.x1) / 2;
+    if (bl.t < bl.warn) {
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = 'rgba(185,140,255,' + (0.10 + 0.12 * (0.5 + 0.5 * Math.sin(S.t * 9))) + ')';
+      ctx.fillRect(bl.x0, top, bw, bot - top);
+      ctx.strokeStyle = '#d9c2ff'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -S.t * 40;
+      ctx.beginPath(); ctx.moveTo(bl.x0 + 1, top); ctx.lineTo(bl.x0 + 1, bot); ctx.moveTo(bl.x1 - 1, top); ctx.lineTo(bl.x1 - 1, bot); ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      const k = 1 - (bl.t - bl.warn) / bl.fire;
+      ctx.globalAlpha = 0.35 + 0.65 * k;
+      ctx.fillStyle = 'rgba(185,140,255,.45)'; ctx.fillRect(bl.x0, top, bw, bot - top);
+      // zigzag bolt; its shape changes at most 3 times per second (flash-safe)
+      let seed = (bl.strip * 97 + Math.floor(bl.t * 3) * 31) | 0;
+      const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+      ctx.beginPath(); ctx.moveTo(cx, top);
+      for (let y = top + 40; y <= bot; y += 40) ctx.lineTo(cx + (rnd() - 0.5) * bw * 0.6, y);
+      ctx.lineJoin = 'miter';
+      ctx.strokeStyle = '#b98cff'; ctx.lineWidth = bw * 0.45; ctx.stroke();
+      ctx.strokeStyle = '#fbf4ff'; ctx.lineWidth = bw * 0.14; ctx.stroke();
+      ctx.lineJoin = 'round';
+    }
+  }
+  ctx.globalAlpha = 1;
+  for (const o of S.orbs || []) {
+    const left = STORM.orbs.life - o.t;
+    // last 1.5 s: blink at 2.5 per second (<= 3 flashes per second) before the orb fades out
+    if (left < STORM.orbs.blink && Math.floor(o.t * 5) % 2 === 1) continue;
+    const R = STORM.orbs.r;
+    ctx.fillStyle = 'rgba(185,140,255,.45)'; ctx.beginPath(); ctx.arc(o.x, o.y, R + 5, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#b98cff'; ctx.beginPath(); ctx.arc(o.x, o.y, R, 0, 6.28); ctx.fill();
+    ctx.fillStyle = '#fbf4ff'; ctx.beginPath(); ctx.arc(o.x, o.y, R * 0.45, 0, 6.28); ctx.fill();
+  }
   // popups
   for (const p of S.pops) {
     const a = p.t < 0.9 ? 1 : 1 - (p.t - 0.9) / 0.3;

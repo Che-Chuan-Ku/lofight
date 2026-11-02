@@ -1,13 +1,15 @@
 // 商店頁 (specs/ui/商店頁.md; prototype shop()). Items + prices from listShopItems, owned counts from
 // listMyBuffInventories, chip from getMyWallet. SPEC-01: api.yml returns no "約 N 次通關" value, so it is not shown.
+// The rewarded-ad card (D33-D35) sits on top and takes listShopItems.adReward; no other call is made for it.
 import { useEffect, useState } from 'react';
 import { PageHeader, CoinChip, RetryBox, Skeletons, PrimaryButton, LoginBanner } from '../components/ui/Common.jsx';
-import { PixelCoin } from '../components/ui/Icons.jsx';
+import { PixelCoin, TierBadge } from '../components/ui/Icons.jsx';
+import AdRewardCard from '../components/ui/AdRewardCard.jsx';
 import { listShopItems, listMyBuffInventories, getMyWallet, purchaseShopItem } from '../lib/api/index.js';
-import { BUFFS, lockLine, NETWORK_MSG } from '../lib/labels.js';
+import { BUFFS, lockLine, NETWORK_MSG, EXTRA_LOCKED_MSG } from '../lib/labels.js';
 
 export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercept, onBannerDone, onBannerLogin, onBannerClose, onBannerShown }) {
-  const [st, setSt] = useState({ status: 'loading', items: [], inv: {} });
+  const [st, setSt] = useState({ status: 'loading', items: [], inv: {}, adReward: null });
   const [n, setN] = useState(0);
   const [msg, setMsg] = useState({});        // buffItem -> ok | short | locked | net
   const [busy, setBusy] = useState(null);
@@ -20,7 +22,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
     Promise.all([listShopItems(), listMyBuffInventories(), getMyWallet()]).then(([shop, inv, w]) => {
       if (!live) return;
       onCoins(w.coins);
-      setSt({ status: 'ok', items: shop.items, inv: Object.fromEntries(inv.items.map(i => [i.buffItem, i.quantity])) });
+      setSt({ status: 'ok', items: shop.items, adReward: shop.adReward, inv: Object.fromEntries(inv.items.map(i => [i.buffItem, i.quantity])) });
     }, () => { if (live) setSt(s => ({ ...s, status: 'error' })); });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -70,7 +72,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
           return (
             <div key={item.shopItemId} className={'card' + (item.isPurchasable ? '' : ' locked')} style={{ animationDelay: i * 30 + 'ms' }}>
               <div className="info">
-                <span className="name">{b.name}</span>
+                <span className="name">{b.name} <span className="tag silver"><TierBadge tier="silver" size={12} />EXTRA 專用</span></span>
                 <span>{b.desc}</span>
                 <span className="own">持有 <b className={pop === item.buffItem ? 'pop' : undefined}>{st.inv[item.buffItem] ?? 0}</b></span>
               </div>
@@ -83,7 +85,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
               <div className="msgline" aria-live={m === 'short' ? 'assertive' : 'polite'}>
                 {m === 'ok' && <span className="msg ok">已購買</span>}
                 {m === 'short' && <span className="msg err">餘額不足</span>}
-                {m === 'locked' && <span className="msg err">擊敗 bronze 第 {item.silverUnlockBossSeq ?? 8} 王才能購買</span>}
+                {m === 'locked' && <span className="msg err">{EXTRA_LOCKED_MSG}</span>}
                 {m === 'net' && <span className="msg err">{NETWORK_MSG}</span>}
               </div>
             </div>
@@ -94,12 +96,13 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
   }
   return (
     <div className="page menu enter">
-      <PageHeader title="銀牌商店" onBack={onBack} right={<CoinChip coins={coins} />} />
+      <PageHeader title="商店" onBack={onBack} right={<CoinChip coins={coins} />} />
       <div>{banner && (
         <LoginBanner text={banner} onLogin={onBannerLogin} onClose={() => { setPending(null); onBannerClose(); }} onShown={onBannerShown}
           loginLabel={pending ? '先登入' : undefined} secondaryLabel="直接購買" onSecondary={pending ? buyDirect : undefined} />
       )}</div>
       <main className="content scroll" style={{ paddingTop: 'var(--space-3)' }} aria-busy={st.status === 'loading' ? 'true' : undefined}>
+        {st.status === 'ok' && st.adReward && <AdRewardCard status={st.adReward} onCoins={onCoins} />}
         {st.status === 'ok' && locked && (
           <p id="lockline" className="msg warn"><span className="lock" aria-hidden="true" style={{ margin: '6px 6px 0 0' }} />{lockLine(locked.silverUnlockBossSeq, locked.bronzeBestBossesKilled)}</p>
         )}

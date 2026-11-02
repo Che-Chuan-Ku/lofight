@@ -8,6 +8,9 @@ import { BUFFS } from '../lib/labels.js';
 const pad = n => String(n).padStart(2, '0');
 const when = iso => { const d = new Date(iso); return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
+// AD_REWARD = 廣告獎勵 (AMB-A4 final ruling, AdSense wording); BUFF_PURCHASE falls through to 購買 <buff>
+const LEDGER_LABEL = { BOSS_REWARD: '對局獲得', MERGE_IN: '帳號合併', AD_REWARD: '廣告獎勵' };
+
 // GAP-4: the API books one BOSS_REWARD entry per boss; consecutive entries of the same run show as one 對局獲得 row.
 export function groupLedger(items) {
   const rows = [];
@@ -16,7 +19,7 @@ export function groupLedger(items) {
     if (e.ledgerSource === 'BOSS_REWARD' && e.runId && last && last.runId === e.runId && last.source === 'BOSS_REWARD') { last.amount += e.coinDelta; continue; }
     rows.push({
       key: e.ledgerEntryId, source: e.ledgerSource, runId: e.ledgerSource === 'BOSS_REWARD' ? e.runId : null, amount: e.coinDelta, at: e.occurredAt,
-      label: e.ledgerSource === 'BOSS_REWARD' ? '對局獲得' : e.ledgerSource === 'MERGE_IN' ? '帳號合併' : '購買 ' + (e.buffItem ? BUFFS[e.buffItem].name : 'buff')
+      label: LEDGER_LABEL[e.ledgerSource] || '購買 ' + (e.buffItem ? BUFFS[e.buffItem].name : 'buff')
     });
   }
   return rows;

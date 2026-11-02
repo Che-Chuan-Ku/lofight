@@ -44,3 +44,16 @@ export const BuffInventoryListResponseSchema = BuffQuantitySchema;
 export const BuffInventoryItemsDataSchema = z.object({
   items: z.array(BuffInventoryListResponseSchema)
 });
+
+// claimAdReward (POST /players/me/ad-rewards): request = the local device id, response = AdRewardDetailResponse (201)
+export const AdRewardCreateRequestSchema = z.object({
+  deviceId: z.string().min(1).max(64)
+});
+
+export const AdRewardDetailResponseSchema = z.object({
+  adRewardId: z.string(),
+  coinsAwarded: z.number().int(),
+  walletCoins: z.number().int().min(0),
+  remainingCount: z.number().int().min(0),
+  nextClaimableAt: DateTimeSchema
+});

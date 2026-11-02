@@ -1,6 +1,6 @@
 // Players tag handlers (progress, nickname, wallet, ledger, buff inventory).
 import { route, ok, fail, authenticate, blank } from './util.js';
-import { getDb, persist, BANNED_WORDS, LEDGER_PAGE_SIZE, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
+import { getDb, persist, addLedger, adRewardStatus, now, BANNED_WORDS, LEDGER_PAGE_SIZE, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ, AD_REWARD } from '../db.js';
 
 export const progressOf = p => ({
   playerId: p.playerId, nickname: p.nickname, playerKind: p.playerKind, isSilverUnlocked: p.isSilverUnlocked,
@@ -42,6 +42,25 @@ export const playerHandlers = [
     const items = mine.slice((page - 1) * LEDGER_PAGE_SIZE, page * LEDGER_PAGE_SIZE)
       .map(({ playerId, ...e }) => e);
     return ok({ items, totalCount: mine.length, page, hasNext: page * LEDGER_PAGE_SIZE < mine.length });
+  }),
+
+  // 領取廣告獎勵.feature: deviceId -> open (eco003) -> daily limit (eco001) -> cooldown (eco002); limit wins over cooldown
+  route('claimAdReward', ({ request, body }) => {
+    const auth = authenticate(request);
+    if (auth.error) return auth.error;
+    const deviceId = body && typeof body.deviceId === 'string' ? body.deviceId : null;
+    if (blank(deviceId) || deviceId.length > 64) return fail('400001');
+    const before = adRewardStatus(auth.player.playerId);
+    if (!before.isEnabled) return fail('eco003');
+    if (before.remainingCount === 0) return fail('eco001');
+    if (before.nextClaimableAt) return fail('eco002');
+    addLedger(auth.player.playerId, { ledgerSource: 'AD_REWARD', coinDelta: AD_REWARD.coins });
+    const db = getDb(), entry = db.ledger[db.ledger.length - 1];
+    (db.adEvents || (db.adEvents = [])).push({ playerId: auth.player.playerId, deviceId, at: now() });
+    persist();
+    const after = adRewardStatus(auth.player.playerId);
+    return ok({ adRewardId: entry.ledgerEntryId, coinsAwarded: AD_REWARD.coins, walletCoins: auth.player.coins,
+      remainingCount: after.remainingCount, nextClaimableAt: after.nextClaimableAt }, 201);
   }),
 
   route('listMyBuffInventories', ({ request }) => {

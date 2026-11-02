@@ -37,6 +37,17 @@ public class ResponseDataThenSteps {
         }
     }
 
+    @Then("回應中的 {string} 物件應為：")
+    public void 回應中的物件應為(String field, DataTable dataTable) {
+        JsonNode node = responseReader.data().path(field);
+        assertThat(node.isObject()).as("回應中的 %s 預期為物件，實際 %s", field, node).isTrue();
+        Map<String, String> expected = dataTable.asMaps().get(0);
+        expected.keySet().forEach(key -> assertThat(node.has(key))
+                .as("回應中的 %s 缺少欄位 %s（null 也須明確序列化），實際 %s", field, key, node)
+                .isTrue());
+        CellValues.assertJsonMatches(expected, node);
+    }
+
     @Then("回應中的 {string} 應為空")
     public void 回應中的應為空(String field) {
         JsonNode node = responseReader.data().path(field);

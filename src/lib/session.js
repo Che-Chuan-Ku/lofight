@@ -31,6 +31,9 @@ function deviceId(renew) {
   return id;
 }
 
+/** The local device id (same one issue-guest uses); claimAdReward sends it for auditing (AMB-A5=a). */
+export const getDeviceId = () => deviceId(false);
+
 function fromDetail(d) {
   return {
     playerId: d.playerId, playerKind: d.playerKind, accessToken: d.accessToken,

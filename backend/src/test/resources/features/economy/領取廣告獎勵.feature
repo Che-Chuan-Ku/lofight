@@ -1,0 +1,1 @@
+../../../../../../specs/features/economy/領取廣告獎勵.feature

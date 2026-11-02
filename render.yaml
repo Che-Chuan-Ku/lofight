@@ -34,6 +34,11 @@ services:
       # page. Empty = login entries hidden. sync:false only prompts on the first Blueprint creation.
       - key: GOOGLE_CLIENT_ID
         sync: false
+      # Rewarded ad (shop "watch an ad") switch: leave EMPTY to keep the feature OFF (no ad script,
+      # no shop card, API answers eco003, no /ads.txt). Set to the AdSense publisher id (ca-pub-...)
+      # after AdSense + H5 Games Ads approval to turn it on; no rebuild needed, just redeploy.
+      - key: ADSENSE_PUBLISHER_ID
+        value: ""
 
 databases:
   - name: lofight-db

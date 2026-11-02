@@ -2,10 +2,12 @@
 import { setupWorker } from 'msw/browser';
 import { handlers } from './handlers/index.js';
 import { controls } from './db.js';
+import { installMockAds } from './ads.js';
 
 export async function startMocks() {
   const worker = setupWorker(...handlers);
   await worker.start({ onUnhandledRequest: 'bypass', quiet: true });
   window.__mockDb = controls;   // test controls for the Playwright suite (dev mock mode only)
+  installMockAds();             // Google Ad Placement stand-in + test publisher id (window.__mockAds)
   return worker;
 }

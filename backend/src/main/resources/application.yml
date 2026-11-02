@@ -71,6 +71,13 @@ game:
       boss-coins: [4, 8, 16, 32, 64, 128]
       victory-threshold-seconds: 84
 
+ad-reward:
+  # Rewarded ad is open only when the AdSense publisher id (ca-pub-...) is set (AMB-A7=a).
+  publisher-id: ${ADSENSE_PUBLISHER_ID:}
+  coins: 200
+  daily-limit: 5
+  cooldown: 60s
+
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
   token-info-url: https://oauth2.googleapis.com/tokeninfo

@@ -2,6 +2,7 @@
 // status: submitting | ok | invalid (gam003/gam004) | error (network, retry is idempotent) | offline (run never opened)
 import { useEffect, useRef, useState } from 'react';
 import { BossIcon, RetryBox, Skeletons, LoginBanner, useTitleFocus } from '../components/ui/Common.jsx';
+import { TierBadge } from '../components/ui/Icons.jsx';
 import { deathLine } from '../lib/settlement.js';
 
 const STEP = 250;
@@ -85,8 +86,8 @@ export default function ResultPage({ run, goal, banner, onAgain, onHome, onRetry
           <div className="row" style={{ border: 0, paddingTop: 0 }}><span className="grow sub">目前餘額 {s.walletCoins}</span></div>
         </section>
         {s.isSilverNewlyUnlocked && done && (
-          <div className={'unlock' + (animate && !skip ? ' pop' : '')} role="status" ref={unlockRef}>
-            <h2>SILVER 已解鎖</h2><p>現在可以帶 buff 進 silver 了</p>
+          <div className={'unlock extra' + (animate && !skip ? ' pop' : '')} role="status" ref={unlockRef}>
+            <div className="ub"><TierBadge tier="silver" size={32} /><h2>EXTRA 已解鎖</h2></div><p>現在可以帶 buff 進 EXTRA 了</p>
           </div>
         )}
         {done && <GoalLine goal={goal} late={animate && !skip} />}

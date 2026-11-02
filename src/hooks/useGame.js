@@ -117,6 +117,8 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
       if (v) game.setTurretX(S.turret.x + v * 5);
     }, 16);
 
+    // fast-forward helper: keep the turret out of the EXTRA boss 6 lightning column
+    const dodge = () => { const b = S.bolts[0]; if (b && S.turret.x + 16 > b.x0 && S.turret.x - 16 < b.x1) game.setTurretX(b.x0 > W / 2 ? W / 4 : W * 3 / 4); };
     // dev-only inspection hook; stripped from production builds so scores cannot be forged through it
     if (import.meta.env.MODE !== 'production' && location.search.includes('debug')) window.__game = {
       start() { game.reset({ tier: S.tier, buff: S.buff }); S.started = true; sync(); },
@@ -132,10 +134,26 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
           for (const b of S.bosses) if (b.alive && !b.minion) { if (b.bornT === undefined) b.bornT = S.t; if (S.t - b.bornT > 1.5) game.killBoss(b); }
           if (S.resting) game.pickRest(1);
           if (S.choosing) game.pickChoice(0);
+          dodge();
         }
         if (strong) { S.spread = 24; S.blueHp = 4; S.blueSpeed = 140; S.fireMul = 0.5; S.gates[1].mult = 60; }
         S.redReserve = reserve; S.red = []; render(ctx, S, SPR, lite, view); updateHud(); sync();
       },
+      // EXTRA (D29-D32) fast-forward: every boss falls 1.5 s after it enters and the rest pick is taken, until boss
+      // `seq` is on the field (boss 5 enters at >= 70 s, boss 6 at >= 84 s); no red infantry meanwhile (`calm`: none after either)
+      extra(seq, calm) {
+        game.reset({ tier: S.tier, buff: S.buff }); S.started = true; const reserve = S.redReserve; S.redReserve = 0;
+        for (let i = 0; i < 20000 && !S.over; i++) {
+          game.update(1 / 60);
+          if (S.bosses.some(b => b.alive && !b.minion && b.idx === seq)) break;
+          for (const b of S.bosses) if (b.alive && !b.minion) { if (b.bornT === undefined) b.bornT = S.t; if (S.t - b.bornT > 1.5) game.killBoss(b); }
+          if (S.resting) game.pickRest(1);
+          if (S.choosing) game.pickChoice(0);
+        }
+        S.redReserve = calm ? 0 : reserve; S.red = []; render(ctx, S, SPR, lite, view); updateHud(); sync();
+      },
+      // EXTRA boss 6 lightning state: current column (firing or warning), columns hit this round, orbs on the field
+      storm() { const b = S.bolts[0]; return { bolt: b ? { strip: b.strip, x0: b.x0, x1: b.x1, firing: b.t >= b.warn, t: +b.t.toFixed(2) } : null, scorch: S.scorch.slice(), orbs: S.orbs.map(o => [Math.round(o.x), Math.round(o.y), +o.t.toFixed(2), Math.round(Math.atan2(o.vy, o.vx) * 180 / Math.PI)]), beams: S.beams.length, t: S.t, over: S.over }; },
       // soldiers-per-shot cap checks (FE-27): set spread, hang/roll/break a crate on an hp gate (index 0 or 2)
       spread(n) { if (n != null) S.spread = n; return S.spread; }, gateAbility(i, ab) { if (ab) S.gates[i].ability = ab; return S.gates[i].ability; },
       rollGate(i) { game.rebuildGate(S.gates[i]); return S.gates[i].ability; },

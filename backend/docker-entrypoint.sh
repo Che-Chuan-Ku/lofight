@@ -3,6 +3,7 @@
 #   DATABASE_URL=postgres[ql]://user:pass@host[:port]/db[?params]  ->  DB_URL (jdbc:postgresql://...), DB_USERNAME, DB_PASSWORD
 #   PORT                                                          ->  SERVER_PORT
 #   GOOGLE_CLIENT_ID                                              ->  /app/static/index.html (meta google-client-id)
+#   ADSENSE_PUBLISHER_ID (ca-pub-<digits>)                        ->  /app/static/index.html (meta adsense-publisher-id) + /app/static/ads.txt
 # Explicit DB_URL / DB_USERNAME / DB_PASSWORD / SERVER_PORT always win (local docker-compose sets DB_* directly).
 set -eu
 
@@ -38,9 +39,24 @@ if [ -n "${PORT:-}" ] && [ -z "${SERVER_PORT:-}" ]; then
   export SERVER_PORT
 fi
 
-# Front-end page: render the build's index.html template with the runtime Google client id.
-# The placeholder lives only in <meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">; an empty or
-# malformed id renders content="" and the page hides its login entries.
+# Front-end page: render the build's index.html template with the runtime Google client id and AdSense publisher id.
+# The placeholders live only in <meta name="google-client-id" content="__GOOGLE_CLIENT_ID__"> and
+# <meta name="adsense-publisher-id" content="__ADSENSE_PUBLISHER_ID__">; an empty or malformed value renders content=""
+# and the page hides the matching feature (login entries / rewarded-ad card, no ad script).
+publisher_id="${ADSENSE_PUBLISHER_ID:-}"
+case "$publisher_id" in
+  "") ;;
+  ca-pub-*[!0-9]*|ca-pub-)
+    echo "entrypoint: ADSENSE_PUBLISHER_ID is not ca-pub-<digits>; ads stay off" >&2
+    publisher_id=""
+    ;;
+  ca-pub-*) ;;
+  *)
+    echo "entrypoint: ADSENSE_PUBLISHER_ID is not ca-pub-<digits>; ads stay off" >&2
+    publisher_id=""
+    ;;
+esac
+
 if [ -f /app/web/index.html ]; then
   client_id="${GOOGLE_CLIENT_ID:-}"
   case "$client_id" in
@@ -49,13 +65,28 @@ if [ -f /app/web/index.html ]; then
       client_id=""
       ;;
   esac
-  sed 's|<meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">|<meta name="google-client-id" content="'"$client_id"'">|' \
+  sed -e 's|<meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">|<meta name="google-client-id" content="'"$client_id"'">|' \
+      -e 's|<meta name="adsense-publisher-id" content="__ADSENSE_PUBLISHER_ID__">|<meta name="adsense-publisher-id" content="'"$publisher_id"'">|' \
     /app/web/index.html > /app/static/index.html
   if [ -n "$client_id" ]; then
     echo "entrypoint: index.html rendered with GOOGLE_CLIENT_ID"
   else
     echo "entrypoint: index.html rendered without GOOGLE_CLIENT_ID (login hidden)"
   fi
+  if [ -n "$publisher_id" ]; then
+    echo "entrypoint: index.html rendered with ADSENSE_PUBLISHER_ID"
+  else
+    echo "entrypoint: index.html rendered without ADSENSE_PUBLISHER_ID (ads off)"
+  fi
+fi
+
+# ads.txt at the site root (infrastructure.yml site_ads.ads_txt): only when a publisher id is set, otherwise /ads.txt is 404.
+# AdSense writes the seller id without the ca- prefix; f08c47fec0942fa0 is Google's certification authority id.
+if [ -n "$publisher_id" ]; then
+  printf 'google.com, %s, DIRECT, f08c47fec0942fa0\n' "${publisher_id#ca-}" > /app/static/ads.txt
+  echo "entrypoint: ads.txt written"
+else
+  rm -f /app/static/ads.txt
 fi
 
 exec java ${JAVA_OPTS:-} -jar /app/app.jar "$@"

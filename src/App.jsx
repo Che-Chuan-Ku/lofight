@@ -10,6 +10,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import LoadoutPage from './pages/LoadoutPage.jsx';
 import ResultPage from './pages/ResultPage.jsx';
 import WalletPage from './pages/WalletPage.jsx';
+import PrivacyPage from './pages/PrivacyPage.jsx';
 import ShopPage from './pages/ShopPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import { getMyProgress, getMyWallet, createRun, settleRun, updateMyNickname } from './lib/api/index.js';
@@ -23,7 +24,7 @@ import { TILES_DATA_URI } from './game/tiles.js';
 // settleRun error codes that mean the run is finished without a result (BDY-02 check failed, BDY-06 abandoned)
 const SETTLE_INVALID_CODES = new Set(['gam003', 'gam004']);
 
-// Screens: home | login | ready (silver loadout) | game | result | wallet | shop | board.
+// Screens: home | login | ready (silver loadout) | game | result | wallet | shop | board | privacy.
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
   const sceneryRef = useRef(true);
@@ -107,7 +108,7 @@ export default function App() {
       getMyProgress().then(setProgress, () => {});
       const guest = getSession() && getSession().playerKind === 'GUEST';
       const kind = s.isSilverNewlyUnlocked ? 'silver' : firstCoins ? 'coins' : null;
-      const text = kind === 'silver' ? '登入保存你的 SILVER 解鎖' : kind === 'coins' ? '登入保存 ' + s.coinsAwarded + ' 金幣' : null;
+      const text = kind === 'silver' ? '登入保存你的 EXTRA 解鎖' : kind === 'coins' ? '登入保存 ' + s.coinsAwarded + ' 金幣' : null;
       if (LOGIN_AVAILABLE && text && bannerAllowed(guest)) setBanner({ text, on: 'result', kind });
     } catch (e) {
       // D-02 (結算對局 BDY-02/06): only gam003 (check failed) / gam004 (abandoned) make the run 本局成績無效 — the run
@@ -181,6 +182,7 @@ export default function App() {
       onBuyIntercept={interceptBuy} onBannerDone={() => setBanner(null)}
       onBannerLogin={() => openLogin('shop')} onBannerClose={closeBanner} onBannerShown={bannerShown} />;
   } else if (screen === 'board') page = <LeaderboardPage onBack={() => go('home')} onPlay={() => go('home')} />;
+  else if (screen === 'privacy') page = <PrivacyPage onBack={() => go('home')} />;
 
   return (
     <div id="app" ref={appRef}>

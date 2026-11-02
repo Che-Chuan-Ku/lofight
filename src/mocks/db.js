@@ -16,6 +16,8 @@ export const LEDGER_PAGE_SIZE = 20;
 export const BANNED_WORDS = ['管理員', 'GM'];             // backend keeps the real list in config; prototype simulates these two
 export const DEFAULT_GUEST_NICKNAME = '勇者248';           // 建立guest身分.feature: 系統預設暱稱產生器下一個值
 export const DEFAULT_MEMBER_NICKNAME = '老兵512';          // Google登入.feature: a new account takes the system default, not the guest's nickname
+// Rewarded ad (AMB-A1=a, backend config): 200 coins, 5 per UTC day, 60 s apart
+export const AD_REWARD = { coins: 200, dailyLimit: 5, cooldownSec: 60 };
 // Google id_token -> verification result (查詢合併預覽.feature Background)
 export const GOOGLE_TOKENS = { 'g-ok-1': 'g-sub-1', 'g-ok-2': 'g-sub-2' };
 
@@ -43,7 +45,7 @@ export function seed() {
     { boardVersion: '19.0', tier: 'SILVER', playerId: '1001', isVictory: true, gameSeconds: 100, settledAt: '2026-11-01T11:05:00+00:00', equippedBuff: 'LASER' },
     { boardVersion: '19.0', tier: 'SILVER', playerId: '1002', isVictory: false, gameSeconds: 70, settledAt: '2026-11-01T11:05:00+00:00', equippedBuff: null }
   ];
-  return { seq: 2000, players, tokens: {}, refresh: {}, ledger: [], runs: {}, board, fail: {} };
+  return { seq: 2000, players, tokens: {}, refresh: {}, ledger: [], runs: {}, board, fail: {}, adEnabled: true, adEvents: [] };
 }
 
 let db = readJson(KEY, null) || seed();
@@ -71,6 +73,21 @@ export function addLedger(playerId, entry) {
   const p = db.players[playerId];
   p.coins += entry.coinDelta;
   db.ledger.push({ ledgerEntryId: nextId(), playerId, bossSeq: null, buffItem: null, runId: null, occurredAt: now(), ...entry, coinsAfter: p.coins });
+}
+
+/** adReward state of one player (瀏覽商店 adReward / INF-A12): counts today's (UTC) AD_REWARD ledger rows. */
+export function adRewardStatus(playerId, at = Date.now()) {
+  if (db.adEnabled === false) return { isEnabled: false, remainingCount: null, nextClaimableAt: null };
+  const day0 = new Date(at); day0.setUTCHours(0, 0, 0, 0);
+  const mine = db.ledger.filter(e => e.playerId === playerId && e.ledgerSource === 'AD_REWARD').map(e => Date.parse(e.occurredAt));
+  const today = mine.filter(t => t >= day0.getTime() && t <= at).length;
+  const last = mine.length ? Math.max(...mine) : null;
+  const remainingCount = Math.max(0, AD_REWARD.dailyLimit - today);
+  const coolEnd = last === null ? null : last + AD_REWARD.cooldownSec * 1000;
+  let next = null;
+  if (remainingCount === 0) next = Math.max(day0.getTime() + 864e5, coolEnd || 0);
+  else if (coolEnd !== null && coolEnd > at) next = coolEnd;
+  return { isEnabled: true, remainingCount, nextClaimableAt: next === null ? null : iso(next) };
 }
 
 /** Leaderboard ranking: wins first, faster wins, longer losses, earlier settlement; best entry per player. */
@@ -105,5 +122,12 @@ export const controls = {
     for (let i = 0; i < n; i++) addLedger(playerId, i % 9 === 4 ? { ledgerSource: 'MERGE_IN', coinDelta: 50 } : { ledgerSource: 'BOSS_REWARD', coinDelta: TIER_RULES.BRONZE.coins[i % 4], bossSeq: 1 + (i % 4), runId: 'r-' + Math.floor(i / 4) });
     persist();
   },
-  clearBoard() { db.board = []; persist(); }
+  clearBoard() { db.board = []; persist(); },
+  /** Backend rewarded-ad switch (ADSENSE_PUBLISHER_ID set or not). */
+  setAdEnabled(on) { db.adEnabled = !!on; persist(); },
+  /** n AD_REWARD rows for a player, `agoSec` seconds in the past (daily limit / cooldown states). */
+  seedAdRewards(playerId, n, agoSec = 3600) {
+    for (let i = 0; i < n; i++) addLedger(playerId, { ledgerSource: 'AD_REWARD', coinDelta: AD_REWARD.coins, occurredAt: iso(Date.now() - (agoSec + (n - 1 - i)) * 1000) });
+    persist();
+  }
 };

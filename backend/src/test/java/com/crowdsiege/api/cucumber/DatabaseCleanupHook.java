@@ -1,5 +1,6 @@
 package com.crowdsiege.api.cucumber;
 
+import com.crowdsiege.api.config.AdRewardProperties;
 import com.crowdsiege.api.config.GameProperties;
 import io.cucumber.java.Before;
 import java.util.ArrayList;
@@ -18,6 +19,8 @@ public class DatabaseCleanupHook {
 
     private static String defaultBoardVersion;
     private static List<String> defaultBannedWords;
+    private static String defaultPublisherId;
+    private static boolean adRewardDefaultsCaptured;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -37,6 +40,9 @@ public class DatabaseCleanupHook {
     @Autowired
     private GameProperties gameProperties;
 
+    @Autowired
+    private AdRewardProperties adRewardProperties;
+
     @Before(order = 0)
     public void resetState() {
         jdbcTemplate.execute(TRUNCATE_ALL);
@@ -45,6 +51,15 @@ public class DatabaseCleanupHook {
         googleIdTokenVerifier.reset();
         appleIdentityTokenVerifier.reset();
         resetGameProperties();
+        resetAdRewardProperties();
+    }
+
+    private void resetAdRewardProperties() {
+        if (!adRewardDefaultsCaptured) {
+            defaultPublisherId = adRewardProperties.getPublisherId();
+            adRewardDefaultsCaptured = true;
+        }
+        adRewardProperties.setPublisherId(defaultPublisherId);
     }
 
     private void resetGameProperties() {

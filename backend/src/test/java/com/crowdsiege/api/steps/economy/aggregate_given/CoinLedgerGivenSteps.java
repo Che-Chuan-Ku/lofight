@@ -52,6 +52,8 @@ public class CoinLedgerGivenSteps {
             case MERGE_IN -> CoinLedgerEntry.mergeIn(playerId, null, coinDelta, coinsAfter, occurredAt);
             case BUFF_PURCHASE -> CoinLedgerEntry.buffPurchase(playerId, BuffItem.valueOf(row.get("buffItem")),
                     -coinDelta, coinsAfter, occurredAt);
+            case AD_REWARD -> CoinLedgerEntry.adReward(playerId, row.get("deviceId"), coinDelta, coinsAfter,
+                    occurredAt);
         };
     }
 }

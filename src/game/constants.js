@@ -8,8 +8,6 @@ export const MAXB = 9999, MAXR = 4500;   // over MAXB the rear of the blue colum
 export const FIRE_INTERVAL = 0.18;   // base seconds between shots (~5.6/s); SPD rewards shorten it via S.fireMul
 export const FIRE_MIN = 0.1;         // fastest allowed fire interval
 export const FIRE_MIN_BUFF = 0.08;   // fastest fire interval with the ATTACK_SPEED loadout buff (GAP-04=A)
-// v19 silver tier: first six bosses, boss hp x1.5, red spawn x1.2, boss 6 down = victory (GAP-03=A)
-export const SILVER_TIER = { bosses: 6, bossHp: 1.5, redRate: 1.2 };
 // LASER loadout buff: every `interval` s x fireMul (never below `min`), clears a 60px column (PATH_HW x2) up from
 // the turret and hits bosses for bossDamage x attack; `fx` is how long the beam stays drawn (D12, GAP-05=A).
 export const LASER = { interval: 3, min: 1.5, halfWidth: 30, bossDamage: 200, fx: 0.25 };
@@ -33,6 +31,28 @@ export const BOSS_PLAN = [
   { at: 98, hp: 90000, v: 21, r: 30 },
   { at: Infinity, hp: 120000, v: 21, r: 32, summon: { n: 5, hp: 2000, v: 26, cd: 5 } }
 ];
+// EXTRA (API tier SILVER, D29-D32; specs/ui/遊戲畫面.md "EXTRA 魔王機制"): six bosses, boss 6 down = victory.
+// Own hp table; speed / size of NORMAL bosses 1-6; red spawn as NORMAL (the old x1.2 is gone, AMB-E8=B).
+// `minAt`: a held boss (at = Infinity) never enters before this game second (backend appearance floors 70 / 84).
+// `after`: what releases a held boss — 'rest' (rest pick once the field is clear, as NORMAL boss 8) or 'kill' (the
+// previous boss falls). `skills`: 'beam' = hidden-stage beams, 'storm' = lightning sweep + lightning orbs.
+export const EXTRA_PLAN = [
+  { at: 14, hp: 2400, v: 14, r: 16 },
+  { at: 28, hp: 8000, v: 15, r: 18 },
+  { at: 42, hp: 15000, v: 16, r: 20 },
+  { at: 56, hp: 20000, v: 17, r: 22, summon: { n: 5, hp: 500, v: 26, cd: 5 } },   // only boss 4 summons (AMB-E2=D)
+  { at: Infinity, minAt: 70, after: 'rest', hp: 57000, v: 18, r: 24, skills: 'beam' },
+  { at: Infinity, minAt: 84, after: 'kill', hp: 105000, v: 20, r: 27, skills: 'storm' }
+];
+// EXTRA boss 6 (D32). Sweep: the logical width (0-390) is cut into `strips` equal columns (65 px >= 2 x turret hit
+// width 32); one column at a time in random order, each `warn` s telegraph (harmless) then `fire` s lightning that
+// ends the run when the turret overlaps it; a round hits every column once, the next round starts `cd` s after.
+// Orbs: `n` per cast from the boss, angle 20-160 deg each (90 = straight down), `speed` px/s, bounce off the
+// 390x780 edges, live `life` s, first cast `first` s after the boss enters, then every `cd` s. Neither touches soldiers.
+export const STORM = {
+  sweep: { strips: 6, warn: 1.2, fire: 0.6, cd: 20 },
+  orbs: { n: 3, minDeg: 20, maxDeg: 160, speed: 50, life: 8, first: 7, cd: 7, r: 9, blink: 1.5 }
+};
 // Hidden stage 9, offered once boss 8 falls. Every beam telegraphs for `warn` seconds before it
 // `fire`s; a turret inside a firing beam ends the run. `hw` is the beam half-width.
 export const SECRET_TILE = 84;

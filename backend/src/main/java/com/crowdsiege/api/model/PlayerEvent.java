@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 /**
- * Append-only backend event (shop view, buff purchase); created_at is the occurred time.
+ * Append-only backend event (shop view, buff purchase, ad reward); created_at is the occurred time.
  */
 @Entity
 @Table(name = "player_events")
@@ -34,6 +34,9 @@ public class PlayerEvent extends AppendOnlyEntity {
     @Column(name = "paid_coins")
     private Integer paidCoins;
 
+    @Column(name = "device_id", length = 64)
+    private String deviceId;
+
     protected PlayerEvent() {
     }
 
@@ -45,6 +48,15 @@ public class PlayerEvent extends AppendOnlyEntity {
         this.buffItem = buffItem;
         this.paidCoins = paidCoins;
         markCreated(now, playerId);
+    }
+
+    /**
+     * AD_REWARD event carrying the client device id (AMB-A5=a).
+     */
+    public static PlayerEvent adReward(Long playerId, boolean silverUnlocked, String deviceId, Instant now) {
+        PlayerEvent event = new PlayerEvent(EventKind.AD_REWARD, playerId, silverUnlocked, null, null, now);
+        event.deviceId = deviceId;
+        return event;
     }
 
     public Long getId() {
@@ -69,5 +81,9 @@ public class PlayerEvent extends AppendOnlyEntity {
 
     public Integer getPaidCoins() {
         return paidCoins;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
     }
 }

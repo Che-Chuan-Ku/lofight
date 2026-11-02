@@ -129,7 +129,9 @@ public class RunSettlementService {
 
     /**
      * The six plausibility checks (D17, ASM-03, GAP-03, audit fix 2026-10-30): sequence in range, no duplicates,
-     * kill not before spawn, victory beyond threshold with all bosses, server elapsed time >= game seconds.
+     * kill not before spawn, victory at or beyond threshold with all bosses, server elapsed time >= game seconds.
+     * D-09 (2026-11-02): victory gameSeconds equal to the threshold is accepted (>=), so a boss-6 kill
+     * within its entry second (floor(t) = 84 on silver) settles.
      */
     private boolean isPlausible(Run run, RunSettleRequest request, Instant now) {
         TierRule rule = gameProperties.tierRule(run.getTier());
@@ -141,7 +143,7 @@ public class RunSettlementService {
                 return false;
             }
         }
-        if (request.isVictory() && (request.gameSeconds() <= rule.getVictoryThresholdSeconds()
+        if (request.isVictory() && (request.gameSeconds() < rule.getVictoryThresholdSeconds()
                 || seen.size() < rule.bossCount())) {
             return false;
         }

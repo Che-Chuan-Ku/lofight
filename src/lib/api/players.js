@@ -6,3 +6,4 @@ export const updateMyNickname = ({ nickname }) => apiRequest('updateMyNickname',
 export const getMyWallet = () => apiRequest('getMyWallet');
 export const listMyCoinLedgerEntries = ({ page } = {}) => apiRequest('listMyCoinLedgerEntries', { query: { page } });
 export const listMyBuffInventories = () => apiRequest('listMyBuffInventories');
+export const claimAdReward = ({ deviceId }) => apiRequest('claimAdReward', { body: { deviceId } });

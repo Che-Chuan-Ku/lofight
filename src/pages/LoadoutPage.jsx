@@ -1,7 +1,8 @@
-// 裝填畫面 (specs/ui/裝填畫面.md; prototype ready()). silver only: pick none or one buff, then createRun.
+// 裝填畫面 (specs/ui/裝填畫面.md; prototype ready()). EXTRA (API tier SILVER) only: pick none or one buff, then createRun.
 import { useEffect, useRef, useState } from 'react';
 import { PageHeader, PrimaryButton, RetryBox, Skeletons, useLoad } from '../components/ui/Common.jsx';
 import { listMyBuffInventories } from '../lib/api/index.js';
+import { TierBadge } from '../components/ui/Icons.jsx';
 import { BUFFS, BUFF_ORDER, NETWORK_MSG } from '../lib/labels.js';
 
 export default function LoadoutPage({ preselect, onBack, onStart }) {
@@ -65,7 +66,7 @@ export default function LoadoutPage({ preselect, onBack, onStart }) {
   }
   return (
     <div className="page menu enter">
-      <PageHeader title="SILVER 裝填" titleId="ready-t" onBack={onBack} />
+      <PageHeader title={<><TierBadge tier="silver" size={30} />EXTRA 裝填</>} titleId="ready-t" onBack={onBack} />
       <main className="content" style={{ paddingTop: 'var(--space-4)' }}>
         {warn && <p className="msg warn" role="alert">{warn}</p>}
         {list}

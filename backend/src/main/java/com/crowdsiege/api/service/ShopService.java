@@ -5,8 +5,8 @@ import com.crowdsiege.api.common.exception.CommonErrorCode;
 import com.crowdsiege.api.common.exception.ShopErrorCode;
 import com.crowdsiege.api.config.GameProperties;
 import com.crowdsiege.api.dto.response.BuffPurchaseDetailResponse;
-import com.crowdsiege.api.dto.response.ItemsResponse;
 import com.crowdsiege.api.dto.response.ShopItemListResponse;
+import com.crowdsiege.api.dto.response.ShopItemsResponse;
 import com.crowdsiege.api.model.BuffInventory;
 import com.crowdsiege.api.model.BuffItem;
 import com.crowdsiege.api.model.CoinLedgerEntry;
@@ -27,7 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Silver shop: item list with current prices (records a SHOP_VIEW event) and buff purchase (D09, BDY-07).
+ * Silver shop: item list with current prices and the rewarded ad option state (records a SHOP_VIEW event) and buff
+ * purchase (D09, BDY-07, AMB-A6=a).
  */
 @Service
 public class ShopService {
@@ -39,33 +40,36 @@ public class ShopService {
     private final CoinLedgerEntryRepository coinLedgerEntryRepository;
     private final BuffInventoryRepository buffInventoryRepository;
     private final PlayerEventRepository playerEventRepository;
+    private final AdRewardService adRewardService;
     private final GameProperties gameProperties;
     private final Clock clock;
 
     public ShopService(PlayerService playerService, WalletRepository walletRepository,
                        CoinLedgerEntryRepository coinLedgerEntryRepository,
                        BuffInventoryRepository buffInventoryRepository, PlayerEventRepository playerEventRepository,
-                       GameProperties gameProperties, Clock clock) {
+                       AdRewardService adRewardService, GameProperties gameProperties, Clock clock) {
         this.playerService = playerService;
         this.walletRepository = walletRepository;
         this.coinLedgerEntryRepository = coinLedgerEntryRepository;
         this.buffInventoryRepository = buffInventoryRepository;
         this.playerEventRepository = playerEventRepository;
+        this.adRewardService = adRewardService;
         this.gameProperties = gameProperties;
         this.clock = clock;
     }
 
     @Transactional
-    public ItemsResponse<ShopItemListResponse> listItems(Long playerId) {
+    public ShopItemsResponse listItems(Long playerId) {
         Player player = playerService.getPlayer(playerId);
         SilverUnlockHint hint = playerService.silverUnlockHint(player);
+        Instant now = clock.instant();
         playerEventRepository.save(new PlayerEvent(EventKind.SHOP_VIEW, playerId, player.isSilverUnlocked(), null,
-                null, clock.instant()));
-        return new ItemsResponse<>(Arrays.stream(BuffItem.values())
+                null, now));
+        return new ShopItemsResponse(Arrays.stream(BuffItem.values())
                 .map(buffItem -> new ShopItemListResponse(buffItem.name(), buffItem,
                         gameProperties.priceOf(buffItem), player.isSilverUnlocked(), hint.silverUnlockBossSeq(),
                         hint.bronzeBestBossesKilled()))
-                .toList());
+                .toList(), adRewardService.statusOf(playerId, now));
     }
 
     /**

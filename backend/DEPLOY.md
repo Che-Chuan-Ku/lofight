@@ -85,3 +85,10 @@ cd backend && GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com docker compose up
 - 無 HTTP health check（未設 `healthCheckPath`），Render 用預設 TCP port 探測（[Health checks](https://render.com/docs/health-checks)）。
 
 參考：<https://render.com/docs/blueprint-spec>、<https://render.com/docs/infrastructure-as-code>、<https://render.com/docs/build-filters>、<https://render.com/docs/free>、<https://render.com/docs/web-services#port-binding>、<https://render.com/docs/health-checks>
+
+## 廣告功能開關（看廣告 +200）
+
+- 開關就是 `ADSENSE_PUBLISHER_ID`：**留空＝關閉**（render.yaml 預設 `value: ""`）。關閉時頁面不載入 Google 廣告 script、商店不顯示看廣告卡片、`claimAdReward` 回 eco003、`/ads.txt` 回 404，其餘功能不受影響。
+- 要開啟：AdSense 與 H5 Games Ads 核准後，到 Dashboard → `lofight` → Environment 把 `ADSENSE_PUBLISHER_ID` 填成 `ca-pub-<數字>` → Save（自動重新部署，不需重 build）。啟動腳本會把 ID 注入頁面並產生 `/ads.txt`（`google.com, pub-<數字>, DIRECT, f08c47fec0942fa0`）。
+- 要暫停廣告：把值清空再 Save 即可。
+- 每日次數（5）、冷卻（60 秒）、金幣（200）在 `backend/src/main/resources/application.yml` 的 `ad-reward` 區段。

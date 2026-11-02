@@ -64,30 +64,41 @@ export const PixelCoin = ({ className = '' }) => (
   <PixelArt rows={COIN_ROWS} palette={COIN_PALETTE} className={('coin ' + className).trim()} />
 );
 
-const TROPHY_ROWS = [
-  '..oooooooooooo..',
-  '..ohhbbbbbbsso..',
-  'ooohhbbbbbbssooo',
-  'o.ohbbbbbbbbso.o',
-  'o.ohbbbbbbbbso.o',
-  '.o.ohbbbbbbso.o.',
-  '..oohbbbbbssoo..',
-  '...oohbbbbsoo...',
-  '....oohbbsoo....',
-  '......obso......',
-  '......obso......',
-  '.....oobsoo.....',
-  '....oooooooo....',
-  '....ohbbbbso....',
-  '...ohbbbbbbso...',
-  '...oooooooooo...'
-];
-const TROPHY_PALETTES = {
-  bronze: { o: 'var(--color-bronze-shadow)', b: 'var(--color-bronze)', s: 'var(--color-bronze-deep)', h: 'var(--sand)' },
-  silver: { o: 'var(--color-silver-shadow)', b: 'var(--color-silver)', s: 'var(--color-silver-deep)', h: 'var(--color-card-edge)' }
+// Tier badges (D26/D27, prototype PIX.normal / PIX.extra): NORMAL = forged-bronze shield, EXTRA = violet crystal with
+// a bolt and a spark. Shown next to the tier name; colors are the --color-tier-* tokens (menu.css).
+const BADGES = {
+  normal: {
+    rows: ['.oooooooooooooo.', 'ohhhhhhhhhhhhhso', 'ohbbbbbeebbbbbso', 'ohbbbbbeebbbbbso', 'ohbbbbbeebbbbbso', 'ohbbbbbeebbbbbso', 'ohbbbbbeebbbbbso', 'ohbbbbbeebbbbsso',
+      'ohbbeeeeeeeebsso', '.ohbbbbggbbbsso.', '.ohbbbbggbbbsso.', '..ohbbbeebbsso..', '...ohbbbbbbso...', '....ohbbbbso....', '.....osbbso.....', '......oooo......'],
+    palette: { o: 'var(--color-tier-normal-shadow)', h: 'var(--color-tier-normal-hi)', b: 'var(--color-tier-normal)', s: 'var(--color-tier-normal-deep)', e: 'var(--color-text)', g: 'var(--color-tier-normal-shadow)' }
+  },
+  extra: {
+    rows: ['.......oo.....p.', '......ohbo...ppp', '.....ohbbbo...p.', '....ohbbebbo....', '...ohbbeebbbo...', '..ohbbeebbbbbo..', '.ohbbeeeeeebbbo.', 'ohbbbbbbeebbbbbo',
+      'obbbbbbeebbbbbso', '.obbbbeebbbbbso.', '..obbeebbbbbso..', '...obebbbbbso...', '....obbbbbso....', '.....obbbso.....', '......obso......', '.......oo.......'],
+    palette: { o: 'var(--color-tier-extra-shadow)', h: 'var(--color-tier-extra-hi)', b: 'var(--color-tier-extra)', s: 'var(--color-tier-extra-deep)', e: 'var(--color-tier-extra-hi)', p: 'var(--color-tier-extra-spark)' }
+  }
 };
 
-/** Tier trophy: same cup, bronze or silver colors. */
-export const PixelTrophy = ({ tier, size = 40 }) => (
-  <PixelArt rows={TROPHY_ROWS} palette={TROPHY_PALETTES[tier]} className="trophy" size={size} />
-);
+/** Tier badge by API tier value (BRONZE / SILVER or bronze / silver); decorative, the tier name is always next to it. */
+export const TierBadge = ({ tier, size = 18 }) => {
+  const b = BADGES[/^silver$/i.test(tier) ? 'extra' : 'normal'];
+  return <PixelArt rows={b.rows} palette={b.palette} className="ticon" size={size} />;
+};
+
+// Generic buff mark (potion): the EXTRA card shows it instead of the words "可帶 buff" (AMB-N1=C).
+const BUFF_ROWS = ['.....oooooo.....', '.....occcco.....', '.....oooooo.....', '......ohgo......', '......ohgo......', '....oohgggoo....', '...ohgggggggo...', '..ohllllllllso..',
+  '.ohllwlllllllso.', '.ohllllllwlllso.', '.ohllllllllllso.', '.ohllllllllllso.', '..ollllllllsso..', '...ollllllsso...', '....oooooooo....', '................'];
+const BUFF_PALETTE = { o: 'var(--color-ally-shadow)', c: 'var(--sand)', h: 'var(--color-text)', g: 'var(--color-ally-light)', l: 'var(--color-ally)', s: 'var(--color-ally-deep)', w: 'var(--color-ally-light)' };
+export const BuffMark = ({ size = 18 }) => <PixelArt rows={BUFF_ROWS} palette={BUFF_PALETTE} className="ticon" size={size} />;
+
+// Pixelised Linktree mark (asterisk + stem, D36; prototype PIX.linktree).
+const LINKTREE_ROWS = ['................', '.......gg.......', '.gg....gg....gg.', '.ggg...gg...ggg.', '..ggg..gg..ggg..', '...ggg.gg.ggg...', '....gggggggg....', 'gggggggggggggggg',
+  'dddddddddddddddd', '....gggggggg....', '...ggg.gg.ggg...', '..ggd..gg..dgg..', '.......gg.......', '.......gg.......', '.......gg.......', '.......dd.......'];
+const LINKTREE_PALETTE = { g: 'var(--color-linktree)', d: 'var(--color-linktree-deep)' };
+export const LinktreeMark = ({ size = 24 }) => <PixelArt rows={LINKTREE_ROWS} palette={LINKTREE_PALETTE} className="ticon lt-mark" size={size} />;
+
+// Rewarded-ad card icon: a screen with a play mark (no words, no brand marks; prototype PIX.ad).
+const AD_ROWS = ['................', '.oooooooooooooo.', 'ohhhhhhhhhhhhhso', 'ohbbbbbbbbbbbbso', 'ohbbbbpbbbbbbbso', 'ohbbbbppbbbbbbso', 'ohbbbbpppbbbbbso', 'ohbbbbppppbbbbso',
+  'ohbbbbpppbbbbbso', 'ohbbbbppbbbbbbso', 'ohbbbbpbbbbbbbso', 'ohbbbbbbbbbbbbso', 'osssssssssssssso', '.oooooooooooooo.', '......oooo......', '....oooooooo....'];
+const AD_PALETTE = { o: 'var(--color-accent-deep)', h: 'var(--color-text-secondary)', b: 'var(--color-neutral-deep)', s: 'var(--color-surface)', p: 'var(--color-accent)' };
+export const AdScreen = ({ size = 32 }) => <PixelArt rows={AD_ROWS} palette={AD_PALETTE} className="ticon" size={size} />;

@@ -1,6 +1,6 @@
 // Simulation: state, spawning, movement, combat, gates, bosses, rest/choice pauses.
 // Copied from the single-file v17 game; UI changes are reported through `onChange` instead of touching the DOM.
-import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, FIRE_MIN_BUFF, BOSS_PLAN, SILVER_TIER, LASER, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R } from './constants.js';
+import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, FIRE_MIN_BUFF, BOSS_PLAN, EXTRA_PLAN, STORM, H, LASER, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R } from './constants.js';
 import { PATH_LEN, pathPos } from './path.js';
 import { ABILITIES, CHOICES, BONUS, cardFor, spreadMaxed } from './abilities.js';
 
@@ -62,12 +62,10 @@ export function createGame(onChange) {
     S.spread = 1; S.blueHp = 1; S.blueSpeed = 62; S.bossKills = 0; S.fireMul = 1;
     S.turret = { x: W / 2, y: 700, fireT: 0, flash: 0 };
     S.redReserve = 1e9; S.redRate = 70; S.redRamp = 2.5; S.redAcc = 0;
-    S.bossQueue = BOSS_PLAN.map(b => ({ ...b }));
-    if (tier === 'silver') {
-      // silver: the first six bosses with more hp, a denser red sea; boss 6 down = victory (GAP-03=A)
-      S.bossQueue = BOSS_PLAN.slice(0, SILVER_TIER.bosses).map(b => ({ ...b, hp: Math.round(b.hp * SILVER_TIER.bossHp) }));
-      S.redRate *= SILVER_TIER.redRate; S.redRamp *= SILVER_TIER.redRate;
-    }
+    // EXTRA (silver): its own six-boss plan (D29-D32); red spawn stays as NORMAL (AMB-E8=B)
+    S.bossQueue = (tier === 'silver' ? EXTRA_PLAN : BOSS_PLAN).map(b => ({ ...b }));
+    // EXTRA boss 6: current sweep column, columns already hit this round (drawn darker, no collision), orbs
+    S.bolts = []; S.scorch = []; S.orbs = [];
     // settlement data: every planned boss kill (appearance order + game second) and how the run was lost
     S.kills = []; S.death = null;
     S.shake = 0;
@@ -100,7 +98,11 @@ export function createGame(onChange) {
   function spawnBoss(b) {
     const p = pathPos(PATH_LEN - 1, 0);
     S.bossCount++;
-    S.bosses.push({ x: p[0], y: p[1], s: PATH_LEN - 1, hp: b.hp, max: b.hp, mode: 1, alive: true, v: b.v, r: b.r, hitT: 0, idx: S.bossCount, minion: false, summon: b.summon || null, cd: b.summon ? 2.5 : 0 });
+    const bo = { x: p[0], y: p[1], s: PATH_LEN - 1, hp: b.hp, max: b.hp, mode: 1, alive: true, v: b.v, r: b.r, hitT: 0, idx: S.bossCount, minion: false, summon: b.summon || null, cd: b.summon ? 2.5 : 0 };
+    // EXTRA boss 5 fights with the hidden-stage beams (no enraged triple, D31); boss 6 with the lightning storm (D32)
+    if (b.skills === 'beam') Object.assign(bo, { beam: true, soloCd: 4, wideCd: 0, enraged: false });
+    if (b.skills === 'storm') { bo.storm = { round: null, gap: 0, orbT: STORM.orbs.first }; startSweep(bo); }
+    S.bosses.push(bo);
     addPop('BOSS!', W / 2, 120, '#ff6b6b');
   }
   // result: win | lose for stage 8; secret (hidden boss killed) | secretfail (died in stage 9, stage-8 clear still counts)
@@ -110,7 +112,7 @@ export function createGame(onChange) {
     if (win && S.stage !== 9) S.clearT = S.t;
     S.result = win ? (S.stage === 9 ? 'secret' : 'win') : (S.stage === 9 ? 'secretfail' : 'lose');
     S.choosing = false; S.resting = false; S.choiceCards = null;
-    S.offering = false; S.bonusing = false; S.bonusCards = null; S.beams = [];
+    S.offering = false; S.bonusing = false; S.bonusCards = null; S.beams = []; S.bolts = []; S.orbs = [];
     notify();
   }
 
@@ -197,7 +199,8 @@ export function createGame(onChange) {
         if (d < 10 + bo.r) { endGame(false, bo.minion || bo.secret ? { cause: 'RED_BREACH', bossSeq: null } : { cause: 'BOSS_REACHED', bossSeq: bo.idx }); return; }
       }
       if (bo.summon) { bo.cd -= dt; if (bo.cd <= 0) { bo.cd = bo.summon.cd; for (let i = 0; i < bo.summon.n; i++) spawnMinion(bo); addFx(bo.x, bo.y, '#ff4b4b', 16, 160); } }
-      if (bo.secret) secretSkills(bo, dt);
+      if (bo.secret || bo.beam) secretSkills(bo, dt);
+      if (bo.storm && stormSkills(bo, dt)) return;
     }
     // laser buff: a vertical sweep up from the turret every few seconds (GAP-05=A)
     if (S.laser) {
@@ -212,6 +215,20 @@ export function createGame(onChange) {
       if (b.t < b.warn) continue;
       if (beamHits(b, T.x, T.y, BEAM_HIT_R)) { addFx(T.x, T.y, '#ff3b3b', 40, 220); S.shake = 1; endGame(false); return; }
       for (const u of S.blue) if (u.alive && u.mode === 2 && beamHits(b, u.x, u.y, 2)) u.alive = false;
+    }
+    // EXTRA boss 6 lightning: a firing column or an orb touching the turret ends the run (RED_BREACH, AMB-E9=B);
+    // soldiers pass through both (human ruling: the sweep does not burn soldiers)
+    for (const bl of S.bolts) {
+      if (bl.t >= bl.warn && T.x + BEAM_HIT_R > bl.x0 && T.x - BEAM_HIT_R < bl.x1) { addFx(T.x, T.y, '#b98cff', 40, 220); S.shake = 1; endGame(false, { cause: 'RED_BREACH', bossSeq: null }); return; }
+    }
+    for (let i = S.orbs.length - 1; i >= 0; i--) {
+      const o = S.orbs[i]; o.t += dt;
+      if (o.t >= STORM.orbs.life) { S.orbs.splice(i, 1); continue; }
+      o.x += o.vx * dt; o.y += o.vy * dt;
+      const R = STORM.orbs.r;
+      if (o.x < R) { o.x = R; o.vx = Math.abs(o.vx); } else if (o.x > W - R) { o.x = W - R; o.vx = -Math.abs(o.vx); }
+      if (o.y < R) { o.y = R; o.vy = Math.abs(o.vy); } else if (o.y > H - R) { o.y = H - R; o.vy = -Math.abs(o.vy); }
+      if (Math.hypot(o.x - T.x, o.y - T.y) < R + BEAM_HIT_R) { addFx(T.x, T.y, '#b98cff', 40, 220); S.shake = 1; endGame(false, { cause: 'RED_BREACH', bossSeq: null }); return; }
     }
     if (S.bosses.some(b => b.minion && !b.alive)) S.bosses = S.bosses.filter(b => b.alive || !b.minion);
     const pathBosses = S.bosses.filter(b => b.alive && b.mode === 1), arenaBosses = S.bosses.filter(b => b.alive && b.mode === 0);
@@ -338,6 +355,47 @@ export function createGame(onChange) {
     }
     S.laserFx.push({ x: T.x, t: 0 });
   }
+  // ---- EXTRA boss 6 (D32): lightning sweep + lightning orbs ----
+  function startSweep(bo) {
+    const n = STORM.sweep.strips, order = [];
+    for (let i = 0; i < n; i++) order.splice((Math.random() * (order.length + 1)) | 0, 0, i);   // random order, no repeats
+    bo.storm.round = { order, i: 0 };
+    S.scorch = [];
+    nextBolt(bo);
+  }
+  function nextBolt(bo) {
+    const r = bo.storm.round, w = W / STORM.sweep.strips, k = r.order[r.i];
+    S.bolts = [{ strip: k, x0: k * w, x1: (k + 1) * w, t: 0, warn: STORM.sweep.warn, fire: STORM.sweep.fire }];
+  }
+  // returns true when the run ended
+  function stormSkills(bo, dt) {
+    const st = bo.storm;
+    if (st.round) {
+      const bl = S.bolts[0];
+      if (bl) {
+        bl.t += dt;
+        // the column stops colliding the moment its firing time is over (nothing lingers but the darker trace)
+        if (bl.t >= bl.warn + bl.fire) {
+          S.scorch.push(bl.strip); S.bolts = [];
+          if (++st.round.i < st.round.order.length) nextBolt(bo);
+          else { st.round = null; st.gap = STORM.sweep.cd; S.scorch = []; }   // cd counts from the end of the round
+        }
+      }
+    } else {
+      st.gap -= dt;
+      if (st.gap <= 0) startSweep(bo);
+    }
+    st.orbT -= dt;
+    if (st.orbT <= 0) {
+      st.orbT = STORM.orbs.cd;
+      const O = STORM.orbs;
+      for (let i = 0; i < O.n; i++) {
+        const a = (O.minDeg + Math.random() * (O.maxDeg - O.minDeg)) * Math.PI / 180;   // each orb its own angle
+        S.orbs.push({ x: bo.x, y: bo.y, vx: Math.cos(a) * O.speed, vy: Math.sin(a) * O.speed, t: 0 });
+      }
+    }
+    return false;
+  }
   // ---- hidden stage 9 ----
   function openOffer() { S.clearT = S.t; S.offering = true; notify(); }
   function declineOffer() { if (!S.offering) return; S.offering = false; endGame(true); }
@@ -370,13 +428,14 @@ export function createGame(onChange) {
     bo.soloCd -= dt;
     if (bo.soloCd <= 0) {
       bo.soloCd = B.solo.cd;
-      const pick = (Math.random() * (bo.enraged && !starUp ? 3 : 2)) | 0, ph = Math.random() * TAU;
+      const pick = (Math.random() * (bo.secret && bo.enraged && !starUp ? 3 : 2)) | 0, ph = Math.random() * TAU;
       const solo = (kind, dx, tri) => S.beams.push({ kind, x: bo.x + dx, y: bo.y, ph, tri: !!tri, t: 0, warn: B.solo.warn, fire: B.solo.fire, hw: B.solo.hw });
       if (pick === 0) solo('pillar', 0);
       else if (pick === 1) solo('scurve', 0);
       else for (const dx of [-B.scurve.triGap, 0, B.scurve.triGap]) solo('scurve', dx, true);
     }
-    if (!bo.enraged && bo.hp <= bo.max / 2) { bo.enraged = true; bo.wideCd = 1.5; S.shake = Math.max(S.shake, 0.8); addPop('ENRAGE', W / 2, 200, '#ff3b3b'); }
+    // EXTRA boss 5 (bo.beam): no enraged triple and no ENRAGE text (D31; effects carry no words)
+    if (!bo.enraged && bo.hp <= bo.max / 2) { bo.enraged = true; bo.wideCd = 1.5; S.shake = Math.max(S.shake, 0.8); if (bo.secret) addPop('ENRAGE', W / 2, 200, '#ff3b3b'); }
     if (bo.enraged) {
       bo.wideCd -= dt;
       if (bo.wideCd <= 0 && !tripleUp) {
@@ -414,11 +473,17 @@ export function createGame(onChange) {
     if (bo.minion) { addFx(bo.x, bo.y, '#ff8a8a', 10, 120); return; }
     S.shake = 1; S.bossKills++;
     if (!bo.secret) S.kills.push({ bossSeq: bo.idx, killedAtSecond: Math.floor(S.t) });
-    if (bo.secret) S.beams = [];
+    if (bo.secret || bo.beam) S.beams = [];
+    if (bo.storm) { S.bolts = []; S.scorch = []; S.orbs = []; bo.storm = null; }
     addFx(bo.x, bo.y, '#ff4b4b', 40, 220); addPop('BOSS DOWN', W / 2, 200, '#ffe066');
     if (bo.summon) for (const m of S.bosses) if (m.minion && m.alive) killBoss(m);
-    // a manually-spawned boss waits in the queue: pause for the rest choice before it enters
-    if (S.bossQueue.length && S.bossQueue[0].at === Infinity && !S.bosses.some(b => b.alive && !b.minion)) openRest();
+    // a held boss waits in the queue: with the field clear it is released by the rest pick (NORMAL boss 8, EXTRA
+    // boss 5) or right away for 'kill' (EXTRA boss 6), never before its minAt second (spawned by the update loop)
+    const head = S.bossQueue[0];
+    if (head && head.at === Infinity && !S.bosses.some(b => b.alive && !b.minion)) {
+      if (head.after === 'kill') head.at = Math.max(S.t, head.minAt || 0);
+      else openRest();
+    }
   }
   // ---- rest: widen one gate, total width stays the same ----
   function resizeGates(which) {
@@ -433,7 +498,11 @@ export function createGame(onChange) {
     if (!S.resting) return;
     resizeGates(i); S.resting = false; notify();
     addFx((S.gates[i].x0 + S.gates[i].x1) / 2, GATE_Y + 10, '#ffe066', 24, 160);
-    if (S.bossQueue.length && S.bossQueue[0].at === Infinity) spawnBoss(S.bossQueue.shift());
+    const head = S.bossQueue[0];
+    if (head && head.at === Infinity) {
+      if (!head.minAt || S.t >= head.minAt) spawnBoss(S.bossQueue.shift());
+      else head.at = head.minAt;   // EXTRA boss 5 never enters before 70 s (the rest keeps the clock stopped)
+    }
   }
   function onReward(g) {
     const ab = ABILITIES[g.ability];

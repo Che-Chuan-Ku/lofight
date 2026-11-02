@@ -1,10 +1,10 @@
 // 首頁 (specs/ui/首頁.md; prototype home()). Nickname, tier cards, coin chip, shop / leaderboard entries, login state.
 import { useEffect, useRef, useState } from 'react';
 import { CoinChip, useTitleFocus, ConfirmDialog } from '../components/ui/Common.jsx';
-import { PixelTrophy } from '../components/ui/Icons.jsx';
+import { TierBadge, BuffMark, LinktreeMark } from '../components/ui/Icons.jsx';
 import { updateMyNickname } from '../lib/api/index.js';
 import { lockLine, nicknameError, NETWORK_MSG } from '../lib/labels.js';
-import { APP_VERSION } from '../config.js';
+import { APP_VERSION, LINKTREE_URL } from '../config.js';
 
 function NicknameField({ progress, onSaved, notice, onNoticeShown }) {
   const [value, setValue] = useState(progress ? progress.nickname : '');
@@ -67,26 +67,32 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
         ) : loginAvailable ? (
           <button type="button" className="btn-ghost sm" onClick={onLogin}>登入</button>
         ) : <span className="slot44" aria-hidden="true" />}
-        <CoinChip coins={coins} onClick={() => onGo('wallet')} />
+        <div className="topright">
+          {/* D36: secondary entry next to the coin chip; mark <= 70% of the chip height, 44px hit area */}
+          <a className="lt" href={LINKTREE_URL} target="_blank" rel="noopener noreferrer" aria-label="Linktree"><LinktreeMark size={24} /></a>
+          <CoinChip coins={coins} onClick={() => onGo('wallet')} />
+        </div>
       </div>
-      <main className="content" style={{ overflow: 'hidden', paddingBottom: 'var(--space-8)', gap: 'var(--space-4)' }}>
+      <main className="content" style={{ overflow: 'hidden', paddingBottom: 'var(--space-12)', gap: 'var(--space-4)' }}>
         <div className="hero"><h1 tabIndex={-1} ref={h1}>人海攻城</h1><p>左右移動砲台，守住陣地。</p></div>
         <NicknameField progress={progress} onSaved={onNickname} notice={nickNotice} onNoticeShown={onNickNoticeShown} />
         {loadError && <p className="msg err center" role="alert">{NETWORK_MSG}<button type="button" className="btn-ghost sm" onClick={onRetry}>重試</button></p>}
         <div className="grid2" style={{ marginTop: 'auto' }}>
           <button type="button" className="tier bronze" onClick={onBronze} aria-busy={starting === 'bronze' ? 'true' : undefined}
-            aria-label={'BRONZE，8 王' + (bronzeBest ? '，' + bronzeBest : '') + '，點擊開局'}>
-            <PixelTrophy tier="bronze" size={40} /><span className="ct">BRONZE</span><span className="cd">8 王</span>
+            aria-label={'NORMAL，8 王' + (bronzeBest ? '，' + bronzeBest : '') + '，點擊開局'}>
+            <TierBadge tier="bronze" size={40} /><span className="ct">NORMAL</span><span className="cd">8 王</span>
             {bronzeBest && <span className="best">{bronzeBest}</span>}
           </button>
           {unlocked ? (
-            <button type="button" className="tier silver" onClick={onSilver} aria-label="SILVER，6 王，可帶 buff">
-              <PixelTrophy tier="silver" size={40} /><span className="ct">SILVER</span><span className="cd">6 王・可帶 buff</span>
+            // AMB-N1=C: boss count stays, "can carry a buff" is the buff mark instead of words
+            <button type="button" className="tier silver" onClick={onSilver} aria-label="EXTRA，6 王，buff">
+              <TierBadge tier="silver" size={40} /><span className="ct">EXTRA</span>
+              <span className="cd meta">6 王<span className="buffmark"><BuffMark size={18} /></span></span>
             </button>
           ) : (
             <button type="button" className={'tier silver locked' + (shake ? ' shake' : '')} aria-disabled="true" aria-describedby="silver-cond"
               onClick={tapLocked} onAnimationEnd={e => { if (e.target === e.currentTarget) setShake(false); }}>
-              <span className="ct">SILVER</span><span className="lock" aria-hidden="true" />
+              <TierBadge tier="silver" size={28} /><span className="ct">EXTRA</span><span className="lock" aria-hidden="true" />
               <span className="cd cond" id="silver-cond">
                 {progress ? <>{lockLine(progress.silverUnlockBossSeq, best).replace(/（.*$/, '')}<br />{lockLine(progress.silverUnlockBossSeq, best).replace(/^[^（]*/, '')}</> : '　'}
               </span>
@@ -100,7 +106,10 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
           </div>
         </nav>
       </main>
-      <span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span>
+      <footer className="sitefoot">
+        <button type="button" className="linkbtn" onClick={() => onGo('privacy')}>隱私權政策</button>
+        <span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span>
+      </footer>
       {dialog && (
         <ConfirmDialog title="登出？" desc="這台裝置會從新的訪客開始。你的帳號進度不會消失，再登入就回來。" action="登出"
           onCancel={closeDialog} onConfirm={() => { setDialog(false); onLogout(); }} />

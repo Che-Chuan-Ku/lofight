@@ -58,6 +58,11 @@
   --color-rank-1: #f2c233; --color-rank-2: #c9d1dc; --color-rank-3: #d08a4e;
   --color-bronze-shadow: #3a200e;               /* [NEW] tier card hard shadow */
   --color-silver-shadow: #2c3038;               /* [NEW] */
+  /* CHANGE 2026-11-02 (D26-D28, D36; prototype _ui-spec.md §5.1): tier display colors + Linktree mark */
+  --color-tier-normal: #d08a4e; --color-tier-normal-deep: #6e4120; --color-tier-normal-shadow: #3a200e; --color-tier-normal-hi: #f3c58f;
+  --color-tier-extra: #b98cff; --color-tier-extra-deep: #4a2a80; --color-tier-extra-shadow: #231340; --color-tier-extra-hi: #efe2ff;
+  --color-tier-extra-spark: #ffe45c;
+  --color-linktree: #43e55e; --color-linktree-deep: #1f9e3a;
   --color-black: #000000;
   --color-stage-edge: #0a0b0d;
   /* Google brand exception */
@@ -184,8 +189,8 @@
 
 /* ---------- Tags ---------- */
 .v19 .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-sm); font: var(--text-xs) var(--font-display); letter-spacing: var(--tracking-display); white-space: nowrap; }
-.v19 .tag.silver { background: var(--color-silver); color: var(--color-text-on-tier); }
-.v19 .tag.bronze { background: var(--color-bronze); color: var(--color-text-on-tier); }
+.v19 .tag.silver { background: var(--color-tier-extra); color: var(--color-text-on-tier); gap: 4px; }
+.v19 .tag.bronze { background: var(--color-tier-normal); color: var(--color-text-on-tier); gap: 4px; }
 .v19 .tag.buff { background: var(--color-ally-deep); color: var(--color-ally-light); font-family: var(--font-body); font-weight: var(--weight-bold); }
 .v19 .tag.win { color: var(--color-success); font-family: var(--font-body); font-weight: var(--weight-bold); padding: 0; letter-spacing: var(--tracking-display); }
 .v19 .tag.lose { color: var(--color-text-secondary); font-family: var(--font-body); font-weight: var(--weight-bold); padding: 0; letter-spacing: var(--tracking-display); }
@@ -271,12 +276,14 @@
 .v19 .tier .ct { font: 30px var(--font-display); letter-spacing: var(--tracking-display); text-shadow: var(--text-shadow-card); line-height: 1; }
 .v19 .tier .cd { font-size: var(--text-sm); font-weight: var(--weight-bold); line-height: 1.4; text-shadow: var(--text-shadow-soft); }
 .v19 .tier .best { font-size: var(--text-xs); font-weight: var(--weight-bold); color: var(--color-text); background: rgba(0, 0, 0, 0.35); border-radius: var(--radius-full); padding: 2px 10px; }
-.v19 .tier.bronze { --tc: var(--color-bronze); --tb: var(--color-bronze-deep); --ts: var(--color-bronze-shadow); }
-.v19 .tier.silver { --tc: var(--color-silver); --tb: var(--color-silver-deep); --ts: var(--color-silver-shadow); }
+.v19 .tier.bronze { --tc: var(--color-tier-normal); --tb: var(--color-tier-normal-deep); --ts: var(--color-tier-normal-shadow); }
+.v19 .tier.silver { --tc: var(--color-tier-extra); --tb: var(--color-tier-extra-deep); --ts: var(--color-tier-extra-shadow); }
+.v19 .tier .meta { display: inline-flex; align-items: center; gap: 6px; }
+.v19 .tier .buffmark { display: inline-flex; padding: 2px; border-radius: var(--radius-sm); background: rgba(0, 0, 0, 0.35); }
 .v19 .tier.locked { --tc: var(--color-silver-deep); --tb: var(--color-surface-raised); --ts: var(--color-neutral-deep); cursor: not-allowed; }
 .v19 .tier.locked .ct { color: var(--color-locked); }
 .v19 .tier.locked .cd { color: var(--color-text); }
-.v19 .tier.locked .spr { filter: grayscale(1) brightness(0.6); }
+.v19 .tier.locked .spr, .v19 .tier.locked .ticon { filter: grayscale(1) brightness(0.6); }
 .v19 .tier .trophy { flex: none; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }   /* PixelTrophy, same drop as .spr */
 .v19 .tier.shake { animation: shake var(--dur-slow) ease-in-out 2; }
 .v19 .tier.shake .cond { animation: flashGold var(--dur-slow) ease-in-out 2; }
@@ -406,3 +413,38 @@
 .v19 .msg.fade { animation: msgOut var(--dur-slow) ease 1.7s forwards; }
 @keyframes msgOut { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .v19 .msg.fade { animation: none; } }
+
+/* ==========================================================================
+   CHANGE 2026-11-02 (D26-D36): tier badges, Linktree, rewarded-ad card, footer + privacy page
+   ========================================================================== */
+.v19 .ticon { display: inline-block; flex: none; vertical-align: middle; filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.6)); }
+.v19 .tname { display: inline-flex; align-items: center; gap: 6px; }
+.v19 .hdr h1 .ticon { margin-right: 6px; vertical-align: -2px; }
+.v19 .topright { display: flex; align-items: center; gap: var(--space-2); }
+/* D36: the mark is a secondary entry, at most 70% of the coin chip height; the hit area stays 44px */
+.v19 .lt { width: var(--touch-min); height: var(--touch-min); flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-full); }
+.v19 .lt .lt-mark { width: 24px; height: 24px; }
+.v19 .lt:active { transform: translateY(2px); }
+.v19 .unlock.extra { background: var(--color-tier-extra-deep); border-color: var(--color-tier-extra); box-shadow: 0 5px 0 var(--color-tier-extra-shadow); }
+.v19 .unlock .ub { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.v19 .unlock.extra h2 { color: var(--color-tier-extra-hi); text-shadow: 0 3px 0 var(--color-tier-extra-shadow), 0 3px 6px rgba(0, 0, 0, 0.6); }
+.v19 .tabs[data-tab="bronze"] .thumb { background: var(--color-tier-normal); box-shadow: 0 3px 0 var(--color-tier-normal-deep); }
+.v19 .tabs[data-tab="silver"] .thumb { background: var(--color-tier-extra); box-shadow: 0 3px 0 var(--color-tier-extra-deep); }
+.v19 .tabs button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.v19 .adcard { grid-template-columns: auto 1fr auto; align-items: center; border-color: var(--color-accent); margin-bottom: var(--space-4); }
+.v19 .adcard > .ticon { align-self: start; margin-top: 2px; }
+.v19 .adcard .name { font-size: var(--text-md); }
+.v19 .adcard .stat { color: var(--color-text); font-size: var(--text-sm); }
+.v19 .adcard.idle { border-color: var(--color-border); }
+.v19 .adcard.idle > .ticon { filter: grayscale(1) brightness(0.75); }
+.v19 .adcard .buy .btn-primary { min-width: 76px; }
+.v19 .adcard .msgline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.v19 .sitefoot { position: absolute; left: 0; right: 0; bottom: 0; height: var(--touch-min); display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 2px; }
+.v19 .sitefoot .ver { position: static; }
+.v19 .linkbtn { min-height: var(--touch-min); padding: 0 10px; border: 0; background: none; color: var(--color-text-secondary); font: var(--weight-bold) var(--text-xs) var(--font-body);
+  text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-shadow: var(--text-shadow-soft); }
+.v19 .policy { display: flex; flex-direction: column; gap: 6px; padding: 8px 16px 16px; }
+.v19 .policy h2 { text-align: left; margin: 12px 0 0; font-size: var(--text-md); }
+.v19 .policy p, .v19 .policy li { margin: 0; font-size: var(--text-base); font-weight: var(--weight-regular); line-height: var(--leading-relaxed); }
+.v19 .policy ul { margin: 0; padding-left: 1.2em; }
+.v19 .policy a { color: var(--color-ally-light); font-weight: var(--weight-bold); }

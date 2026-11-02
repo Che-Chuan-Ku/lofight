@@ -3,15 +3,23 @@ module: backend_development
 test_strategy: e2e
 stack: {java: 17, spring_boot: "3.2", cucumber: "7.15", testcontainers_postgresql: "1.21.4"}
 base_package: com.crowdsiege.api
-current_step: completed   # 2026-10-30 gates re-run after BDY-01 decision
-red_green_refactor: completed   # 17 active features; not re-run on resume
+current_step: completed   # 2026-11-02 CHANGE round D33-D35 (rewarded ad) gates re-run
+red_green_refactor: completed   # 18 active features; CHANGE 2026-11-02: red 20 failed -> green 167/167
 deferred:
   - feature: specs/features/account/Apple登入.feature   # @ignore, BDY-01=B, user_response A (2026-10-30)
     operation: loginApple   # api.yml x-deferred: true -> Gate5 N/A; not implemented
     steps: kept   # AppleLoginSteps bound, stays red until next round
+changes:
+  - date: "2026-11-02"
+    scope: "D33-D35 rewarded ad (claimAdReward, listShopItems.adReward, AD_REWARD ledger/event, device_id)"
+    migration: V2__ad_reward.sql
+    open_items:
+      - "/ads.txt endpoint (infrastructure.yml ads_txt) not implemented: no feature / api.yml operation; awaiting decision"
+  - date: "2026-11-02"
+    scope: "D-09=A victory threshold > -> >= (bronze 98, silver 84); RunSettlementService.isPlausible; 結算對局.feature +1 Example (silver 84 accepted); red 1 failed -> green 168/168"
 gates:
-  gate1_features: "18/18 bound (symlinked to specs/features)"
+  gate1_features: "19/19 bound (symlinked to specs/features)"
   gate2_service_ut: N/A (e2e)
   gate3_controller_slice: N/A (e2e)
-  gate4_cucumber: "PASSED 145/145 scenarios, 1188 steps (not @ignore)"
-  gate5_api: "16/16 active operations implemented; 1 N/A (x-deferred loginApple)"
+  gate4_cucumber: "PASSED 168/168 scenarios, 1440 steps (not @ignore)"
+  gate5_api: "17/17 active operations implemented, 0 extra; 1 N/A (x-deferred loginApple)"

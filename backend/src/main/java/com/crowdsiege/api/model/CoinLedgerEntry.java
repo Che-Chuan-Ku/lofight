@@ -43,6 +43,9 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
     @Column(name = "merged_from_player_id")
     private Long mergedFromPlayerId;
 
+    @Column(name = "device_id", length = 64)
+    private String deviceId;
+
     protected CoinLedgerEntry() {
     }
 
@@ -72,6 +75,15 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
                                                Instant now) {
         CoinLedgerEntry entry = new CoinLedgerEntry(playerId, LedgerSource.BUFF_PURCHASE, -price, coinsAfter, now);
         entry.buffItem = buffItem;
+        return entry;
+    }
+
+    /**
+     * AD_REWARD credit; deviceId is the client device id kept for audit only (AMB-A5=a, INF-A14).
+     */
+    public static CoinLedgerEntry adReward(Long playerId, String deviceId, int coins, int coinsAfter, Instant now) {
+        CoinLedgerEntry entry = new CoinLedgerEntry(playerId, LedgerSource.AD_REWARD, coins, coinsAfter, now);
+        entry.deviceId = deviceId;
         return entry;
     }
 
@@ -109,5 +121,9 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
 
     public Long getMergedFromPlayerId() {
         return mergedFromPlayerId;
+    }
+
+    public String getDeviceId() {
+        return deviceId;
     }
 }
