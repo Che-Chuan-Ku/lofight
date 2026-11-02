@@ -65,7 +65,7 @@
 6. 若先前已建立 `lofight-api`：它已從 `render.yaml` 移除、變成 unmanaged，確認新服務正常後到 Dashboard 手動刪除。`lofight-db` 仍由 Blueprint 管理，新服務經 `fromDatabase` 連同一顆 DB，資料不受影響。
 7. 看 `lofight` 實際網址，把它（與自訂網域，如果有）加入 Google Cloud Console OAuth client 的 Authorized JavaScript origins。
 8. 驗證：
-   - `curl -i https://<網址>/` → 200、HTML 含「人海攻城」、`Cache-Control: no-cache`、`<meta name="google-client-id" content="....apps.googleusercontent.com">`
+   - `curl -i https://<網址>/` → 200、HTML 含「DayWar」、`Cache-Control: no-cache`、`<meta name="google-client-id" content="....apps.googleusercontent.com">`
    - `curl -i https://<網址>/api/csg/v1/leaderboard` → 401 JSON（`未帶 Token`）
 
 ## 本機建置與驗證

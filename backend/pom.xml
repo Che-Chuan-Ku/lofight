@@ -14,8 +14,8 @@
     <groupId>com.crowdsiege</groupId>
     <artifactId>api</artifactId>
     <version>19.0.0</version>
-    <name>crowd-siege-api</name>
-    <description>Crowd Siege v19 backend (Spring Boot 3.2 + JPA + Cucumber E2E)</description>
+    <name>daywar-api</name>
+    <description>DayWar v19 backend (Spring Boot 3.2 + JPA + Cucumber E2E)</description>
 
     <properties>
         <java.version>17</java.version>

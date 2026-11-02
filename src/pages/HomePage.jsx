@@ -74,7 +74,7 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
         </div>
       </div>
       <main className="content" style={{ overflow: 'hidden', paddingBottom: 'var(--space-12)', gap: 'var(--space-4)' }}>
-        <div className="hero"><h1 tabIndex={-1} ref={h1}>人海攻城</h1><p>左右移動砲台，守住陣地。</p></div>
+        <div className="hero"><h1 tabIndex={-1} ref={h1}>DayWar</h1><p>左右移動砲台，守住陣地。</p></div>
         <NicknameField progress={progress} onSaved={onNickname} notice={nickNotice} onNoticeShown={onNickNoticeShown} />
         {loadError && <p className="msg err center" role="alert">{NETWORK_MSG}<button type="button" className="btn-ghost sm" onClick={onRetry}>重試</button></p>}
         <div className="grid2" style={{ marginTop: 'auto' }}>

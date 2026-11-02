@@ -1,4 +1,4 @@
-// Leaderboard backend for 人海攻城 (Google Apps Script bound to a Google Sheet).
+// Leaderboard backend for DayWar (Google Apps Script bound to a Google Sheet).
 // Deploy: Extensions > Apps Script > paste this file > Deploy > New deployment > Web app,
 // "Execute as: Me", "Who has access: Anyone". Put the web-app URL into src/config.js (LEADERBOARD_URL).
 // Sheet "scores" columns: time, version, name, seconds, win, secret (hidden stage cleared). One sheet keeps every version;
