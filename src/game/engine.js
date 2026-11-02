@@ -2,13 +2,14 @@
 // Copied from the single-file v17 game; UI changes are reported through `onChange` instead of touching the DOM.
 import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, FIRE_MIN_BUFF, BOSS_PLAN, SILVER_TIER, LASER, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R } from './constants.js';
 import { PATH_LEN, pathPos } from './path.js';
-import { ABILITIES, CHOICES, BONUS, cardFor } from './abilities.js';
+import { ABILITIES, CHOICES, BONUS, cardFor, spreadMaxed } from './abilities.js';
 
 export function createGame(onChange) {
   const notify = () => { if (onChange) onChange(); };
 
   function openChoice(force) {
-    const keys = Object.keys(CHOICES);
+    // multiplying picks drop out once soldiers per shot is maxed
+    const keys = Object.keys(CHOICES).filter(k => !(CHOICES[k].mult && spreadMaxed(S)));
     let a = keys[(Math.random() * keys.length) | 0];
     let b = a; while (b === a) b = keys[(Math.random() * keys.length) | 0];
     if (force) [a, b] = force;
@@ -20,14 +21,16 @@ export function createGame(onChange) {
     if (!S.choosing) return;
     const k = S.choice[i], c = CHOICES[k];
     S.choosing = false; S.choiceCards = null; notify();
-    c.apply(S, api); addPop(c.title, W / 2, 560, c.good ? '#ffe066' : '#c0c0c0');
+    c.apply(S, api); addPop(c.mult && spreadMaxed(S) ? 'MAX' : c.title, W / 2, 560, c.good ? '#ffe066' : '#c0c0c0');
   }
   const ABILITY_POOL = Object.keys(ABILITIES);
-  // random pick that avoids this gate's previous ability and the other gate's current one
+  // random pick that avoids this gate's previous ability and the other gate's current one;
+  // multiplying rewards are never picked once soldiers per shot is maxed
   function pickAbility(g, others) {
     const avoid = new Set([g.ability, ...others.map(o => o.ability)]);
-    let pool = ABILITY_POOL.filter(a => !avoid.has(a));
-    if (!pool.length) pool = ABILITY_POOL;
+    const base = ABILITY_POOL.filter(a => !(ABILITIES[a].mult && spreadMaxed(S)));
+    let pool = base.filter(a => !avoid.has(a));
+    if (!pool.length) pool = base;
     return pool[(Math.random() * pool.length) | 0];
   }
   const otherHpGates = (gs, g) => gs.filter(o => o !== g && o.kind === 'hp');
@@ -53,6 +56,7 @@ export function createGame(onChange) {
     const buff = tier === 'silver' && opts ? opts.buff || null : null;
     S.tier = tier; S.buff = buff;
     S.t = 0; S.over = false; S.result = null; S.started = false;
+    S.spread = 1;   // before makeGates: the ability pool depends on it
     S.gates = makeGates();
     S.blue = []; S.red = []; S.bosses = []; S.pops = []; S.fx = []; S.multPop = null;
     S.spread = 1; S.blueHp = 1; S.blueSpeed = 62; S.bossKills = 0; S.fireMul = 1;
@@ -434,8 +438,10 @@ export function createGame(onChange) {
   function onReward(g) {
     const ab = ABILITIES[g.ability];
     addFx((g.x0 + g.x1) / 2, GATE_Y + 10, ab.color, 30, 180);
+    // a multiplier crate hung before the cap was reached reads MAX (see render) and does nothing
+    if (ab.mult && spreadMaxed(S)) { addPop('MAX', W / 2, 560, ab.color); return; }
     ab.apply(S, api);
-    addPop(ab.name, W / 2, 560, ab.color);
+    addPop(ab.mult && spreadMaxed(S) ? 'MAX' : ab.name, W / 2, 560, ab.color);
   }
 
 
@@ -445,7 +451,7 @@ export function createGame(onChange) {
   function setPaused(v) { if (S.started && !S.over && S.paused !== !!v) { S.paused = !!v; notify(); } }
   function setTurretX(x) { if (Number.isFinite(x)) S.turret.x = Math.max(22, Math.min(W - 22, x)); }
 
-  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits, loseNow };
+  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits, loseNow, rebuildGate, onReward };
   reset();
   return api;
 }

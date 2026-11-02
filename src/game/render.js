@@ -2,7 +2,7 @@
 // `view.oy` shifts the world: positive adds red sea above the battlefield (tall screens), negative crops the top.
 import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS, LASER, MAX_EXTRA_H } from './constants.js';
 import { PL, PATH_LEN, pathPos } from './path.js';
-import { ABILITIES } from './abilities.js';
+import { ABILITIES, spreadMaxed } from './abilities.js';
 
 export function render(ctx, S, SPR, lite, view) {
   const oy = view ? view.oy : 0;
@@ -97,7 +97,9 @@ export function render(ctx, S, SPR, lite, view) {
         ctx.fillStyle = '#1a1a1a'; ctx.beginPath(); ctx.arc(bx, by, r0 * 0.45, 0, 6.28); ctx.fill();
       }
       ctx.fillStyle = ab.color; ctx.font = 'bold 14px "Luckiest Guy", "Arial Black", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.lineWidth = 3; ctx.strokeStyle = '#2b1d00'; ctx.strokeText(ab.tag, cx, top - 10); ctx.fillText(ab.tag, cx, top - 10);
+      // a multiplier crate reads MAX once soldiers per shot is maxed
+      const tag = ab.mult && spreadMaxed(S) ? 'MAX' : ab.tag;
+      ctx.lineWidth = 3; ctx.strokeStyle = '#2b1d00'; ctx.strokeText(tag, cx, top - 10); ctx.fillText(tag, cx, top - 10);
       ctx.fillStyle = '#7a1a1a'; roundRect(g.x0, GATE_Y, w, GATE_H, 4); ctx.fill();
       ctx.fillStyle = '#f2c233'; roundRect(g.x0 + 2, GATE_Y + 2, (w - 4) * (g.hp / g.max), GATE_H - 8, 3); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = 'bold 20px "Luckiest Guy", "Arial Black", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
