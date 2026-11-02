@@ -1,6 +1,6 @@
 // Canvas drawing for one frame. Pure function of the state; `lite` drops sprites for slow devices.
 // `view.oy` shifts the world: positive adds red sea above the battlefield (tall screens), negative crops the top.
-import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS } from './constants.js';
+import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS, LASER, MAX_EXTRA_H } from './constants.js';
 import { PL, PATH_LEN, pathPos } from './path.js';
 import { ABILITIES } from './abilities.js';
 
@@ -33,6 +33,8 @@ export function render(ctx, S, SPR, lite, view) {
   ctx.fillStyle = '#d9b97c'; ctx.fillRect(10, GATE_Y + GATE_H + 8, W - 20, H);
   ctx.fillStyle = 'rgba(0,0,0,.08)';
   for (let y = GATE_Y + GATE_H + 30; y < H; y += 44) ctx.fillRect(10, y, W - 20, 2);
+  // gate strip: repainted in scenery mode so the last run's gates do not linger on the canvas behind menus
+  if (view && view.scenery) { ctx.fillStyle = '#1b1d22'; ctx.fillRect(-10, GATE_Y + 10, W + 20, GATE_H - 10); }
   // path (rock rim + sand)
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   ctx.beginPath(); ctx.moveTo(PL[0][0], PL[0][1]);
@@ -47,6 +49,8 @@ export function render(ctx, S, SPR, lite, view) {
   ctx.fillStyle = '#7a0f15';
   for (let x = 0; x < W; x += 9) ctx.fillRect(x, 26 + (x % 3), 5, 2);
 
+  // out-of-game screens (v19): static scenery only — no armies, gates, bosses or turret behind the menus (UXR-01)
+  if (view && view.scenery) { ctx.restore(); return; }
   // red sea: solid fill only where the path actually holds reds, so shell craters open real gaps
   if (S.red.length) {
     const SEG = 6, nseg = Math.ceil(PATH_LEN / SEG) + 1, occ = new Uint16Array(nseg);
@@ -187,6 +191,15 @@ export function render(ctx, S, SPR, lite, view) {
   // fx
   for (const f of S.fx) { ctx.globalAlpha = 1 - f.t / f.life; ctx.fillStyle = f.color; ctx.fillRect(f.x - 1.5, f.y - 1.5, 3, 3); }
   ctx.globalAlpha = 1;
+  // LASER loadout buff: a short-lived blue column up from the turret (60px wide, fading out)
+  if (S.laserFx && S.laserFx.length) {
+    for (const lz of S.laserFx) {
+      const k = 1 - lz.t / LASER.fx, top = -MAX_EXTRA_H, y0 = S.turret.y - 20;
+      ctx.globalAlpha = 0.25 * k; ctx.fillStyle = '#8fb3ff'; ctx.fillRect(lz.x - LASER.halfWidth, top, LASER.halfWidth * 2, y0 - top);
+      ctx.globalAlpha = 0.85 * k; ctx.fillStyle = '#e6efff'; ctx.fillRect(lz.x - 4, top, 8, y0 - top);
+    }
+    ctx.globalAlpha = 1;
+  }
   // hidden-boss beams: a pulsing dashed telegraph while warning, then a glowing beam. Each kind is a path:
   // pillar (straight down), scurve (sinusoidal down), cross (star of lines through the boss).
   const L = 1400, TAU = Math.PI * 2, SB = SECRET_BOSS;

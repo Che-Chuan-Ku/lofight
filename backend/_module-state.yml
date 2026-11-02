@@ -1,0 +1,17 @@
+# backend_development module internal state (module-owned; Hub does not read)
+module: backend_development
+test_strategy: e2e
+stack: {java: 17, spring_boot: "3.2", cucumber: "7.15", testcontainers_postgresql: "1.21.4"}
+base_package: com.crowdsiege.api
+current_step: completed   # 2026-10-30 gates re-run after BDY-01 decision
+red_green_refactor: completed   # 17 active features; not re-run on resume
+deferred:
+  - feature: specs/features/account/Apple登入.feature   # @ignore, BDY-01=B, user_response A (2026-10-30)
+    operation: loginApple   # api.yml x-deferred: true -> Gate5 N/A; not implemented
+    steps: kept   # AppleLoginSteps bound, stays red until next round
+gates:
+  gate1_features: "18/18 bound (symlinked to specs/features)"
+  gate2_service_ut: N/A (e2e)
+  gate3_controller_slice: N/A (e2e)
+  gate4_cucumber: "PASSED 145/145 scenarios, 1188 steps (not @ignore)"
+  gate5_api: "16/16 active operations implemented; 1 N/A (x-deferred loginApple)"

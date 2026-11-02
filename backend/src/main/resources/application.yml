@@ -1,0 +1,69 @@
+spring:
+  application:
+    name: api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/api_dev}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+        type:
+          # Instants are stored in timestamp(3) columns (UTC) as declared by erm.dbml / V1 migration.
+          preferred_instant_jdbc_type: TIMESTAMP
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  jackson:
+    time-zone: Asia/Taipei
+
+server:
+  port: 8080
+
+logging:
+  level:
+    # preferred_instant_jdbc_type is an "incubating" Hibernate setting; silence its startup notice.
+    org.hibernate.orm.incubating: ERROR
+
+api:
+  prefix: /api/csg/v1
+
+jwt:
+  secret-key: ${JWT_SECRET_KEY:crowd-siege-dev-secret-key-do-not-use-in-production-0123456789}
+  access-token-ttl: 15m
+
+game:
+  board-version: "19.0"
+  refresh-token-ttl: 30d
+  abandon-timeout: 24h
+  ledger-page-size: 20
+  leaderboard-size: 15
+  leaderboard-neighbor-span: 2
+  silver-unlock-boss-seq: 8
+  response-zone: Asia/Taipei
+  banned-words: []
+  shop-prices:
+    ATTACK_SPEED: 200
+    CANNON: 400
+    LASER: 600
+  tiers:
+    BRONZE:
+      boss-spawn-seconds: [14, 28, 42, 56, 70, 84, 98, 98]
+      boss-coins: [1, 2, 4, 8, 16, 24, 48, 96]
+      victory-threshold-seconds: 98
+    SILVER:
+      boss-spawn-seconds: [14, 28, 42, 56, 70, 84]
+      boss-coins: [4, 8, 16, 32, 64, 128]
+      victory-threshold-seconds: 84
+
+google:
+  client-id: ${GOOGLE_CLIENT_ID:}
+  token-info-url: https://oauth2.googleapis.com/tokeninfo

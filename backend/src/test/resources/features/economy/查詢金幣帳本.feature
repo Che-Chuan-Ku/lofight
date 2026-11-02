@@ -1,0 +1,1 @@
+../../../../../../specs/features/economy/查詢金幣帳本.feature

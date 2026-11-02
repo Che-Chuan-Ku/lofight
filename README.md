@@ -17,18 +17,27 @@ npm run build    # 輸出 dist/index.html（單檔）
 
 Render 靜態網站，設定在 `render.yaml`（Blueprint）。推到 `main` 就會自動 build 與部署。
 
-### 排行榜（Google Sheet）
+### v19 後端（帳號、金幣、商店、排行榜）
 
-排行榜資料存在你自己的 Google Sheet，透過 Apps Script 當 API，不需要伺服器。
+排行榜與帳號改走 v19 後端 API（`/api/csg/v1`，契約 `specs/api.yml`，後端在 `backend/`），不再使用 Google Sheet。
 
-1. 建一個新的 Google Sheet。
-2. 選單「擴充功能 → Apps Script」，把 `tools/leaderboard.gs` 全部貼進去取代預設內容，存檔。
-3. 右上「部署 → 新增部署作業」，類型選「網頁應用程式」，「執行身分：我」、「誰可以存取：所有人」，按部署並授權。
-4. 複製產生的網頁應用程式網址（`https://script.google.com/macros/s/.../exec`）。
-5. 在 Render 的 lofight 服務 → Environment 新增 `VITE_LEADERBOARD_URL` = 那個網址，存檔後 Render 會自動重新 build。
+```
+npm run dev                # 本機開發；預設用 MSW 假後端（src/mocks），不需要啟動後端
+VITE_API_MOCK=false npm run dev   # 改連真後端：/api 轉送到 API_PROXY_TARGET（預設 http://localhost:8080）
+npm run test:contract      # api.yml ↔ 前端 API 層／zod／MSW 機械比對
+npm run test:e2e           # Playwright：MSW 流程（port 5199）＋ build 產物可開始遊玩（port 4199）
+npm run test:e2e:backend   # Playwright 對真後端（需先在 E2E_BACKEND_URL，預設 http://localhost:18080 起好 API）
+```
 
-沒設定網址時遊戲不會顯示排行榜。榜單以 `package.json` 的 `version` 前兩碼（例如 18.6）分組：改第三碼（18.6.3 → 18.6.4）榜單延續，改第二碼（18.6 → 18.7）就重新開始；舊資料仍留在試算表。畫面顯示前 15 名。
-排名規則：通關者在前（秒數少者優先），未通關者在後（撐越久越前），同一暱稱只留最佳成績。
+設定見 `.env.example`：`VITE_API_BASE_URL`（預設 `/api/csg/v1`，後端沒開 CORS，需同源或反向代理）、`VITE_GOOGLE_CLIENT_ID`（空白時不顯示登入入口）。
+後端連不上時 bronze 仍可離線遊玩，結算畫面會說明這局沒有保存。
+
+#### Google 登入設定
+
+- 登入按鈕只在 `VITE_GOOGLE_CLIENT_ID` 有值時出現；沒填就只有訪客模式。
+- 前端：把 client id 寫在 `.env.local`（`VITE_GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com`，改完重啟 `npm run dev`）。
+- 後端：docker compose 讀環境變數 `GOOGLE_CLIENT_ID`（`backend/docker-compose.yml`），例如 `GOOGLE_CLIENT_ID=xxxx.apps.googleusercontent.com docker compose up -d`。**前後端兩個值必須相同。**
+- Google Cloud Console →「API 和服務」→「憑證」→ 建立 OAuth 用戶端 ID，類型選「網頁應用程式」，「已授權的 JavaScript 來源」加入 `http://localhost:5174`（正式環境再加部署網域）。
 
 ### 素材
 

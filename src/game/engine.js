@@ -1,6 +1,6 @@
 // Simulation: state, spawning, movement, combat, gates, bosses, rest/choice pauses.
 // Copied from the single-file v17 game; UI changes are reported through `onChange` instead of touching the DOM.
-import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, BOSS_PLAN, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R } from './constants.js';
+import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, FIRE_MIN_BUFF, BOSS_PLAN, SILVER_TIER, LASER, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R } from './constants.js';
 import { PATH_LEN, pathPos } from './path.js';
 import { ABILITIES, CHOICES, BONUS, cardFor } from './abilities.js';
 
@@ -47,7 +47,11 @@ export function createGame(onChange) {
   }
 
   const S = {};
-  function reset() {
+  // opts: { tier: 'bronze' | 'silver', buff: null | 'ATTACK_SPEED' | 'CANNON' | 'LASER' } (v19; buffs only apply in silver)
+  function reset(opts) {
+    const tier = opts && opts.tier === 'silver' ? 'silver' : 'bronze';
+    const buff = tier === 'silver' && opts ? opts.buff || null : null;
+    S.tier = tier; S.buff = buff;
     S.t = 0; S.over = false; S.result = null; S.started = false;
     S.gates = makeGates();
     S.blue = []; S.red = []; S.bosses = []; S.pops = []; S.fx = []; S.multPop = null;
@@ -55,11 +59,23 @@ export function createGame(onChange) {
     S.turret = { x: W / 2, y: 700, fireT: 0, flash: 0 };
     S.redReserve = 1e9; S.redRate = 70; S.redRamp = 2.5; S.redAcc = 0;
     S.bossQueue = BOSS_PLAN.map(b => ({ ...b }));
+    if (tier === 'silver') {
+      // silver: the first six bosses with more hp, a denser red sea; boss 6 down = victory (GAP-03=A)
+      S.bossQueue = BOSS_PLAN.slice(0, SILVER_TIER.bosses).map(b => ({ ...b, hp: Math.round(b.hp * SILVER_TIER.bossHp) }));
+      S.redRate *= SILVER_TIER.redRate; S.redRamp *= SILVER_TIER.redRate;
+    }
+    // settlement data: every planned boss kill (appearance order + game second) and how the run was lost
+    S.kills = []; S.death = null;
     S.shake = 0;
     S.choosing = false; S.choice = null; S.cannon = { level: 0, t: 0, flash: 0 }; S.shells = []; S.booms = [];
     S.resting = false; S.bossCount = 0; S.choiceCards = null; S.paused = false;
     // hidden stage: `stage` is 8 until the player accepts the offer; `clearT` is the stage-8 clear time (the leaderboard seconds)
     S.stage = 8; S.clearT = 0; S.offering = false; S.bonusing = false; S.bonus = null; S.bonusCards = null; S.beams = [];
+    // loadout buffs (D10-D12)
+    S.fireMin = FIRE_MIN; S.laser = null; S.laserFx = [];
+    if (buff === 'ATTACK_SPEED') { S.fireMul *= 0.8; S.fireMin = FIRE_MIN_BUFF; }
+    if (buff === 'CANNON') { S.cannon.level = 1; S.cannon.t = 0.4; }
+    if (buff === 'LASER') S.laser = { t: LASER.interval };
   }
   const rnd = (a, b) => a + Math.random() * (b - a);
   function addPop(text, x, y, color, sub) { const p = { text, sub: sub || '', x, y, color, t: 0, t0: S.t, n: 0 }; S.pops.push(p); return p; }
@@ -84,8 +100,10 @@ export function createGame(onChange) {
     addPop('BOSS!', W / 2, 120, '#ff6b6b');
   }
   // result: win | lose for stage 8; secret (hidden boss killed) | secretfail (died in stage 9, stage-8 clear still counts)
-  function endGame(win) {
+  function endGame(win, death) {
     S.over = true;
+    if (!win) S.death = death || { cause: 'RED_BREACH', bossSeq: null };
+    if (win && S.stage !== 9) S.clearT = S.t;
     S.result = win ? (S.stage === 9 ? 'secret' : 'win') : (S.stage === 9 ? 'secretfail' : 'lose');
     S.choosing = false; S.resting = false; S.choiceCards = null;
     S.offering = false; S.bonusing = false; S.bonusCards = null; S.beams = [];
@@ -119,7 +137,7 @@ export function createGame(onChange) {
     // turret fire
     T.fireT -= dt; T.flash = Math.max(0, T.flash - dt); S.cannon.flash = Math.max(0, S.cannon.flash - dt);
     while (T.fireT <= 0) {
-      T.fireT += Math.max(FIRE_MIN, FIRE_INTERVAL * S.fireMul); T.flash = 0.06;
+      T.fireT += Math.max(S.fireMin, FIRE_INTERVAL * S.fireMul); T.flash = 0.06;
       const n = S.spread, gap = Math.min(6, 70 / n);
       for (let k = 0; k < n; k++) {
         const c = k - (n - 1) / 2;
@@ -156,7 +174,7 @@ export function createGame(onChange) {
       } else {
         const dx = T.x - r.x, dy = T.y - r.y, d = Math.hypot(dx, dy) || 1;
         r.x += dx / d * 46 * dt; r.y += dy / d * 46 * dt;
-        if (d < 16) { endGame(false); return; }
+        if (d < 16) { endGame(false, { cause: 'RED_BREACH', bossSeq: null }); return; }
       }
     }
     // boss movement
@@ -171,11 +189,18 @@ export function createGame(onChange) {
         const dx = T.x - bo.x, dy = T.y - bo.y, d = Math.hypot(dx, dy) || 1;
         const sp = bo.minion ? 36 : 30;
         bo.x += dx / d * sp * dt; bo.y += dy / d * sp * dt;
-        if (d < 10 + bo.r) { endGame(false); return; }
+        // a summoned minion is part of the red sea; a planned boss reaching the turret is "第 N 王抵達砲台"
+        if (d < 10 + bo.r) { endGame(false, bo.minion || bo.secret ? { cause: 'RED_BREACH', bossSeq: null } : { cause: 'BOSS_REACHED', bossSeq: bo.idx }); return; }
       }
       if (bo.summon) { bo.cd -= dt; if (bo.cd <= 0) { bo.cd = bo.summon.cd; for (let i = 0; i < bo.summon.n; i++) spawnMinion(bo); addFx(bo.x, bo.y, '#ff4b4b', 16, 160); } }
       if (bo.secret) secretSkills(bo, dt);
     }
+    // laser buff: a vertical sweep up from the turret every few seconds (GAP-05=A)
+    if (S.laser) {
+      S.laser.t -= dt;
+      if (S.laser.t <= 0) { S.laser.t = Math.max(LASER.min, LASER.interval * S.fireMul); fireLaser(); }
+    }
+    for (let i = S.laserFx.length - 1; i >= 0; i--) { S.laserFx[i].t += dt; if (S.laserFx[i].t > LASER.fx) S.laserFx.splice(i, 1); }
     // beams: the warn phase is harmless; while firing, a turret inside the beam loses the run and soldiers in flight burn
     for (let i = S.beams.length - 1; i >= 0; i--) {
       const b = S.beams[i]; b.t += dt;
@@ -296,7 +321,18 @@ export function createGame(onChange) {
     S.shake = Math.max(0, S.shake - dt * 3);
 
     // victory
-    if (S.bossQueue.length === 0 && S.bosses.length && S.bosses.every(b => !b.alive)) { if (S.stage === 9) endGame(true); else openOffer(); }
+    if (S.bossQueue.length === 0 && S.bosses.length && S.bosses.every(b => !b.alive)) { if (S.stage === 9 || S.tier === 'silver') endGame(true); else openOffer(); }
+  }
+  function fireLaser() {
+    const T = S.turret, hw = LASER.halfWidth;
+    for (const r of S.red) if (r.alive && Math.abs(r.x - T.x) < hw && r.y < T.y) r.alive = false;
+    for (const b of S.bosses) {
+      if (!b.alive || Math.abs(b.x - T.x) >= hw + b.r || b.y >= T.y) continue;
+      if (b.minion) { killBoss(b); continue; }
+      b.hp -= LASER.bossDamage * S.blueHp; b.hitT = 0.12;
+      if (b.hp <= 0) killBoss(b);
+    }
+    S.laserFx.push({ x: T.x, t: 0 });
   }
   // ---- hidden stage 9 ----
   function openOffer() { S.clearT = S.t; S.offering = true; notify(); }
@@ -373,6 +409,7 @@ export function createGame(onChange) {
     bo.alive = false; bo.hp = 0;
     if (bo.minion) { addFx(bo.x, bo.y, '#ff8a8a', 10, 120); return; }
     S.shake = 1; S.bossKills++;
+    if (!bo.secret) S.kills.push({ bossSeq: bo.idx, killedAtSecond: Math.floor(S.t) });
     if (bo.secret) S.beams = [];
     addFx(bo.x, bo.y, '#ff4b4b', 40, 220); addPop('BOSS DOWN', W / 2, 200, '#ffe066');
     if (bo.summon) for (const m of S.bosses) if (m.minion && m.alive) killBoss(m);
@@ -402,11 +439,13 @@ export function createGame(onChange) {
   }
 
 
-  function startGame() { reset(); S.started = true; notify(); }
+  function startGame(opts) { reset(opts); S.started = true; notify(); }
+  // dev-only (window.__game): end the run as a loss right now
+  function loseNow() { if (S.started && !S.over) endGame(false, { cause: 'RED_BREACH', bossSeq: null }); }
   function setPaused(v) { if (S.started && !S.over && S.paused !== !!v) { S.paused = !!v; notify(); } }
   function setTurretX(x) { if (Number.isFinite(x)) S.turret.x = Math.max(22, Math.min(W - 22, x)); }
 
-  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits };
+  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits, loseNow };
   reset();
   return api;
 }

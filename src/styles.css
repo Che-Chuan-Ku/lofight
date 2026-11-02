@@ -22,7 +22,7 @@
   #stage[data-full] #hud { border-radius: 0; padding-top: max(10px, env(safe-area-inset-top, 0px)); }
   #stage[data-full] #hint { bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
   #stage[data-full] #restart { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
-  #stage[data-full] #overlay, #stage[data-full] #choice, #stage[data-full] #rest, #stage[data-full] #offer { border-radius: 0; }
+  #stage[data-full] #choice, #stage[data-full] #rest, #stage[data-full] #offer { border-radius: 0; }
   #app { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
   #stage { position: relative; }
   canvas { display: block; touch-action: none; border-radius: 12px; box-shadow: 0 0 0 3px #0a0b0d, 0 20px 60px rgba(0,0,0,.6); }
@@ -37,20 +37,6 @@
   #status { position: absolute; left: 0; right: 0; top: 58px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: .5px;
     color: rgba(255,255,255,.9); text-shadow: 0 1px 2px #000; pointer-events: none; font-variant-numeric: tabular-nums; }
   #hud small { display: block; font-family: var(--font-body); font-size: 11px; font-weight: 700; letter-spacing: 1px; opacity: .9; }
-  #overlay {
-    position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 14px; background: rgba(10,11,14,.72); border-radius: 12px; text-align: center; padding: 24px; overflow: auto; -webkit-overflow-scrolling: touch;
-  }
-  #overlay h1 { font-family: var(--font-display); font-size: 44px; margin: 0; line-height: 1.05; text-wrap: balance;
-    color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
-  #overlay h1.lose { color: #cfd4de; text-shadow: 0 3px 0 #3a3f4a, 0 6px 18px rgba(0,0,0,.8); }
-  #overlay p { margin: 0; max-width: 30ch; line-height: 1.6; font-size: 14px; }
-  #overlay button {
-    touch-action: manipulation; font-family: var(--font-display); font-size: 22px; letter-spacing: 1px; color: #fff; background: var(--red);
-    border: 0; border-radius: 10px; padding: 12px 36px; cursor: pointer; box-shadow: 0 4px 0 #7a1016;
-  }
-  #overlay button:active { transform: translateY(3px); box-shadow: 0 1px 0 #7a1016; }
-  #overlay button:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
   #hint { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 12px; font-weight: 700;
     letter-spacing: 1px; color: rgba(255,255,255,.8); text-shadow: 0 1px 2px #000; pointer-events: none; transition: opacity .6s; }
   #restart {
@@ -99,24 +85,5 @@
   #offer .yes { background: #7a1a8f; box-shadow: 0 4px 0 #3d0a48; }
   #confirm .no, #offer .no { background: #3a3f4a; box-shadow: 0 4px 0 #1a1c22; }
   #confirm button:active, #offer button:active { transform: translateY(3px); box-shadow: none; }
-  /* nickname + leaderboard */
-  #overlay input { font: 700 18px var(--font-body); text-align: center; width: 200px; max-width: 80%; padding: 10px 12px; border-radius: 10px;
-    border: 2px solid rgba(255,255,255,.35); background: rgba(0,0,0,.35); color: #fff; outline: none; }
-  #overlay input:focus { border-color: var(--gold); }
-  #overlay .nick { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  #overlay .nick span { font-size: 11px; font-weight: 700; letter-spacing: 2px; opacity: .7; }
-  #overlay input.err { border-color: var(--red); }
-  #overlay small.err { color: #ff8a8a; font-size: 12px; font-weight: 700; margin-top: -8px; }
-  #overlay button.ghost { background: transparent; box-shadow: none; border: 2px solid rgba(255,255,255,.5); font-size: 16px; padding: 8px 20px; }
-  #overlay button.ghost:active { transform: none; }
-  #overlay .ver { position: absolute; right: 10px; bottom: 8px; font-size: 11px; opacity: .5; letter-spacing: 1px; }
-  .board { width: 100%; max-width: 260px; background: rgba(0,0,0,.45); border-radius: 12px; padding: 10px 12px; text-align: left; font-size: 13px; box-sizing: border-box; }
-  .board h3 { margin: 0 0 6px; font-family: var(--font-display); font-size: 18px; color: var(--gold); text-align: center; letter-spacing: 1px; }
-  .board ol { list-style: none; margin: 0; padding: 0; }
-  .board li { display: flex; gap: 8px; align-items: baseline; padding: 3px 0; border-top: 1px solid rgba(255,255,255,.08); font-variant-numeric: tabular-nums; font-weight: 700; }
-  .board li.me { color: var(--gold); }
-  .board .rk { width: 1.6em; opacity: .7; }
-  .board .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .board .w { font-size: 10px; color: #7dffa7; letter-spacing: 1px; }
-  .board .nm .s { color: #e9a6ff; }
-  .board .msg { text-align: center; opacity: .85; padding: 6px 0; font-weight: 700; }
+  /* v19: menus cover the stage; the HUD belongs to the game screen only */
+  #stage[data-menu] #hud, #stage[data-menu] #hint { visibility: hidden; }

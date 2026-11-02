@@ -7,6 +7,12 @@ export const SHOT_SPEED = 420;        // px/s, soldiers fired from the turret
 export const MAXB = 9999, MAXR = 4500;   // over MAXB the rear of the blue column is culled; the turret never stops
 export const FIRE_INTERVAL = 0.18;   // base seconds between shots (~5.6/s); SPD rewards shorten it via S.fireMul
 export const FIRE_MIN = 0.1;         // fastest allowed fire interval
+export const FIRE_MIN_BUFF = 0.08;   // fastest fire interval with the ATTACK_SPEED loadout buff (GAP-04=A)
+// v19 silver tier: first six bosses, boss hp x1.5, red spawn x1.2, boss 6 down = victory (GAP-03=A)
+export const SILVER_TIER = { bosses: 6, bossHp: 1.5, redRate: 1.2 };
+// LASER loadout buff: every `interval` s x fireMul (never below `min`), clears a 60px column (PATH_HW x2) up from
+// the turret and hits bosses for bossDamage x attack; `fx` is how long the beam stays drawn (D12, GAP-05=A).
+export const LASER = { interval: 3, min: 1.5, halfWidth: 30, bossDamage: 200, fx: 0.25 };
 export const GATE_RESPAWN = 2.0;   // seconds a broken gate stays open before it rebuilds
 export const GATE_X0 = 16, GATE_GAP = 14, GATE_MIN = 44, GATE_STEP = 40;
 // sprites: Kenney "Tiny Dungeon", CC0 (kenney.nl), 16x16 tiles, 12 columns

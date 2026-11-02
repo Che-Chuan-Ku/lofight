@@ -3,3 +3,8 @@
 .DS_Store
 node_modules/
 dist/
+test-results/
+playwright-report/
+.env.local
+integration-test/evidence/
+integration-test/.build/
