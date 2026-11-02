@@ -17,7 +17,10 @@ services:
       - db-data:/var/lib/postgresql/data
 
   app:
-    build: .
+    # Context = repo root: the image also bundles the front end (see backend/Dockerfile and the root .dockerignore).
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
     depends_on:
       db:
         condition: service_healthy

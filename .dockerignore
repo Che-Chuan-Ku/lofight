@@ -1,0 +1,18 @@
+# Docker build context = repo root (backend/Dockerfile). Allow-list: only what the image build needs.
+# Secrets (.env.local, backend/.env, any .env*) and local artifacts must never enter the context.
+*
+!package.json
+!package-lock.json
+!index.html
+!vite.config.js
+!src/
+!backend/
+**/.env*
+**/node_modules
+**/.DS_Store
+dist
+backend/target
+backend/src/test
+backend/.env*
+backend/_module-state.yml
+backend/DEPLOY.md

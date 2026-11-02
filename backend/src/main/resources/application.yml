@@ -24,6 +24,13 @@ spring:
     baseline-on-migrate: true
   jackson:
     time-zone: Asia/Taipei
+  web:
+    resources:
+      # The only static resource is the bundled single-file front end (index.html, see backend/Dockerfile):
+      # browsers must revalidate it so a new deploy is picked up immediately.
+      cache:
+        cachecontrol:
+          no-cache: true
 
 server:
   port: 8080

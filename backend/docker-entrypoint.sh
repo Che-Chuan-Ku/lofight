@@ -2,6 +2,7 @@
 # Container entrypoint: adapts PaaS-style env vars (Render) to the Spring Boot settings in application.yml.
 #   DATABASE_URL=postgres[ql]://user:pass@host[:port]/db[?params]  ->  DB_URL (jdbc:postgresql://...), DB_USERNAME, DB_PASSWORD
 #   PORT                                                          ->  SERVER_PORT
+#   GOOGLE_CLIENT_ID                                              ->  /app/static/index.html (meta google-client-id)
 # Explicit DB_URL / DB_USERNAME / DB_PASSWORD / SERVER_PORT always win (local docker-compose sets DB_* directly).
 set -eu
 
@@ -35,6 +36,26 @@ fi
 if [ -n "${PORT:-}" ] && [ -z "${SERVER_PORT:-}" ]; then
   SERVER_PORT="$PORT"
   export SERVER_PORT
+fi
+
+# Front-end page: render the build's index.html template with the runtime Google client id.
+# The placeholder lives only in <meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">; an empty or
+# malformed id renders content="" and the page hides its login entries.
+if [ -f /app/web/index.html ]; then
+  client_id="${GOOGLE_CLIENT_ID:-}"
+  case "$client_id" in
+    *[!A-Za-z0-9._-]*)
+      echo "entrypoint: GOOGLE_CLIENT_ID has unexpected characters; login stays hidden" >&2
+      client_id=""
+      ;;
+  esac
+  sed 's|<meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">|<meta name="google-client-id" content="'"$client_id"'">|' \
+    /app/web/index.html > /app/static/index.html
+  if [ -n "$client_id" ]; then
+    echo "entrypoint: index.html rendered with GOOGLE_CLIENT_ID"
+  else
+    echo "entrypoint: index.html rendered without GOOGLE_CLIENT_ID (login hidden)"
+  fi
 fi
 
 exec java ${JAVA_OPTS:-} -jar /app/app.jar "$@"

@@ -20,14 +20,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Access token check (@cross 驗證存取權杖): public paths skip it, login paths accept an optional guest token,
- * every other path requires a valid token.
+ * Access token check (@cross 驗證存取權杖) for /api/** only: public paths skip it, login paths accept an optional
+ * guest token, every other API path requires a valid token. Non-API paths (the bundled front-end page) are not checked.
  */
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
 
     public static final String CURRENT_USER_ID_ATTRIBUTE = "currentUserId";
     private static final String BEARER_PREFIX = "Bearer ";
+    private static final String API_ROOT = "/api/";
 
     private final AccessTokenService accessTokenService;
     private final PlayerRepository playerRepository;
@@ -53,7 +54,8 @@ public class JwtTokenFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return publicPaths.contains(path) || path.startsWith(apiPrefix + "/internal/ops/");
+        // Only /api/** is token-protected; the front-end page (/, /index.html) and other static paths are open.
+        return !path.startsWith(API_ROOT) || publicPaths.contains(path) || path.startsWith(apiPrefix + "/internal/ops/");
     }
 
     @Override

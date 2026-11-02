@@ -1,44 +1,27 @@
-# Render Blueprint: frontend static site + Spring Boot API (Docker) + PostgreSQL, deployed on every push to main.
-# Field reference: https://render.com/docs/blueprint-spec
+# Render Blueprint: one Docker web service (front-end page + Spring Boot API on the same origin) + PostgreSQL,
+# deployed on every push to main. Field reference: https://render.com/docs/blueprint-spec
+# JSON schema: https://render.com/schema/render.yaml.json . First switch from the old static site: backend/DEPLOY.md.
 services:
-  # Frontend: single-file Vite build served from Render's CDN.
-  - type: web
-    runtime: static
-    name: lofight
-    branch: main
-    buildCommand: npm ci && npm run build
-    staticPublishPath: ./dist
-    previews:
-      generation: off
-    envVars:
-      # Build-time Google Identity client id (same value as the API's GOOGLE_CLIENT_ID); empty hides login.
-      - key: VITE_GOOGLE_CLIENT_ID
-        sync: false
-    # Same-origin proxy: the backend has no CORS, so /api/* is rewritten to the API's public onrender.com URL.
-    # Routes cannot reference other services (fromService.host is a private-network name and free web services
-    # cannot receive private traffic), so the URL is hard-coded. Verify it matches the API's actual
-    # onrender.com URL after the first deploy (Render may append a suffix if the name is taken).
-    # https://render.com/docs/redirects-rewrites
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: https://lofight-api.onrender.com/api/*
-
-  # Backend: Spring Boot 3.2 / Java 17 built from backend/Dockerfile.
+  # Spring Boot 3.2 / Java 17 API that also serves the single-file Vite build at / (backend/Dockerfile).
   - type: web
     runtime: docker
-    name: lofight-api
+    name: lofight
     branch: main
     plan: free
     region: singapore # must match the database region for the internal connection string; immutable after creation
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
-    # Only rebuild the API when backend files change (paths are relative to the repo root).
+    dockerfilePath: ./backend/Dockerfile # relative to the repo root
+    dockerContext: . # repo root: the image builds the front end too (root .dockerignore limits the context)
+    # Rebuild only when the front end or the backend changes (paths are relative to the repo root).
+    # https://render.com/docs/build-filters
     buildFilter:
       paths:
+        - src/**
         - backend/**
-    # No healthCheckPath: every API route requires a token (401), and HTTP checks need 2xx/3xx.
-    # Render falls back to a TCP probe on $PORT. https://render.com/docs/health-checks
+        - package*.json
+        - vite.config.js
+        - index.html
+        - .dockerignore
+    # No healthCheckPath: Render falls back to a TCP probe on $PORT. https://render.com/docs/health-checks
     envVars:
       # postgresql://user:password@host:port/database (private network); backend/docker-entrypoint.sh converts it to JDBC.
       - key: DATABASE_URL
@@ -47,6 +30,8 @@ services:
           property: connectionString
       - key: JWT_SECRET_KEY
         generateValue: true
+      # Read at container start: the API verifies Google tokens with it and docker-entrypoint.sh writes it into the
+      # page. Empty = login entries hidden. sync:false only prompts on the first Blueprint creation.
       - key: GOOGLE_CLIENT_ID
         sync: false
 
