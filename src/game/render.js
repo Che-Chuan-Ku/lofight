@@ -193,7 +193,7 @@ export function render(ctx, S, SPR, lite, view) {
   // fx
   for (const f of S.fx) { ctx.globalAlpha = 1 - f.t / f.life; ctx.fillStyle = f.color; ctx.fillRect(f.x - 1.5, f.y - 1.5, 3, 3); }
   ctx.globalAlpha = 1;
-  // LASER loadout buff: a short-lived blue column up from the turret (60px wide, fading out)
+  // LASER loadout buff: a short-lived blue column up from the turret (2 x LASER.halfWidth = 90px wide, fading out)
   if (S.laserFx && S.laserFx.length) {
     for (const lz of S.laserFx) {
       const k = 1 - lz.t / LASER.fx, top = -MAX_EXTRA_H, y0 = S.turret.y - 20;
@@ -232,13 +232,8 @@ export function render(ctx, S, SPR, lite, view) {
   }
   ctx.lineCap = 'round';
   ctx.globalAlpha = 1;
-  // EXTRA boss 6 lightning (_ui-spec.md §5.3): columns already hit this round are darker (no collision); the warned
-  // column pulses with a light fill and dashed edges; the firing column is a three-layer violet bolt. No text.
-  if (S.scorch && S.scorch.length) {
-    const w = W / STORM.sweep.strips;
-    ctx.fillStyle = 'rgba(24,12,48,.22)';
-    for (const k of S.scorch) ctx.fillRect(k * w, -MAX_EXTRA_H, w, H + MAX_EXTRA_H + 20);
-  }
+  // EXTRA boss 6 lightning (_ui-spec.md §5.3): the warned column pulses with a light fill and dashed edges; the
+  // firing column is a three-layer violet bolt; once it has fired nothing of it is drawn (FE-41). No text.
   for (const bl of S.bolts || []) {
     const top = -MAX_EXTRA_H, bot = H + 20, bw = bl.x1 - bl.x0, cx = (bl.x0 + bl.x1) / 2;
     if (bl.t < bl.warn) {

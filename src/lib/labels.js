@@ -15,8 +15,9 @@ export const tierName = t => TIER_NAME[t] || '';
 // gam001 / shp002 carry the old tier name in the backend message: the screen uses this copy instead (INF-1)
 export const EXTRA_LOCKED_MSG = 'EXTRA 尚未解鎖';
 
+// FE-47: no result yet reads 尚無成績 instead of 第 0 王
 export function lockLine(seq, best) {
-  return '擊敗 NORMAL 第 ' + (seq ?? 8) + ' 王解鎖（目前最佳：第 ' + (best ?? 0) + ' 王）';
+  return '擊敗 NORMAL 第 ' + (seq ?? 8) + ' 王解鎖（目前最佳：' + (best ? '第 ' + best + ' 王' : '尚無成績') + '）';
 }
 
 export function nicknameError(code) {

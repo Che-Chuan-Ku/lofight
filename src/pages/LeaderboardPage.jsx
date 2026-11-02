@@ -5,12 +5,13 @@ import { IcEmptyBoard, TierBadge } from '../components/ui/Icons.jsx';
 import { getLeaderboard } from '../lib/api/index.js';
 import { BUFFS, tierName } from '../lib/labels.js';
 
-function Row({ e, me, i }) {
+// FE-46: on the EXTRA board a run without a buff (equippedBuff null) gets a neutral 不裝填 tag
+function Row({ e, me, i, extra }) {
   const isMe = me && e.rank === me.rank;
   return (
     <li className={'row lbrow' + (isMe ? ' me' : '')} aria-current={isMe ? 'true' : undefined} style={{ animationDelay: (i || 0) * 30 + 'ms' }}>
       <span className={'rk r' + e.rank}>{e.rank}</span>
-      <span className="nm"><span>{e.nickname}</span>{e.equippedBuff && <span className="tag buff">{BUFFS[e.equippedBuff].name}</span>}</span>
+      <span className="nm"><span>{e.nickname}</span>{e.equippedBuff ? <span className="tag buff">{BUFFS[e.equippedBuff].name}</span> : extra && <span className="tag nobuff">不裝填</span>}</span>
       <span className={'tag ' + (e.isVictory ? 'win' : 'lose')}>{e.isVictory ? '勝' : '敗'}</span>
       <span className="num" style={{ width: '3.6em' }}>{e.gameSeconds} 秒</span>
     </li>
@@ -39,7 +40,7 @@ export default function LeaderboardPage({ onBack, onPlay }) {
     // UXR-03: the empty board gets a way forward (back to the tier cards on the home screen)
     top = d.entries.length ? (
       <ol className="panel rows stagger" style={{ listStyle: 'none', margin: 0 }} aria-label="前 15 名">
-        {d.entries.map((e, i) => <Row key={e.rank + ':' + e.playerId} e={e} me={d.myRank} i={i} />)}
+        {d.entries.map((e, i) => <Row key={e.rank + ':' + e.playerId} e={e} me={d.myRank} i={i} extra={d.tier === 'SILVER'} />)}
       </ol>
     ) : (
       <div className="panel"><div className="empty"><IcEmptyBoard /><b>這個榜還沒有人上榜</b><span>打一局，來當第一個</span>
@@ -48,7 +49,7 @@ export default function LeaderboardPage({ onBack, onPlay }) {
     if (!d.myRank) mine = <p className="msg info center" style={{ padding: '8px 0' }}>尚無成績</p>;
     else {
       const around = [...d.neighbors, d.myRank].sort((a, b) => a.rank - b.rank);
-      mine = <ol className="rows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>{around.map(e => <Row key={'m' + e.rank + ':' + e.playerId} e={e} me={d.myRank} />)}</ol>;
+      mine = <ol className="rows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>{around.map(e => <Row key={'m' + e.rank + ':' + e.playerId} e={e} me={d.myRank} extra={d.tier === 'SILVER'} />)}</ol>;
     }
   }
   const t = tab.toLowerCase();

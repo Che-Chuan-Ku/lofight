@@ -64,8 +64,8 @@ export function createGame(onChange) {
     S.redReserve = 1e9; S.redRate = 70; S.redRamp = 2.5; S.redAcc = 0;
     // EXTRA (silver): its own six-boss plan (D29-D32); red spawn stays as NORMAL (AMB-E8=B)
     S.bossQueue = (tier === 'silver' ? EXTRA_PLAN : BOSS_PLAN).map(b => ({ ...b }));
-    // EXTRA boss 6: current sweep column, columns already hit this round (drawn darker, no collision), orbs
-    S.bolts = []; S.scorch = []; S.orbs = [];
+    // EXTRA boss 6: current sweep column (telegraph or firing; nothing is kept once it has fired) and orbs
+    S.bolts = []; S.orbs = [];
     // settlement data: every planned boss kill (appearance order + game second) and how the run was lost
     S.kills = []; S.death = null;
     S.shake = 0;
@@ -360,7 +360,6 @@ export function createGame(onChange) {
     const n = STORM.sweep.strips, order = [];
     for (let i = 0; i < n; i++) order.splice((Math.random() * (order.length + 1)) | 0, 0, i);   // random order, no repeats
     bo.storm.round = { order, i: 0 };
-    S.scorch = [];
     nextBolt(bo);
   }
   function nextBolt(bo) {
@@ -374,11 +373,11 @@ export function createGame(onChange) {
       const bl = S.bolts[0];
       if (bl) {
         bl.t += dt;
-        // the column stops colliding the moment its firing time is over (nothing lingers but the darker trace)
+        // the column stops colliding and its telegraph is gone the moment its firing time is over (FE-41)
         if (bl.t >= bl.warn + bl.fire) {
-          S.scorch.push(bl.strip); S.bolts = [];
+          S.bolts = [];
           if (++st.round.i < st.round.order.length) nextBolt(bo);
-          else { st.round = null; st.gap = STORM.sweep.cd; S.scorch = []; }   // cd counts from the end of the round
+          else { st.round = null; st.gap = STORM.sweep.cd; }   // cd counts from the end of the round
         }
       }
     } else {
@@ -474,7 +473,7 @@ export function createGame(onChange) {
     S.shake = 1; S.bossKills++;
     if (!bo.secret) S.kills.push({ bossSeq: bo.idx, killedAtSecond: Math.floor(S.t) });
     if (bo.secret || bo.beam) S.beams = [];
-    if (bo.storm) { S.bolts = []; S.scorch = []; S.orbs = []; bo.storm = null; }
+    if (bo.storm) { S.bolts = []; S.orbs = []; bo.storm = null; }
     addFx(bo.x, bo.y, '#ff4b4b', 40, 220); addPop('BOSS DOWN', W / 2, 200, '#ffe066');
     if (bo.summon) for (const m of S.bosses) if (m.minion && m.alive) killBoss(m);
     // a held boss waits in the queue: with the field clear it is released by the rest pick (NORMAL boss 8, EXTRA
@@ -515,12 +514,14 @@ export function createGame(onChange) {
 
 
   function startGame(opts) { reset(opts); S.started = true; notify(); }
+  // mid-run restart (AMB-01, FE-43): same run, same tier and loadout buff taken from the engine itself, clock back to 0
+  function restart() { startGame({ tier: S.tier, buff: S.buff }); }
   // dev-only (window.__game): end the run as a loss right now
   function loseNow() { if (S.started && !S.over) endGame(false, { cause: 'RED_BREACH', bossSeq: null }); }
   function setPaused(v) { if (S.started && !S.over && S.paused !== !!v) { S.paused = !!v; notify(); } }
   function setTurretX(x) { if (Number.isFinite(x)) S.turret.x = Math.max(22, Math.min(W - 22, x)); }
 
-  const api = { S, reset, update, startGame, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits, loseNow, rebuildGate, onReward };
+  const api = { S, reset, update, startGame, restart, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits, loseNow, rebuildGate, onReward };
   reset();
   return api;
 }

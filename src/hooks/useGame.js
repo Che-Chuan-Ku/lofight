@@ -95,9 +95,10 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
     cv.addEventListener('touchend', onTouchEnd, { passive: false });
     cv.addEventListener('touchcancel', stop);
 
-    // opts: { tier: 'bronze' | 'silver', buff } — the same opts replay a mid-run restart (same run, AMB-01)
+    // opts: { tier: 'bronze' | 'silver', buff }; no opts = mid-run restart with the engine's own tier and buff (AMB-01)
     function start(opts) {
-      game.startGame(opts); setHint(true);
+      if (opts) game.startGame(opts); else game.restart();
+      setHint(true);
       clearTimeout(hintT); hintT = setTimeout(() => setHint(false), 3500);
     }
     startRef.current = start;
@@ -152,8 +153,9 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
         }
         S.redReserve = calm ? 0 : reserve; S.red = []; render(ctx, S, SPR, lite, view); updateHud(); sync();
       },
-      // EXTRA boss 6 lightning state: current column (firing or warning), columns hit this round, orbs on the field
-      storm() { const b = S.bolts[0]; return { bolt: b ? { strip: b.strip, x0: b.x0, x1: b.x1, firing: b.t >= b.warn, t: +b.t.toFixed(2) } : null, scorch: S.scorch.slice(), orbs: S.orbs.map(o => [Math.round(o.x), Math.round(o.y), +o.t.toFixed(2), Math.round(Math.atan2(o.vy, o.vx) * 180 / Math.PI)]), beams: S.beams.length, t: S.t, over: S.over }; },
+      // EXTRA boss 6 lightning state: current column (firing or warning), columns still marked on the field (only the
+      // current one, FE-41), orbs [x, y, age, angle deg, speed px/s]
+      storm() { const b = S.bolts[0]; return { bolt: b ? { strip: b.strip, x0: b.x0, x1: b.x1, firing: b.t >= b.warn, t: +b.t.toFixed(2) } : null, marked: S.bolts.map(x => x.strip), orbs: S.orbs.map(o => [Math.round(o.x), Math.round(o.y), +o.t.toFixed(2), Math.round(Math.atan2(o.vy, o.vx) * 180 / Math.PI), Math.round(Math.hypot(o.vx, o.vy))]), beams: S.beams.length, t: S.t, over: S.over }; },
       // soldiers-per-shot cap checks (FE-27): set spread, hang/roll/break a crate on an hp gate (index 0 or 2)
       spread(n) { if (n != null) S.spread = n; return S.spread; }, gateAbility(i, ab) { if (ab) S.gates[i].ability = ab; return S.gates[i].ability; },
       rollGate(i) { game.rebuildGate(S.gates[i]); return S.gates[i].ability; },
@@ -180,6 +182,8 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
   return {
     ui, hint,
     start: opts => startRef.current && startRef.current(opts),
+    // same run, same loadout buff, clock back to 0; never a new createRun (AMB-01, FE-43)
+    restart: () => startRef.current && startRef.current(null),
     // what the result screen and the settlement need once a run is over
     summary: () => {
       const g = gameRef.current;

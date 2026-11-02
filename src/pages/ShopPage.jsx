@@ -3,7 +3,7 @@
 // The rewarded-ad card (D33-D35) sits on top and takes listShopItems.adReward; no other call is made for it.
 import { useEffect, useState } from 'react';
 import { PageHeader, CoinChip, RetryBox, Skeletons, PrimaryButton, LoginBanner } from '../components/ui/Common.jsx';
-import { PixelCoin, TierBadge } from '../components/ui/Icons.jsx';
+import { PixelCoin } from '../components/ui/Icons.jsx';
 import AdRewardCard from '../components/ui/AdRewardCard.jsx';
 import { listShopItems, listMyBuffInventories, getMyWallet, purchaseShopItem } from '../lib/api/index.js';
 import { BUFFS, lockLine, NETWORK_MSG, EXTRA_LOCKED_MSG } from '../lib/labels.js';
@@ -72,7 +72,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
           return (
             <div key={item.shopItemId} className={'card' + (item.isPurchasable ? '' : ' locked')} style={{ animationDelay: i * 30 + 'ms' }}>
               <div className="info">
-                <span className="name">{b.name} <span className="tag silver"><TierBadge tier="silver" size={12} />EXTRA 專用</span></span>
+                <span className="name">{b.name}</span>
                 <span>{b.desc}</span>
                 <span className="own">持有 <b className={pop === item.buffItem ? 'pop' : undefined}>{st.inv[item.buffItem] ?? 0}</b></span>
               </div>

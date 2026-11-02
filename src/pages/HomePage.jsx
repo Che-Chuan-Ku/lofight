@@ -79,15 +79,16 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
         {loadError && <p className="msg err center" role="alert">{NETWORK_MSG}<button type="button" className="btn-ghost sm" onClick={onRetry}>重試</button></p>}
         <div className="grid2" style={{ marginTop: 'auto' }}>
           <button type="button" className="tier bronze" onClick={onBronze} aria-busy={starting === 'bronze' ? 'true' : undefined}
-            aria-label={'NORMAL，8 王' + (bronzeBest ? '，' + bronzeBest : '') + '，點擊開局'}>
-            <TierBadge tier="bronze" size={40} /><span className="ct">NORMAL</span><span className="cd">8 王</span>
+            aria-label={'NORMAL' + (bronzeBest ? '，' + bronzeBest : '') + '，點擊開局'}>
+            {/* FE-47: tier cards no longer show a boss count */}
+            <TierBadge tier="bronze" size={40} /><span className="ct">NORMAL</span>
             {bronzeBest && <span className="best">{bronzeBest}</span>}
           </button>
           {unlocked ? (
-            // AMB-N1=C: boss count stays, "can carry a buff" is the buff mark instead of words
-            <button type="button" className="tier silver" onClick={onSilver} aria-label="EXTRA，6 王，buff">
+            // AMB-N1=C: "can carry a buff" is the buff mark instead of words; FE-47: no boss count
+            <button type="button" className="tier silver" onClick={onSilver} aria-label="EXTRA，buff">
               <TierBadge tier="silver" size={40} /><span className="ct">EXTRA</span>
-              <span className="cd meta">6 王<span className="buffmark"><BuffMark size={18} /></span></span>
+              <span className="cd meta"><span className="buffmark"><BuffMark size={18} /></span></span>
             </button>
           ) : (
             <button type="button" className={'tier silver locked' + (shake ? ' shake' : '')} aria-disabled="true" aria-describedby="silver-cond"

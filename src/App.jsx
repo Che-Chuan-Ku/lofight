@@ -28,7 +28,7 @@ const SETTLE_INVALID_CODES = new Set(['gam003', 'gam004']);
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
   const sceneryRef = useRef(true);
-  const { ui, hint, start, pause, pickChoice, pickRest, acceptOffer, declineOffer, pickBonus, summary } = useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef });
+  const { ui, hint, start, restart, pause, pickChoice, pickRest, acceptOffer, declineOffer, pickBonus, summary } = useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef });
 
   const session = useSyncExternalStore(subscribe, getSession);
   const [screen, setScreen] = useState('home');
@@ -96,7 +96,9 @@ export default function App() {
       return 'network';
     }
   };
-  const restartNow = () => { if (run) start({ tier: run.tier, buff: run.buff }); };   // same run, no new createRun (AMB-01)
+  // same run, no new createRun, no buff spent again (AMB-01). The engine restarts with the tier and buff it is
+  // running (FE-43), so the loadout can never be lost through React state; settlement keeps run.runId.
+  const restartNow = () => restart();
 
   const settle = useCallback(async (r) => {
     setRun(x => ({ ...x, status: 'submitting' }));

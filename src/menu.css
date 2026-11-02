@@ -192,6 +192,7 @@
 .v19 .tag.silver { background: var(--color-tier-extra); color: var(--color-text-on-tier); gap: 4px; }
 .v19 .tag.bronze { background: var(--color-tier-normal); color: var(--color-text-on-tier); gap: 4px; }
 .v19 .tag.buff { background: var(--color-ally-deep); color: var(--color-ally-light); font-family: var(--font-body); font-weight: var(--weight-bold); }
+.v19 .tag.nobuff { background: var(--color-surface-raised); color: var(--color-text-secondary); font-family: var(--font-body); font-weight: var(--weight-bold); }
 .v19 .tag.win { color: var(--color-success); font-family: var(--font-body); font-weight: var(--weight-bold); padding: 0; letter-spacing: var(--tracking-display); }
 .v19 .tag.lose { color: var(--color-text-secondary); font-family: var(--font-body); font-weight: var(--weight-bold); padding: 0; letter-spacing: var(--tracking-display); }
 .v19 .tag.acct { background: var(--color-surface-raised); color: var(--color-text); font-family: var(--font-body); font-weight: var(--weight-bold); }
