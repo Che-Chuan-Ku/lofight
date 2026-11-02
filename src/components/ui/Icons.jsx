@@ -91,6 +91,14 @@ const BUFF_ROWS = ['.....oooooo.....', '.....occcco.....', '.....oooooo.....', '
 const BUFF_PALETTE = { o: 'var(--color-ally-shadow)', c: 'var(--sand)', h: 'var(--color-text)', g: 'var(--color-ally-light)', l: 'var(--color-ally)', s: 'var(--color-ally-deep)', w: 'var(--color-ally-light)' };
 export const BuffMark = ({ size = 18 }) => <PixelArt rows={BUFF_ROWS} palette={BUFF_PALETTE} className="ticon" size={size} />;
 
+// ATK+1 loadout buff (D37): a diagonal pixel sword; same token palette as the other 16x16 marks.
+const ATK_ROWS = ['.............ooo', '............ohho', '...........ohhbo', '..........ohhbo.', '.........ohhbo..', '........ohhbo...', '.......ohhbo....', '..oo..ohhbo.....', '..ogoohhbo......', '...oggbbo.......', '....oggo........', '...ogoogo.......', '..ogo..ogo......', '.oago...oo......', 'oaao............', 'ooo.............'];
+const ATK_PALETTE = { o: 'var(--color-ally-shadow)', h: 'var(--color-text)', b: 'var(--color-ally-light)', g: 'var(--color-accent)', a: 'var(--color-accent-deep)' };
+export const AtkMark = ({ size = 18 }) => <PixelArt rows={ATK_ROWS} palette={ATK_PALETTE} className="ticon" size={size} />;
+
+/** Per-buff mark shown next to the buff name; only ATK+1 has one so far (other buffs render nothing). */
+export const BuffIcon = ({ buff, size = 18 }) => (buff === 'ATTACK' ? <AtkMark size={size} /> : null);
+
 // Pixelised Linktree mark (asterisk + stem, D36; prototype PIX.linktree).
 const LINKTREE_ROWS = ['................', '.......gg.......', '.gg....gg....gg.', '.ggg...gg...ggg.', '..ggg..gg..ggg..', '...ggg.gg.ggg...', '....gggggggg....', 'gggggggggggggggg',
   'dddddddddddddddd', '....gggggggg....', '...ggg.gg.ggg...', '..ggd..gg..dgg..', '.......gg.......', '.......gg.......', '.......gg.......', '.......dd.......'];

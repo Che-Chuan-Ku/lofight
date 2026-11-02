@@ -14,7 +14,7 @@ Feature: 購買buff
     And 目前以玩家 "阿銀" 的有效存取權杖操作
 
   Rule: 前置（參數）- buff 品項必須存在
-    # 原文 D10–D12 三種 buff
+    # 原文 D10–D12 三種 buff；CHANGE 2026-11-02（D37）新增 ATTACK（ATK+1），共四種
 
     @error:404001
     Example: buff 品項不存在時操作失敗
@@ -43,7 +43,7 @@ Feature: 購買buff
 
   Rule: 前置（狀態）- 玩家金幣餘額必須不少於品項價格
     # 原文 D09 acceptance「餘額不足拒絕」
-    # 澄清 GAP-02（2026-10-29）採 A：品項價格取自後端設定檔（攻速 200、砲台 400、雷射 600），以購買當下設定值判定
+    # 澄清 GAP-02（2026-10-29）採 A：品項價格取自後端設定檔（攻速 200、ATK+1 200、砲台 400、雷射 600；ATK+1 為 D37），以購買當下設定值判定
     # 澄清 BDY-07（2026-10-29）採 A：同一玩家的購買依序判斷（條件式扣款：餘額 ≥ 價格才扣），併發時餘額不足那筆回 shp 錯誤碼；Phase 03 補併發 Example（餘額 500 同時買兩個砲台 → 一筆成功、一筆餘額不足）
 
     @error:shp001
@@ -87,6 +87,7 @@ Feature: 購買buff
       Examples:
         | coins | buffItem     | delta | coinsAfter |
         | 500   | ATTACK_SPEED | -200  | 300        |
+        | 200   | ATTACK       | -200  | 0          |
         | 400   | CANNON       | -400  | 0          |
         | 600   | LASER        | -600  | 0          |
 

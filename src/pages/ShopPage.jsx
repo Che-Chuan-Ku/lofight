@@ -3,7 +3,7 @@
 // The rewarded-ad card (D33-D35) sits on top and takes listShopItems.adReward; no other call is made for it.
 import { useEffect, useState } from 'react';
 import { PageHeader, CoinChip, RetryBox, Skeletons, PrimaryButton, LoginBanner } from '../components/ui/Common.jsx';
-import { PixelCoin } from '../components/ui/Icons.jsx';
+import { PixelCoin, BuffIcon } from '../components/ui/Icons.jsx';
 import AdRewardCard from '../components/ui/AdRewardCard.jsx';
 import { listShopItems, listMyBuffInventories, getMyWallet, purchaseShopItem } from '../lib/api/index.js';
 import { BUFFS, lockLine, NETWORK_MSG, EXTRA_LOCKED_MSG } from '../lib/labels.js';
@@ -62,7 +62,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
   const buyDirect = () => { const item = pending; onBannerDone(); if (item) buy(item, true); };
   const locked = st.items.find(i => !i.isPurchasable);
   let cards;
-  if (st.status === 'loading' && !st.items.length) cards = <Skeletons n={3} kind="card" />;
+  if (st.status === 'loading' && !st.items.length) cards = <Skeletons n={4} kind="card" />;
   else if (st.status === 'error') cards = <RetryBox onRetry={() => setN(x => x + 1)} />;
   else {
     cards = (
@@ -72,7 +72,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
           return (
             <div key={item.shopItemId} className={'card' + (item.isPurchasable ? '' : ' locked')} style={{ animationDelay: i * 30 + 'ms' }}>
               <div className="info">
-                <span className="name">{b.name}</span>
+                <span className="name"><BuffIcon buff={item.buffItem} />{b.name}</span>
                 <span>{b.desc}</span>
                 <span className="own">持有 <b className={pop === item.buffItem ? 'pop' : undefined}>{st.inv[item.buffItem] ?? 0}</b></span>
               </div>
@@ -99,7 +99,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
       <PageHeader title="商店" onBack={onBack} right={<CoinChip coins={coins} />} />
       <div>{banner && (
         <LoginBanner text={banner} onLogin={onBannerLogin} onClose={() => { setPending(null); onBannerClose(); }} onShown={onBannerShown}
-          loginLabel={pending ? '先登入' : undefined} secondaryLabel="直接購買" onSecondary={pending ? buyDirect : undefined} />
+          loginLabel={pending ? '登入' : undefined} secondaryLabel="再等等" onSecondary={pending ? buyDirect : undefined} />
       )}</div>
       <main className="content scroll" style={{ paddingTop: 'var(--space-3)' }} aria-busy={st.status === 'loading' ? 'true' : undefined}>
         {st.status === 'ok' && st.adReward && <AdRewardCard status={st.adReward} onCoins={onCoins} />}

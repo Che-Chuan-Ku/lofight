@@ -141,6 +141,7 @@ Feature: 查詢合併預覽
       And 回應中的 "mergedBuffInventories" 應為：
         | buffItem     | quantity |
         | ATTACK_SPEED | 0        |
+        | ATTACK       | 0        |
         | CANNON       | 1        |
         | LASER        | 0        |
       And 回應中的 "mergedBestScores" 應為：

@@ -5,8 +5,8 @@ import { readJson, writeJson } from '../lib/storage.js';
 
 const KEY = 'mock.db';
 export const BOARD_VERSION = '19.0';                       // 查詢排行榜.feature: 後端設定的目前版本前兩碼
-export const SHOP_PRICES = { ATTACK_SPEED: 200, CANNON: 400, LASER: 600 };   // 瀏覽商店.feature / GAP-02=A
-export const BUFF_ORDER = ['ATTACK_SPEED', 'CANNON', 'LASER'];
+export const SHOP_PRICES = { ATTACK_SPEED: 200, ATTACK: 200, CANNON: 400, LASER: 600 };   // 瀏覽商店.feature / GAP-02=A, D37
+export const BUFF_ORDER = ['ATTACK_SPEED', 'ATTACK', 'CANNON', 'LASER'];
 export const TIER_RULES = {
   BRONZE: { bossCount: 8, victoryAbove: 98, spawn: [14, 28, 42, 56, 70, 84, 98, 98], coins: [1, 2, 4, 8, 16, 24, 48, 96] },
   SILVER: { bossCount: 6, victoryAbove: 84, spawn: [14, 28, 42, 56, 70, 84], coins: [4, 8, 16, 32, 64, 128] }
@@ -25,7 +25,7 @@ const iso = ms => new Date(ms).toISOString().replace('Z', '+00:00');
 
 function player(id, nickname, kind, extra) {
   return { playerId: id, nickname, playerKind: kind, deviceId: null, isSilverUnlocked: false, isVoided: false,
-    coins: 0, inv: { ATTACK_SPEED: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: null, ...extra };
+    coins: 0, inv: { ATTACK_SPEED: 0, ATTACK: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: null, ...extra };
 }
 
 export function seed() {

@@ -16,6 +16,7 @@ Feature: 開局
       | buffItem | quantity |
       | LASER    | 1        |
       | CANNON   | 0        |
+      | ATTACK   | 1        |
     And 目前以玩家 "小明" 的有效存取權杖操作
 
   Rule: 前置（參數）- 階層必須為 bronze 或 silver
@@ -152,6 +153,7 @@ Feature: 開局
         | tier   | buffItems | equippedBuff |
         | BRONZE |           |              |
         | SILVER | LASER     | LASER        |
+        | SILVER | ATTACK    | ATTACK       |
 
   Rule: 後置（回應）- 應回傳 run_id 與伺服器開局時間
     # 依據 G05 第 1 點；澄清 ASM-02（2026-10-29）採 A

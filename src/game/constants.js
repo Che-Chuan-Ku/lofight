@@ -52,7 +52,7 @@ export const EXTRA_PLAN = [
 // 390x780 edges, live `life` s, first cast `first` s after the boss enters, then every `cd` s. Neither touches soldiers.
 export const STORM = {
   sweep: { strips: 6, warn: 1.2, fire: 0.6, cd: 20 },
-  orbs: { n: 3, minDeg: 20, maxDeg: 160, speed: 100, life: 8, first: 7, cd: 7, r: 9 * Math.SQRT2, blink: 1.5 }
+  orbs: { n: 3, minDeg: 20, maxDeg: 160, speed: 150, life: 8, first: 7, cd: 7, r: 9 * Math.SQRT2, blink: 1.5 }
 };
 // Hidden stage 9, offered once boss 8 falls. Every beam telegraphs for `warn` seconds before it
 // `fire`s; a turret inside a firing beam ends the run. `hw` is the beam half-width.

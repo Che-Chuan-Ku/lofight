@@ -96,7 +96,7 @@ export function PrimaryButton({ busy, children, className = '', onClick, ...rest
 /** Non-blocking login prompt (region, polite announcement, no scrim, never steals focus). */
 /**
  * Non-blocking login banner. onShown runs once when it is really on screen (banner flags are stored only then);
- * loginLabel / onSecondary add the shop variant (先登入 + 直接購買, D-03 human ruling A).
+ * loginLabel / onSecondary add the shop variant (登入 + 再等等, D-03 human ruling A).
  */
 export function LoginBanner({ text, onLogin, onClose, onShown, loginLabel = '登入保存', secondaryLabel, onSecondary }) {
   const shown = useRef(onShown);

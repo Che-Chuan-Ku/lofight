@@ -50,7 +50,7 @@ export function createGame(onChange) {
   }
 
   const S = {};
-  // opts: { tier: 'bronze' | 'silver', buff: null | 'ATTACK_SPEED' | 'CANNON' | 'LASER' } (v19; buffs only apply in silver)
+  // opts: { tier: 'bronze' | 'silver', buff: null | 'ATTACK_SPEED' | 'ATTACK' | 'CANNON' | 'LASER' } (v19; buffs only apply in silver)
   function reset(opts) {
     const tier = opts && opts.tier === 'silver' ? 'silver' : 'bronze';
     const buff = tier === 'silver' && opts ? opts.buff || null : null;
@@ -76,6 +76,7 @@ export function createGame(onChange) {
     // loadout buffs (D10-D12)
     S.fireMin = FIRE_MIN; S.laser = null; S.laserFx = [];
     if (buff === 'ATTACK_SPEED') { S.fireMul *= 0.8; S.fireMin = FIRE_MIN_BUFF; }
+    if (buff === 'ATTACK') S.blueHp += 1;   // ATK+1 loadout buff (D37): same effect as the in-run ATK+1 ability
     if (buff === 'CANNON') { S.cannon.level = 1; S.cannon.t = 0.4; }
     if (buff === 'LASER') S.laser = { t: LASER.interval };
   }

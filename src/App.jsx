@@ -162,7 +162,7 @@ export default function App() {
   const interceptBuy = () => {
     const guest = getSession() && getSession().playerKind === 'GUEST';
     if (!LOGIN_AVAILABLE || !shopBannerDue(guest)) return false;
-    setBanner({ text: '登入保存金幣和 buff', on: 'shop', kind: 'shop' });
+    setBanner({ text: '尚未登入，帳號資料可能會消失，建議先登入', on: 'shop', kind: 'shop' });
     return true;
   };
   const goal = nextGoal(progress);

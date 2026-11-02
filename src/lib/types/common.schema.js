@@ -6,7 +6,7 @@ export const DateTimeSchema = z.iso.datetime({ offset: true });
 
 export const PlayerKindSchema = z.enum(['GUEST', 'MEMBER']);
 export const LoginProviderSchema = z.enum(['GOOGLE', 'APPLE']);
-export const BuffItemSchema = z.enum(['ATTACK_SPEED', 'CANNON', 'LASER']);
+export const BuffItemSchema = z.enum(['ATTACK_SPEED', 'ATTACK', 'CANNON', 'LASER']);
 export const TierSchema = z.enum(['BRONZE', 'SILVER']);
 export const RunStateSchema = z.enum(['OPEN', 'SETTLED', 'CHECK_FAILED', 'ABANDONED']);
 export const DeathCauseSchema = z.enum(['RED_BREACH', 'BOSS_REACHED']);

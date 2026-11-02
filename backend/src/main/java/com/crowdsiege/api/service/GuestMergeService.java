@@ -14,7 +14,6 @@ import com.crowdsiege.api.repository.WalletRepository;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -134,8 +133,9 @@ public class GuestMergeService {
     }
 
     private Map<BuffItem, Integer> inventoryOf(Long playerId) {
-        Map<BuffItem, Integer> inventory = new EnumMap<>(BuffItem.class);
-        for (BuffItem buffItem : BuffItem.values()) {
+        // LinkedHashMap keeps the API listing order instead of enum ordinal order.
+        Map<BuffItem, Integer> inventory = new LinkedHashMap<>();
+        for (BuffItem buffItem : BuffItem.DISPLAY_ORDER) {
             inventory.put(buffItem, 0);
         }
         for (BuffInventory row : buffInventoryRepository.findByPlayerId(playerId)) {

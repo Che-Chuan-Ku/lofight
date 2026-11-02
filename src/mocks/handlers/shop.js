@@ -23,7 +23,7 @@ export const shopHandlers = [
     if (!p.isSilverUnlocked) return fail('shp002');
     if (p.coins < SHOP_PRICES[item]) return fail('shp001');
     addLedger(p.playerId, { ledgerSource: 'BUFF_PURCHASE', coinDelta: -SHOP_PRICES[item], buffItem: item });
-    p.inv[item] += 1; persist();
+    p.inv[item] = (p.inv[item] ?? 0) + 1; persist();
     return ok({ buffItem: item, pricePaid: SHOP_PRICES[item], walletCoins: p.coins, quantity: p.inv[item] });
   })
 ];

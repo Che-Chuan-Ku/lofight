@@ -4,7 +4,7 @@ import { route, ok, fail, authenticate, blank } from './util.js';
 import { getDb, persist, nextId, now, addLedger, TIER_RULES, BOARD_VERSION, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
 
 const TIERS = ['BRONZE', 'SILVER'];
-const BUFFS = ['ATTACK_SPEED', 'CANNON', 'LASER'];
+const BUFFS = ['ATTACK_SPEED', 'ATTACK', 'CANNON', 'LASER'];
 
 function settlementOf(run) {
   return { runId: run.runId, runState: run.runState, coinsAwarded: run.coinsAwarded || 0, walletCoins: getDb().players[run.playerId].coins,
@@ -23,8 +23,8 @@ export const runHandlers = [
     if (body.tier === 'BRONZE' && buffs.length) return fail('400013');
     const p = auth.player;
     if (body.tier === 'SILVER' && !p.isSilverUnlocked) return fail('gam001');
-    if (buffs.length && p.inv[buffs[0]] <= 0) return fail('gam002');
-    if (buffs.length) p.inv[buffs[0]] -= 1;
+    if (buffs.length && (p.inv[buffs[0]] ?? 0) <= 0) return fail('gam002');
+    if (buffs.length) p.inv[buffs[0]] = (p.inv[buffs[0]] ?? 0) - 1;
     const run = { runId: nextId(), playerId: p.playerId, tier: body.tier, equippedBuff: buffs[0] || null, boardVersion: BOARD_VERSION, startedAt: now(), runState: 'OPEN' };
     getDb().runs[run.runId] = run; persist();
     const { playerId, ...detail } = run;

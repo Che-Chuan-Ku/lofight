@@ -1,10 +1,11 @@
 // Player-facing names (prototype/_ux-copy-guidelines.md). No codes or rules are ever shown.
 export const BUFFS = {
   ATTACK_SPEED: { name: '攻速 +20%', desc: '砲台射得更快' },
+  ATTACK: { name: 'ATK+1', desc: '士兵攻擊 +1' },
   CANNON: { name: '砲台', desc: '開局就有砲擊' },
   LASER: { name: '雷射', desc: '定時清掉一整排' }
 };
-export const BUFF_ORDER = ['ATTACK_SPEED', 'CANNON', 'LASER'];
+export const BUFF_ORDER = ['ATTACK_SPEED', 'ATTACK', 'CANNON', 'LASER'];
 // Boss sprite per appearance order (src/game/constants.js BOSS_TILES)
 export const NETWORK_MSG = '連線不穩，請再試一次';
 

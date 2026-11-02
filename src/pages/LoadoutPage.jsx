@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PageHeader, PrimaryButton, RetryBox, Skeletons, useLoad } from '../components/ui/Common.jsx';
 import { listMyBuffInventories } from '../lib/api/index.js';
-import { TierBadge } from '../components/ui/Icons.jsx';
+import { TierBadge, BuffIcon } from '../components/ui/Icons.jsx';
 import { BUFFS, BUFF_ORDER, NETWORK_MSG } from '../lib/labels.js';
 
 export default function LoadoutPage({ preselect, onBack, onStart }) {
@@ -45,7 +45,7 @@ export default function LoadoutPage({ preselect, onBack, onStart }) {
   };
 
   let list;
-  if (inv.status === 'loading' && !inv.data) list = <Skeletons n={4} kind="opt" />;
+  if (inv.status === 'loading' && !inv.data) list = <Skeletons n={5} kind="opt" />;
   else if (inv.status === 'error') list = <RetryBox onRetry={inv.reload} />;
   else {
     list = (
@@ -56,7 +56,7 @@ export default function LoadoutPage({ preselect, onBack, onStart }) {
             <button key={o.k} type="button" className="opt" role="radio" data-k={o.k} aria-checked={on} tabIndex={on ? 0 : -1}
               aria-disabled={dis ? 'true' : undefined} aria-label={o.name + (o.n === null ? '' : '，持有 ' + o.n)}
               style={{ animationDelay: i * 30 + 'ms' }} onClick={() => { if (!dis) setSel(o.k); }}>
-              <span className="grow">{o.name}<span className="sub">{o.desc}</span></span>
+              <span className="grow"><span className="nmline"><BuffIcon buff={o.k} />{o.name}</span><span className="sub">{o.desc}</span></span>
               {o.n !== null && <span className="cnt">×{o.n}</span>}
             </button>
           );

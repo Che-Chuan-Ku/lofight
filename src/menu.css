@@ -243,7 +243,7 @@
 .v19 .banner.in { animation: bannerIn var(--dur-slow) var(--ease-out); }
 @keyframes bannerIn { from { opacity: 0; height: 0; margin-top: 0; transform: translateY(-12px); } }
 .v19 .banner p { margin: 0; flex: 1; font-size: var(--text-sm); font-weight: var(--weight-bold); line-height: 1.3; text-shadow: var(--text-shadow-card); }
-/* [FE] D-03 shop variant: 先登入 + 直接購買 need a second line on a 390px stage */
+/* [FE] D-03 shop variant: 登入 + 再等等 need a second line on a 390px stage */
 .v19 .banner.two { height: auto; min-height: var(--banner-h); flex-wrap: wrap; row-gap: 6px; padding: 8px 4px 8px 12px; }
 .v19 .banner.two p { flex: 1 1 calc(100% - 52px); }
 .v19 .banner.two .icon-btn { order: 1; }
@@ -313,6 +313,7 @@
 .v19 .opt:active:not([aria-disabled="true"]) { transform: translateY(4px); box-shadow: none; }
 .v19 .opt .grow { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: var(--text-md); font-weight: var(--weight-bold); text-shadow: var(--text-shadow-card); }
 .v19 .opt .grow .sub { text-shadow: none; color: var(--color-text); opacity: 1; }
+.v19 .opt .grow .nmline { display: inline-flex; align-items: center; gap: 6px; }
 .v19 .opt .cnt { font: 22px var(--font-display); text-shadow: var(--text-shadow-card); }
 .v19 .opt[aria-checked="true"] { border-color: var(--color-ally-light); background: var(--color-ally-deep); box-shadow: var(--shadow-stamp-ally); }
 .v19 .opt[aria-checked="true"]::after { content: "✓"; position: absolute; right: -8px; top: -10px; width: 24px; height: 24px; border-radius: 50%; background: var(--color-ally-light); color: var(--color-ally-deep);

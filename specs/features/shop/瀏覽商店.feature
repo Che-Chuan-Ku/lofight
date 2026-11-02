@@ -1,6 +1,6 @@
 @query
 Feature: 瀏覽商店
-  銀牌商店販售單局消耗型 buff（攻速 +20%、砲台、雷射）；bronze 玩家可看不可用（D09）。
+  銀牌商店販售單局消耗型 buff（攻速 +20%、ATK+1、砲台、雷射）；bronze 玩家可看不可用（D09）。
 
   Background:
     Given 現在時間為 "2026-11-01T12:00:00Z"
@@ -22,6 +22,7 @@ Feature: 瀏覽商店
   Rule: 後置（回應）- 應回傳全部 buff 品項及其價格
     # 原文 D09、D10–D12
     # 澄清 GAP-02（2026-10-29）採 A：攻速 +20% 200 金幣、砲台 400 金幣、雷射 600 金幣；價格放後端設定檔（可調），回應價格以設定檔當下值為準
+    # CHANGE 2026-11-02（D37）使用者裁決：新增 ATTACK（ATK+1，士兵攻擊 +1）200 金幣；品項固定依 ATTACK_SPEED、ATTACK、CANNON、LASER 排列（Hub 直接套用，未開需求模組整輪）
 
     Example: 回傳全部 buff 品項及設定檔當下價格
       Given 目前以玩家 "阿銀" 的有效存取權杖操作
@@ -30,6 +31,7 @@ Feature: 瀏覽商店
       And 回應中的 "items" 應為：
         | buffItem     | price | isPurchasable |
         | ATTACK_SPEED | 200   | true          |
+        | ATTACK       | 200   | true          |
         | CANNON       | 400   | true          |
         | LASER        | 600   | true          |
 
@@ -49,6 +51,7 @@ Feature: 瀏覽商店
       And 回應中的 "items" 應為：
         | buffItem     | price | isPurchasable | silverUnlockBossSeq | bronzeBestBossesKilled |
         | ATTACK_SPEED | 200   | false         | 8                   | 5                      |
+        | ATTACK       | 200   | false         | 8                   | 5                      |
         | CANNON       | 400   | false         | 8                   | 5                      |
         | LASER        | 600   | false         | 8                   | 5                      |
 

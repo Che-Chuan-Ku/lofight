@@ -20,6 +20,7 @@ Feature: 查詢buff庫存
       Then 操作失敗，錯誤代碼為 "401003"
 
   Rule: 後置（回應）- 應回傳每種 buff 的持有數量
+    # CHANGE 2026-11-02（D37）：新增 ATTACK，固定依 ATTACK_SPEED、ATTACK、CANNON、LASER 排列
 
     Example: 回傳每種 buff 的持有數量（未持有者為 0）
       Given 目前以玩家 "阿銀" 的有效存取權杖操作
@@ -28,5 +29,6 @@ Feature: 查詢buff庫存
       And 回應中的 "items" 應為：
         | buffItem     | quantity |
         | ATTACK_SPEED | 0        |
+        | ATTACK       | 0        |
         | CANNON       | 2        |
         | LASER        | 0        |

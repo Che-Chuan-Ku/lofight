@@ -50,7 +50,7 @@ public class EventStatisticsService {
         List<PlayerEvent> purchases = events.stream()
                 .filter(event -> event.getEventKind() == EventKind.BUFF_PURCHASE)
                 .toList();
-        List<PurchaseByItemResponse> byItem = Arrays.stream(BuffItem.values())
+        List<PurchaseByItemResponse> byItem = BuffItem.DISPLAY_ORDER.stream()
                 .map(buffItem -> {
                     List<PlayerEvent> ofItem = purchases.stream()
                             .filter(event -> event.getBuffItem() == buffItem)

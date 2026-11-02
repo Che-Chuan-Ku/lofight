@@ -65,6 +65,6 @@ export const playerHandlers = [
 
   route('listMyBuffInventories', ({ request }) => {
     const auth = authenticate(request);
-    return auth.error || ok({ items: BUFF_ORDER.map(b => ({ buffItem: b, quantity: auth.player.inv[b] })) });
+    return auth.error || ok({ items: BUFF_ORDER.map(b => ({ buffItem: b, quantity: auth.player.inv[b] ?? 0 })) });
   })
 ];

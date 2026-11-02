@@ -12,7 +12,7 @@ function mergePlan(guest, sub) {
   const target = Object.values(db.players).find(p => p.googleSub === sub && !p.isVoided) || null;
   const best = p => (p ? db.board.filter(e => e.playerId === p.playerId) : []);
   const scores = list => list.map(e => ({ boardVersion: e.boardVersion, tier: e.tier, isVictory: e.isVictory, gameSeconds: e.gameSeconds }));
-  const inv = (p, q) => BUFF_ORDER.map(b => ({ buffItem: b, quantity: (p ? p.inv[b] : 0) + (q ? q.inv[b] : 0) }));
+  const inv = (p, q) => BUFF_ORDER.map(b => ({ buffItem: b, quantity: (p ? p.inv[b] ?? 0 : 0) + (q ? q.inv[b] ?? 0 : 0) }));
   return {
     target,
     preview: {
@@ -35,7 +35,7 @@ export const sessionHandlers = [
     if (!p) {
       const id = nextId();
       db.players[id] = { playerId: id, nickname: DEFAULT_GUEST_NICKNAME, playerKind: 'GUEST', deviceId: body.deviceId, isSilverUnlocked: false, isVoided: false,
-        coins: 0, inv: { ATTACK_SPEED: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: null };
+        coins: 0, inv: { ATTACK_SPEED: 0, ATTACK: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: null };
       p = db.players[id]; persist();
     }
     return ok(issueToken(p.playerId, false));
@@ -53,13 +53,13 @@ export const sessionHandlers = [
     if (!target) {
       const id = nextId();
       db.players[id] = { playerId: id, nickname: DEFAULT_MEMBER_NICKNAME, playerKind: 'MEMBER', deviceId: null, isSilverUnlocked: false, isVoided: false,
-        coins: 0, inv: { ATTACK_SPEED: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: sub };
+        coins: 0, inv: { ATTACK_SPEED: 0, ATTACK: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: sub };
       target = db.players[id];
     }
     if (guest) {
       // merge: coins and buffs add up, silver ORs, boards keep the best (rankBoard dedupes), guest voided
       if (guest.coins > 0) addLedger(target.playerId, { ledgerSource: 'MERGE_IN', coinDelta: guest.coins });
-      for (const b of BUFF_ORDER) target.inv[b] += guest.inv[b];
+      for (const b of BUFF_ORDER) target.inv[b] = (target.inv[b] ?? 0) + (guest.inv[b] ?? 0);
       target.isSilverUnlocked = target.isSilverUnlocked || guest.isSilverUnlocked;
       target.bronzeBest = Math.max(target.bronzeBest, guest.bronzeBest);
       for (const e of db.board) if (e.playerId === guest.playerId) e.playerId = target.playerId;

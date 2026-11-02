@@ -20,7 +20,6 @@ import com.crowdsiege.api.repository.WalletRepository;
 import com.crowdsiege.api.service.PlayerService.SilverUnlockHint;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -65,7 +64,7 @@ public class ShopService {
         Instant now = clock.instant();
         playerEventRepository.save(new PlayerEvent(EventKind.SHOP_VIEW, playerId, player.isSilverUnlocked(), null,
                 null, now));
-        return new ShopItemsResponse(Arrays.stream(BuffItem.values())
+        return new ShopItemsResponse(BuffItem.DISPLAY_ORDER.stream()
                 .map(buffItem -> new ShopItemListResponse(buffItem.name(), buffItem,
                         gameProperties.priceOf(buffItem), player.isSilverUnlocked(), hint.silverUnlockBossSeq(),
                         hint.bronzeBestBossesKilled()))
@@ -100,7 +99,7 @@ public class ShopService {
     }
 
     private static BuffItem parseShopItem(String shopItemId) {
-        return Arrays.stream(BuffItem.values())
+        return BuffItem.DISPLAY_ORDER.stream()
                 .filter(buffItem -> buffItem.name().equals(shopItemId))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(CommonErrorCode.RESOURCE_NOT_FOUND,
