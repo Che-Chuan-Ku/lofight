@@ -1,8 +1,10 @@
 // Turns the engine's end-of-run summary into a settleRun request body (api.yml RunSettleRequest).
 // The hidden stage 9 stays a front-end effect: a secret clear / a fall to the hidden boss settles as the bronze
-// stage-8 victory; only boss sequences inside the tier range (bronze 1-8, silver 1-6) are sent, never a secret field.
+// stage-8 victory; only boss sequences inside the tier range (bronze 1-8, silver 1-7) are sent, never a secret field.
 // Seconds (FE-39): a secret clear sends the full run time incl. stage 9; a fall to the hidden boss sends the stage-8 clear time.
-const BOSS_COUNT = { bronze: 8, silver: 6 };
+// EXTRA (D39, INF-X16): seven regular bosses, no hidden-stage rule: a win = boss 7 down, gameSeconds = the full run
+// time (clearT is set at the kill); a fall to boss 7 is an ordinary loss (kills 1-6 + seconds survived).
+const BOSS_COUNT = { bronze: 8, silver: 7 };
 
 export function buildSettlement(summary) {
   const max = BOSS_COUNT[summary.tier] || 8;

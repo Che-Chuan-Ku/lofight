@@ -2,6 +2,7 @@ package com.crowdsiege.api.cucumber;
 
 import com.crowdsiege.api.config.AdRewardProperties;
 import com.crowdsiege.api.config.GameProperties;
+import com.crowdsiege.api.steps.economy.aggregate_given.SeasonSettlementGivenSteps;
 import io.cucumber.java.Before;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,10 +14,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class DatabaseCleanupHook {
 
-    private static final String TRUNCATE_ALL = "TRUNCATE TABLE player_events, leaderboard_entries, run_boss_kills, "
+    private static final String TRUNCATE_ALL = "TRUNCATE TABLE season_settlements, player_events, "
+            + "leaderboard_entries, run_boss_kills, "
             + "coin_ledger_entries, buff_inventories, runs, wallets, refresh_tokens, player_identities, players "
             + "RESTART IDENTITY CASCADE";
 
+    private static String defaultBuildVersion;
     private static String defaultBoardVersion;
     private static List<String> defaultBannedWords;
     private static String defaultPublisherId;
@@ -45,6 +48,7 @@ public class DatabaseCleanupHook {
 
     @Before(order = 0)
     public void resetState() {
+        jdbcTemplate.execute(SeasonSettlementGivenSteps.FAILURE_TRIGGER_CLEANUP);
         jdbcTemplate.execute(TRUNCATE_ALL);
         clock.reset();
         nicknameGenerator.reset();
@@ -64,9 +68,11 @@ public class DatabaseCleanupHook {
 
     private void resetGameProperties() {
         if (defaultBoardVersion == null) {
+            defaultBuildVersion = gameProperties.getBuildVersion();
             defaultBoardVersion = gameProperties.getBoardVersion();
             defaultBannedWords = new ArrayList<>(gameProperties.getBannedWords());
         }
+        gameProperties.setBuildVersion(defaultBuildVersion);
         gameProperties.setBoardVersion(defaultBoardVersion);
         gameProperties.setBannedWords(new ArrayList<>(defaultBannedWords));
     }

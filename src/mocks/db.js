@@ -8,8 +8,9 @@ export const BOARD_VERSION = '19.0';                       // 查詢排行榜.fe
 export const SHOP_PRICES = { ATTACK_SPEED: 200, ATTACK: 200, CANNON: 400, LASER: 600 };   // 瀏覽商店.feature / GAP-02=A, D37
 export const BUFF_ORDER = ['ATTACK_SPEED', 'ATTACK', 'CANNON', 'LASER'];
 export const TIER_RULES = {
-  BRONZE: { bossCount: 8, victoryAbove: 98, spawn: [14, 28, 42, 56, 70, 84, 98, 98], coins: [1, 2, 4, 8, 16, 24, 48, 96] },
-  SILVER: { bossCount: 6, victoryAbove: 84, spawn: [14, 28, 42, 56, 70, 84], coins: [4, 8, 16, 32, 64, 128] }
+  BRONZE: { bossCount: 8, victoryMin: 98, spawn: [14, 28, 42, 56, 70, 84, 98, 98], coins: [1, 2, 4, 8, 16, 24, 48, 96] },
+  // D39: seven bosses (boss 7 floor 84, coins 192, AMB-X14=b / X15=a); boss 7 kill second >= boss 6 kill second
+  SILVER: { bossCount: 7, victoryMin: 84, spawn: [14, 28, 42, 56, 70, 84, 84], coins: [4, 8, 16, 32, 64, 128, 192], lastNotBefore: [7, 6] }
 };
 export const SILVER_UNLOCK_BOSS_SEQ = 8;
 export const LEDGER_PAGE_SIZE = 20;
@@ -18,6 +19,8 @@ export const DEFAULT_GUEST_NICKNAME = '勇者248';           // 建立guest身�
 export const DEFAULT_MEMBER_NICKNAME = '老兵512';          // Google登入.feature: a new account takes the system default, not the guest's nickname
 // Rewarded ad (AMB-A1=a, backend config): 200 coins, 5 per UTC day, 60 s apart
 export const AD_REWARD = { coins: 200, dailyLimit: 5, cooldownSec: 60 };
+// 發放賽季獎勵.feature (INF-S1): coins by rank 1..5; rank 6+ gets nothing
+export const SEASON_REWARD_COINS = [1200, 800, 400, 200, 100];
 // Google id_token -> verification result (查詢合併預覽.feature Background)
 export const GOOGLE_TOKENS = { 'g-ok-1': 'g-sub-1', 'g-ok-2': 'g-sub-2' };
 
@@ -72,7 +75,8 @@ export function issueToken(playerId, withRefresh) {
 export function addLedger(playerId, entry) {
   const p = db.players[playerId];
   p.coins += entry.coinDelta;
-  db.ledger.push({ ledgerEntryId: nextId(), playerId, bossSeq: null, buffItem: null, runId: null, occurredAt: now(), ...entry, coinsAfter: p.coins });
+  db.ledger.push({ ledgerEntryId: nextId(), playerId, bossSeq: null, buffItem: null, runId: null,
+    seasonBoardVersion: null, seasonTier: null, seasonRank: null, occurredAt: now(), ...entry, coinsAfter: p.coins });
 }
 
 /** adReward state of one player (瀏覽商店 adReward / INF-A12): counts today's (UTC) AD_REWARD ledger rows. */
@@ -88,6 +92,25 @@ export function adRewardStatus(playerId, at = Date.now()) {
   if (remainingCount === 0) next = Math.max(day0.getTime() + 864e5, coolEnd || 0);
   else if (coolEnd !== null && coolEnd > at) next = coolEnd;
   return { isEnabled: true, remainingCount, nextClaimableAt: next === null ? null : iso(next) };
+}
+
+/** Numeric (major, minor) season comparison: 19.10 > 19.9 (INF-S12). */
+export function compareSeason(a, b) {
+  const [a1, a2] = a.split('.').map(Number), [b1, b2] = b.split('.').map(Number);
+  return a1 - b1 || a2 - b2;
+}
+
+/** getMyWallet latestSeasonReward (INF-S13): the player's SEASON_REWARD rows of the highest season, or null. */
+export function latestSeasonReward(playerId) {
+  const mine = db.ledger.filter(e => e.playerId === playerId && e.ledgerSource === 'SEASON_REWARD');
+  if (!mine.length) return null;
+  const top = mine.map(e => e.seasonBoardVersion).reduce((m, v) => (compareSeason(v, m) > 0 ? v : m));
+  const rows = mine.filter(e => e.seasonBoardVersion === top).sort((a, b) => (a.seasonTier === 'BRONZE' ? -1 : 1) - (b.seasonTier === 'BRONZE' ? -1 : 1));
+  return {
+    boardVersion: top,
+    awardedAt: rows.map(e => e.occurredAt).sort().pop(),
+    items: rows.map(e => ({ tier: e.seasonTier, rank: e.seasonRank, coins: e.coinDelta }))
+  };
 }
 
 /** Leaderboard ranking: wins first, faster wins, longer losses, earlier settlement; best entry per player. */
@@ -125,6 +148,12 @@ export const controls = {
   clearBoard() { db.board = []; persist(); },
   /** Backend rewarded-ad switch (ADSENSE_PUBLISHER_ID set or not). */
   setAdEnabled(on) { db.adEnabled = !!on; persist(); },
+  /** Backend season payout (發放賽季獎勵.feature, @batch at startup): one SEASON_REWARD row for (season, tier); idempotent per key. */
+  seedSeasonReward(playerId, boardVersion, tier, rank) {
+    if (db.ledger.some(e => e.playerId === playerId && e.ledgerSource === 'SEASON_REWARD' && e.seasonBoardVersion === boardVersion && e.seasonTier === tier)) return;
+    addLedger(playerId, { ledgerSource: 'SEASON_REWARD', coinDelta: SEASON_REWARD_COINS[rank - 1], seasonBoardVersion: boardVersion, seasonTier: tier, seasonRank: rank });
+    persist();
+  },
   /** n AD_REWARD rows for a player, `agoSec` seconds in the past (daily limit / cooldown states). */
   seedAdRewards(playerId, n, agoSec = 3600) {
     for (let i = 0; i < n; i++) addLedger(playerId, { ledgerSource: 'AD_REWARD', coinDelta: AD_REWARD.coins, occurredAt: iso(Date.now() - (agoSec + (n - 1 - i)) * 1000) });

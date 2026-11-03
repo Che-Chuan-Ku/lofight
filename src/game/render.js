@@ -1,8 +1,108 @@
 // Canvas drawing for one frame. Pure function of the state; `lite` drops sprites for slow devices.
-// `view.oy` shifts the world: positive adds red sea above the battlefield (tall screens), negative crops the top.
-import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS, LASER, MAX_EXTRA_H, STORM } from './constants.js';
+// `view.oy` shifts the world: positive adds sky / canopy above the battlefield (tall screens), negative crops the top.
+import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS, LASER, MAX_EXTRA_H, STORM, BOSS7 } from './constants.js';
 import { PL, PATH_LEN, pathPos } from './path.js';
 import { ABILITIES, spreadMaxed } from './abilities.js';
+
+// Per-tier visual theme (FE-52): NORMAL (bronze) = pixel forest, EXTRA (silver) = misty cloud sky.
+// Only colours / background / decoration differ; geometry (path, gates, turret zone, hit areas, HUD) is shared.
+export const THEME = {
+  bronze: {
+    upper: ['#1d3320'],                      // forest floor in shade (single colour)
+    horizon: '#0b170d',                      // dark tree line at the top edge, reds come out of it
+    moss: '#24402a',
+    tree: { shadow: 'rgba(0,0,0,.28)', trunk: '#4a2f18', dark: '#25502a', mid: '#347036', light: '#55934a' },
+    gateBand: '#2a1c10',
+    arenaRim: '#2f4f22', arena: '#5f8a3e', arenaLine: 'rgba(0,0,0,.08)', tuft: '#77a64f',
+    pathEdge: '#2a1a0c', pathRim: '#4d7a2c', path: '#9a7044', pathSeam: 'rgba(58,34,14,.45)',
+    gate: { multFrame: '#6b4420', multPost: '#c89b5e', crate: '#7a5526', hpBack: '#5c2412' },
+    clouds: 0, fog: null, stars: false
+  },
+  silver: {
+    upper: ['#121634', '#2c3272', '#5a60a8'],  // night-indigo sky down to a lilac haze at the gates
+    horizon: '#070a1f',
+    cloud: 'rgba(214,220,255,.30)', cloudHi: 'rgba(240,242,255,.35)', star: '#e8e6ff',
+    gateBand: '#262a5c',
+    arenaRim: '#5a5398', arena: '#868cc0', arenaLine: 'rgba(40,40,100,.10)', tuft: 'rgba(255,255,255,.18)',
+    pathEdge: 'rgba(200,206,255,.35)', pathRim: '#8a8fd0', path: '#dfe2f7', pathSeam: 'rgba(90,90,150,.35)',
+    gate: { multFrame: '#6c63a6', multPost: '#e4e0fb', crate: '#5e5a96', hpBack: '#3f2a6b' },
+    clouds: 5, fog: 'rgba(225,230,255,', stars: true,
+    // boss 6 lightning / orbs: dark outlines keep the violet readable on both the dark sky and the pale platform
+    boltWarn: 'rgba(120,70,230,', boltEdge: '#f4ecff', boltEdgeDark: '#1b0f40', boltGlow: 'rgba(185,140,255,.45)',
+    // boss 7 purple lightning (D39, INF-X11): bright core + dark outline, a redder purple than boss 6's violet
+    pWarn: 'rgba(190,40,255,', pEdge: '#fbe6ff', pEdgeDark: '#22042f', pGlow: 'rgba(214,90,255,.45)', pBody: '#c23cff', pCore: '#fff0ff'
+  }
+};
+// Menus (scenery) and the hidden stage 9 always use NORMAL's forest; a run uses its own tier.
+export function themeKey(S, view) { return view && view.scenery ? 'bronze' : S.tier === 'silver' ? 'silver' : 'bronze'; }
+
+// Deterministic decoration layouts (built once; cheap rects per frame).
+function lcg(seed) { return () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }; }
+const TREES = (() => {
+  const r = lcg(7), out = [];
+  for (let y = -MAX_EXTRA_H + 6; y < GATE_Y - 30; y += 34) for (let x = -6; x < W; x += 40) out.push([x + r() * 22, y + r() * 16, 18 + ((r() * 3) | 0) * 6]);
+  return out;
+})();
+const MOSS = (() => { const r = lcg(11), out = []; for (let i = 0; i < 40; i++) out.push([r() * W, -MAX_EXTRA_H + r() * (GATE_Y + MAX_EXTRA_H), 6 + r() * 14]); return out; })();
+const TUFTS = (() => { const r = lcg(23), out = []; for (let i = 0; i < 26; i++) out.push([14 + r() * (W - 34), GATE_Y + GATE_H + 16 + r() * (H - GATE_Y - GATE_H - 24)]); return out; })();
+const STARS = (() => { const r = lcg(5), out = []; for (let i = 0; i < 28; i++) out.push([r() * W, -MAX_EXTRA_H + r() * (MAX_EXTRA_H + 150), r() * 6.28]); return out; })();
+const CLOUDS = [[20, 40, 0.9, 6], [230, 130, 1.1, 4], [90, 250, 0.8, 7], [300, 330, 1.0, 5], [160, -80, 1.2, 3]];   // x, y, scale, drift px/s
+
+// Static backdrop (ground, trees, horizon, arena, gate strip, path) for one theme, painted once into an offscreen
+// canvas at device resolution and blitted every frame; only stars, clouds and fog are drawn live.
+let BG = null;
+function backdrop(th, key, oy, scale) {
+  const id = key + ':' + oy + ':' + scale;
+  if (BG && BG.id === id) return BG.canvas;
+  const cv = (BG && BG.canvas) || document.createElement('canvas');
+  cv.width = Math.ceil((W + 20) * scale); cv.height = Math.ceil((H + oy + 20) * scale);
+  const c = cv.getContext('2d');
+  c.setTransform(scale, 0, 0, scale, 10 * scale, (10 + oy) * scale);   // logical (-10, -10 - oy) maps to the bitmap origin
+  // upper field: forest floor (NORMAL) or night-indigo sky (EXTRA); no red reserve band any more (FE-52)
+  if (th.upper.length > 1) {
+    const g = c.createLinearGradient(0, -oy, 0, GATE_Y + 10);
+    th.upper.forEach((col, i) => g.addColorStop(i / (th.upper.length - 1), col));
+    c.fillStyle = g;
+  } else c.fillStyle = th.upper[0];
+  c.fillRect(-10, -10 - oy, W + 20, GATE_Y + 20 + oy);
+  if (th.tree) {
+    c.fillStyle = th.moss;
+    for (const m of MOSS) c.fillRect(m[0] | 0, m[1] | 0, m[2] | 0, (m[2] * 0.5) | 0);
+    const T = th.tree;
+    for (const t of TREES) {
+      const x = t[0] | 0, y = t[1] | 0, s = t[2];
+      c.fillStyle = T.shadow; c.fillRect(x + 4, y + 6, s, s * 0.8);
+      c.fillStyle = T.trunk; c.fillRect(x + s / 2 - 2, y + s * 0.7, 4, 6);
+      c.fillStyle = T.dark; c.fillRect(x, y, s, s * 0.8);
+      c.fillStyle = T.mid; c.fillRect(x + 2, y + 2, s - 6, s * 0.5);
+      c.fillStyle = T.light; c.fillRect(x + 4, y + 3, (s / 3) | 0, 3);
+    }
+  }
+  // top edge: a dark horizon (tree line / deep sky) fading into the field so red units read against it
+  const hz = c.createLinearGradient(0, -oy, 0, 40);
+  hz.addColorStop(0, th.horizon); hz.addColorStop(1, 'rgba(0,0,0,0)');
+  c.fillStyle = hz; c.fillRect(-10, -10 - oy, W + 20, 50 + oy);
+  // arena ground with rim
+  c.fillStyle = th.arenaRim; c.fillRect(-10, GATE_Y + GATE_H, W + 20, H);
+  c.fillStyle = th.arena; c.fillRect(10, GATE_Y + GATE_H + 8, W - 20, H);
+  c.fillStyle = th.arenaLine;
+  for (let y = GATE_Y + GATE_H + 30; y < H; y += 44) c.fillRect(10, y, W - 20, 2);
+  c.fillStyle = th.tuft;
+  for (const t of TUFTS) { c.fillRect(t[0] | 0, t[1] | 0, 2, 4); c.fillRect((t[0] | 0) + 3, (t[1] | 0) - 1, 2, 5); }
+  // gate strip, always repainted so the last run's gates do not linger behind menus
+  c.fillStyle = th.gateBand; c.fillRect(-10, GATE_Y + 10, W + 20, GATE_H - 10);
+  // path: edge + rim + surface, then cross seams (wooden planks / cloud-bridge steps) via a dashed wide stroke
+  c.lineJoin = 'round'; c.lineCap = 'round';
+  c.beginPath(); c.moveTo(PL[0][0], PL[0][1]);
+  for (let i = 1; i < PL.length; i++) c.lineTo(PL[i][0], PL[i][1]);
+  c.strokeStyle = th.pathEdge; c.lineWidth = PATH_HW * 2 + 16; c.stroke();
+  c.strokeStyle = th.pathRim; c.lineWidth = PATH_HW * 2 + 7; c.stroke();
+  c.strokeStyle = th.path; c.lineWidth = PATH_HW * 2; c.stroke();
+  c.lineCap = 'butt'; c.strokeStyle = th.pathSeam; c.lineWidth = PATH_HW * 2 - 4; c.setLineDash([2, 10]); c.stroke();
+  c.setLineDash([]); c.lineCap = 'round';
+  BG = { id, canvas: cv };
+  return cv;
+}
 
 export function render(ctx, S, SPR, lite, view) {
   const oy = view ? view.oy : 0;
@@ -24,34 +124,34 @@ export function render(ctx, S, SPR, lite, view) {
   }
   const sx = S.shake ? (Math.random() - 0.5) * 6 * S.shake : 0, sy = S.shake ? (Math.random() - 0.5) * 6 * S.shake : 0;
   ctx.save(); ctx.translate(sx, sy + oy);
-  // cliffs
-  ctx.fillStyle = '#3d4148'; ctx.fillRect(-10, -10 - oy, W + 20, GATE_Y + 20 + oy);
-  ctx.fillStyle = '#2d3036';
-  for (let i = 0; i < 9; i++) ctx.fillRect(-10, i * 52 - 10, W + 20, 6);
-  // arena ground with grass rim
-  ctx.fillStyle = '#5c8f3a'; ctx.fillRect(-10, GATE_Y + GATE_H, W + 20, H);
-  ctx.fillStyle = '#d9b97c'; ctx.fillRect(10, GATE_Y + GATE_H + 8, W - 20, H);
-  ctx.fillStyle = 'rgba(0,0,0,.08)';
-  for (let y = GATE_Y + GATE_H + 30; y < H; y += 44) ctx.fillRect(10, y, W - 20, 2);
-  // gate strip: repainted in scenery mode so the last run's gates do not linger on the canvas behind menus
-  if (view && view.scenery) { ctx.fillStyle = '#1b1d22'; ctx.fillRect(-10, GATE_Y + 10, W + 20, GATE_H - 10); }
-  // path (rock rim + sand)
+  const key = themeKey(S, view), th = THEME[key];
+  const scale = Math.max(1, Math.round(Math.abs(ctx.getTransform().a) * 100) / 100);
+  ctx.drawImage(backdrop(th, key, oy, scale), -10, -10 - oy, W + 20, H + oy + 20);
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(PL[0][0], PL[0][1]);
-  for (let i = 1; i < PL.length; i++) ctx.lineTo(PL[i][0], PL[i][1]);
-  ctx.strokeStyle = '#1e2025'; ctx.lineWidth = PATH_HW * 2 + 16; ctx.stroke();
-  ctx.strokeStyle = '#6f9a44'; ctx.lineWidth = PATH_HW * 2 + 7; ctx.stroke();
-  ctx.strokeStyle = '#cdb67e'; ctx.lineWidth = PATH_HW * 2; ctx.stroke();
-  // red sea at the top edge (reserve)
-  ctx.fillStyle = '#c21f28'; ctx.fillRect(-10, -10 - oy, W + 20, 36 + oy);
-  ctx.fillStyle = '#e03a42';
-  for (let x = 0; x < W; x += 5) for (let y = 2 - oy; y < 24; y += 5) if (((x * 7 + y * 13) % 11) < 5) ctx.fillRect(x, y, 2, 2);
-  ctx.fillStyle = '#7a0f15';
-  for (let x = 0; x < W; x += 9) ctx.fillRect(x, 26 + (x % 3), 5, 2);
+  if (th.stars) {
+    ctx.fillStyle = th.star;
+    for (const st of STARS) { ctx.globalAlpha = 0.35 + 0.35 * Math.sin(S.t * 1.3 + st[2]); ctx.fillRect(st[0] | 0, st[1] | 0, 2, 2); }
+    ctx.globalAlpha = 1;
+  }
+  // drifting clouds (EXTRA): a handful of pixel-stepped puffs, behind everything else
+  for (let i = 0; i < th.clouds; i++) {
+    const c = CLOUDS[i], sc = c[2], span = W + 160;
+    const x = ((c[0] + S.t * c[3]) % span + span) % span - 80, y = c[1];
+    ctx.fillStyle = th.cloud;
+    roundRect(x, y, 70 * sc, 14 * sc, 7 * sc); ctx.fill();
+    roundRect(x + 14 * sc, y - 9 * sc, 40 * sc, 14 * sc, 7 * sc); ctx.fill();
+    ctx.fillStyle = th.cloudHi; roundRect(x + 20 * sc, y - 7 * sc, 22 * sc, 4 * sc, 2 * sc); ctx.fill();
+  }
+  // fog (EXTRA): one slowly breathing horizontal gradient band, drawn under units and telegraphs
+  if (th.fog) {
+    const fy = 210 + Math.sin(S.t * 0.4) * 30, fg = ctx.createLinearGradient(0, fy - 90, 0, fy + 90);
+    fg.addColorStop(0, th.fog + '0)'); fg.addColorStop(0.5, th.fog + '.22)'); fg.addColorStop(1, th.fog + '0)');
+    ctx.fillStyle = fg; ctx.fillRect(-10, fy - 90, W + 20, 180);
+  }
 
   // out-of-game screens (v19): static scenery only — no armies, gates, bosses or turret behind the menus (UXR-01)
   if (view && view.scenery) { ctx.restore(); return; }
-  // red sea: solid fill only where the path actually holds reds, so shell craters open real gaps
+  // queued red column: solid fill only where the path actually holds reds, so shell craters open real gaps
   if (S.red.length) {
     const SEG = 6, nseg = Math.ceil(PATH_LEN / SEG) + 1, occ = new Uint16Array(nseg);
     for (const r of S.red) if (r.mode === 1) occ[Math.max(0, Math.min(nseg - 1, (r.s / SEG) | 0))]++;
@@ -81,15 +181,15 @@ export function render(ctx, S, SPR, lite, view) {
   for (const g of S.gates) {
     const w = g.x1 - g.x0;
     if (g.kind === 'mult') {
-      ctx.fillStyle = '#b8860b'; roundRect(g.x0, GATE_Y, w, GATE_H, 4); ctx.fill();
+      ctx.fillStyle = th.gate.multFrame; roundRect(g.x0, GATE_Y, w, GATE_H, 4); ctx.fill();
       ctx.fillStyle = '#f2c233'; roundRect(g.x0 + 2, GATE_Y + 2, w - 4, GATE_H - 8, 3); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.fillRect(g.x0 - 5, GATE_Y - 6, 7, GATE_H + 12); ctx.fillRect(g.x1 - 2, GATE_Y - 6, 7, GATE_H + 12);
+      ctx.fillStyle = th.gate.multPost; ctx.fillRect(g.x0 - 5, GATE_Y - 6, 7, GATE_H + 12); ctx.fillRect(g.x1 - 2, GATE_Y - 6, 7, GATE_H + 12);
       ctx.fillStyle = '#2b1d00'; ctx.font = 'bold 22px "Luckiest Guy", "Arial Black", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('x' + g.mult, g.x0 + w / 2, GATE_Y + GATE_H / 2 - 1);
     } else if (!g.dead) {
       // weapon crate above the bar
       const cx = g.x0 + w / 2, top = GATE_Y - 40, ab = ABILITIES[g.ability];
-      ctx.fillStyle = '#8c6a2a'; roundRect(cx - 28, top, 56, 42, 6); ctx.fill();
+      ctx.fillStyle = th.gate.crate; roundRect(cx - 28, top, 56, 42, 6); ctx.fill();
       const cols = Math.min(2 + g.gen, 4), rows = Math.min(2 + (g.gen >> 1), 3), r0 = cols > 3 ? 5 : 6;
       for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
         const bx = cx - (cols - 1) * (r0 + 2) + i * (r0 * 2 + 4), by = top + 9 + j * (r0 * 2 + 1);
@@ -100,7 +200,7 @@ export function render(ctx, S, SPR, lite, view) {
       // a multiplier crate reads MAX once soldiers per shot is maxed
       const tag = ab.mult && spreadMaxed(S) ? 'MAX' : ab.tag;
       ctx.lineWidth = 3; ctx.strokeStyle = '#2b1d00'; ctx.strokeText(tag, cx, top - 10); ctx.fillText(tag, cx, top - 10);
-      ctx.fillStyle = '#7a1a1a'; roundRect(g.x0, GATE_Y, w, GATE_H, 4); ctx.fill();
+      ctx.fillStyle = th.gate.hpBack; roundRect(g.x0, GATE_Y, w, GATE_H, 4); ctx.fill();
       ctx.fillStyle = '#f2c233'; roundRect(g.x0 + 2, GATE_Y + 2, (w - 4) * (g.hp / g.max), GATE_H - 8, 3); ctx.fill();
       ctx.fillStyle = '#fff'; ctx.font = 'bold 20px "Luckiest Guy", "Arial Black", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineWidth = 3; ctx.strokeStyle = '#2b1d00'; ctx.strokeText(String(g.hp), cx, GATE_Y + GATE_H / 2 - 1); ctx.fillText(String(g.hp), cx, GATE_Y + GATE_H / 2 - 1);
@@ -117,17 +217,29 @@ export function render(ctx, S, SPR, lite, view) {
   for (const bo of S.bosses) {
     if (!bo.alive) continue;
     const R = bo.r;
-    const bset = bo.minion ? SPR.minion : SPR.bosses[bo.idx - 1];   // idx is 1-based
+    const bset = bo.minion ? SPR.minion : bo.purple ? SPR.purple : SPR.bosses[bo.idx - 1];   // idx is 1-based
+    // EXTRA boss 7 in the centre: invulnerable ring, and the wave (sprite hops up + swells) while invulnerable,
+    // then the raised pose (held larger) while the round is cast (D39, X9=a)
+    let lift = 0, grow = 1;
+    if (bo.purple && bo.mode === 3) {
+      const wv = Math.abs(Math.sin(S.t * 10));
+      if (bo.inv > 0) { lift = 4 + wv * 8; grow = 1.08 + wv * 0.14; } else { lift = 6; grow = 1.16; }
+      if (bo.inv > 0) {
+        ctx.strokeStyle = THEME.silver.pEdge; ctx.globalAlpha = 0.5 + 0.3 * wv; ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.arc(bo.x, bo.y, R + 10, 0, 6.28); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    }
     if (SPR.ready && !lite && bset) {
       const im = bset[bo.hitT > 0 ? 1 : 0];
-      const bob = Math.abs(Math.sin(S.t * 9)) * 3;
+      const bob = Math.abs(Math.sin(S.t * 9)) * 3 + lift;
       ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.beginPath(); ctx.ellipse(bo.x, bo.y + R - 2, R, R * 0.35, 0, 0, 6.28); ctx.fill();
-      ctx.drawImage(im, (bo.x - im.width / 2) | 0, (bo.y - im.height / 2 - bob) | 0);
+      if (grow !== 1) { const w = im.width * grow, h = im.height * grow; ctx.drawImage(im, (bo.x - w / 2) | 0, (bo.y - h / 2 - bob) | 0, w | 0, h | 0); }
+      else ctx.drawImage(im, (bo.x - im.width / 2) | 0, (bo.y - im.height / 2 - bob) | 0);
     } else {
-    ctx.save(); ctx.translate(bo.x, bo.y);
-    ctx.fillStyle = bo.hitT > 0 ? '#ffd0d0' : '#8e1016';
+    ctx.save(); ctx.translate(bo.x, bo.y - lift); if (grow !== 1) ctx.scale(grow, grow);
+    ctx.fillStyle = bo.hitT > 0 ? '#ffd0d0' : bo.purple ? '#5a1080' : '#8e1016';
     ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.28); ctx.fill();
-    ctx.fillStyle = bo.hitT > 0 ? '#fff' : '#d6242c';
+    ctx.fillStyle = bo.hitT > 0 ? '#fff' : bo.purple ? '#c23cff' : '#d6242c';
     ctx.beginPath(); ctx.arc(0, -2, R * 0.68, 0, 6.28); ctx.fill();
     ctx.fillStyle = '#e6e6e6';
     const spikes = 5 + bo.idx;
@@ -234,25 +346,28 @@ export function render(ctx, S, SPR, lite, view) {
   ctx.globalAlpha = 1;
   // EXTRA boss 6 lightning (_ui-spec.md §5.3): the warned column pulses with a light fill and dashed edges; the
   // firing column is a three-layer violet bolt; once it has fired nothing of it is drawn (FE-41). No text.
+  const BT = THEME.silver;   // lightning only exists in EXTRA
   for (const bl of S.bolts || []) {
     const top = -MAX_EXTRA_H, bot = H + 20, bw = bl.x1 - bl.x0, cx = (bl.x0 + bl.x1) / 2;
     if (bl.t < bl.warn) {
       ctx.globalAlpha = 1;
-      ctx.fillStyle = 'rgba(185,140,255,' + (0.10 + 0.12 * (0.5 + 0.5 * Math.sin(S.t * 9))) + ')';
+      ctx.fillStyle = BT.boltWarn + (0.14 + 0.14 * (0.5 + 0.5 * Math.sin(S.t * 9))) + ')';
       ctx.fillRect(bl.x0, top, bw, bot - top);
-      ctx.strokeStyle = '#d9c2ff'; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -S.t * 40;
-      ctx.beginPath(); ctx.moveTo(bl.x0 + 1, top); ctx.lineTo(bl.x0 + 1, bot); ctx.moveTo(bl.x1 - 1, top); ctx.lineTo(bl.x1 - 1, bot); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bl.x0 + 1, top); ctx.lineTo(bl.x0 + 1, bot); ctx.moveTo(bl.x1 - 1, top); ctx.lineTo(bl.x1 - 1, bot);
+      ctx.strokeStyle = BT.boltEdgeDark; ctx.lineWidth = 4; ctx.stroke();
+      ctx.strokeStyle = BT.boltEdge; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -S.t * 40; ctx.stroke();
       ctx.setLineDash([]);
     } else {
       const k = 1 - (bl.t - bl.warn) / bl.fire;
       ctx.globalAlpha = 0.35 + 0.65 * k;
-      ctx.fillStyle = 'rgba(185,140,255,.45)'; ctx.fillRect(bl.x0, top, bw, bot - top);
+      ctx.fillStyle = BT.boltGlow; ctx.fillRect(bl.x0, top, bw, bot - top);
       // zigzag bolt; its shape changes at most 3 times per second (flash-safe)
       let seed = (bl.strip * 97 + Math.floor(bl.t * 3) * 31) | 0;
       const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
       ctx.beginPath(); ctx.moveTo(cx, top);
       for (let y = top + 40; y <= bot; y += 40) ctx.lineTo(cx + (rnd() - 0.5) * bw * 0.6, y);
       ctx.lineJoin = 'miter';
+      ctx.strokeStyle = BT.boltEdgeDark; ctx.lineWidth = bw * 0.45 + 6; ctx.stroke();
       ctx.strokeStyle = '#b98cff'; ctx.lineWidth = bw * 0.45; ctx.stroke();
       ctx.strokeStyle = '#fbf4ff'; ctx.lineWidth = bw * 0.14; ctx.stroke();
       ctx.lineJoin = 'round';
@@ -264,9 +379,55 @@ export function render(ctx, S, SPR, lite, view) {
     // last 1.5 s: blink at 2.5 per second (<= 3 flashes per second) before the orb fades out
     if (left < STORM.orbs.blink && Math.floor(o.t * 5) % 2 === 1) continue;
     const R = STORM.orbs.r;
+    // orb keeps the original look (soft glow + body + core); no dark outline (user ruling 2026-11-03)
     ctx.fillStyle = 'rgba(185,140,255,.45)'; ctx.beginPath(); ctx.arc(o.x, o.y, R + 5, 0, 6.28); ctx.fill();
     ctx.fillStyle = '#b98cff'; ctx.beginPath(); ctx.arc(o.x, o.y, R, 0, 6.28); ctx.fill();
     ctx.fillStyle = '#fbf4ff'; ctx.beginPath(); ctx.arc(o.x, o.y, R * 0.45, 0, 6.28); ctx.fill();
+  }
+  // EXTRA boss 7 purple lightning (D39): same column look as boss 6 in a purple palette; columns with t < 0 are not
+  // shown yet; a column that has fired is gone (INF-X4). The safe column carries no mark (X3=b). No text.
+  for (const bl of S.pbolts || []) {
+    if (bl.t < 0) continue;
+    const top = -MAX_EXTRA_H, bot = H + 20, bw = bl.x1 - bl.x0, cx = (bl.x0 + bl.x1) / 2;
+    if (bl.t < bl.warn) {
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = BT.pWarn + (0.14 + 0.14 * (0.5 + 0.5 * Math.sin(S.t * 9))) + ')';
+      ctx.fillRect(bl.x0, top, bw, bot - top);
+      ctx.beginPath(); ctx.moveTo(bl.x0 + 1, top); ctx.lineTo(bl.x0 + 1, bot); ctx.moveTo(bl.x1 - 1, top); ctx.lineTo(bl.x1 - 1, bot);
+      ctx.strokeStyle = BT.pEdgeDark; ctx.lineWidth = 4; ctx.stroke();
+      ctx.strokeStyle = BT.pEdge; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -S.t * 40; ctx.stroke();
+      ctx.setLineDash([]);
+    } else {
+      const k = 1 - (bl.t - bl.warn) / bl.fire;
+      ctx.globalAlpha = 0.35 + 0.65 * k;
+      ctx.fillStyle = BT.pGlow; ctx.fillRect(bl.x0, top, bw, bot - top);
+      let seed = (bl.strip * 131 + Math.floor(bl.t * 3) * 17 + 7) | 0;   // shape changes at most 3 times per second
+      const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+      ctx.beginPath(); ctx.moveTo(cx, top);
+      for (let y = top + 40; y <= bot; y += 40) ctx.lineTo(cx + (rnd() - 0.5) * bw * 0.6, y);
+      ctx.lineJoin = 'miter';
+      ctx.strokeStyle = BT.pEdgeDark; ctx.lineWidth = bw * 0.45 + 6; ctx.stroke();
+      ctx.strokeStyle = BT.pBody; ctx.lineWidth = bw * 0.45; ctx.stroke();
+      ctx.strokeStyle = BT.pCore; ctx.lineWidth = bw * 0.14; ctx.stroke();
+      ctx.lineJoin = 'round';
+    }
+  }
+  ctx.globalAlpha = 1;
+  // lightning arrows: shaft along the flight direction (len x width as the hit capsule), dark outline, bright core, arrowhead
+  if (S.arrows && S.arrows.length) {
+    const A = BOSS7.arrows;
+    ctx.lineCap = 'round';
+    for (const a of S.arrows) {
+      const tx = a.x - a.ux * A.len, ty = a.y - a.uy * A.len;
+      ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(a.x, a.y);
+      ctx.strokeStyle = BT.pGlow; ctx.lineWidth = A.hw * 2 + 8; ctx.stroke();
+      ctx.strokeStyle = BT.pEdgeDark; ctx.lineWidth = A.hw * 2 + 3; ctx.stroke();
+      ctx.strokeStyle = BT.pBody; ctx.lineWidth = A.hw * 2; ctx.stroke();
+      ctx.strokeStyle = BT.pCore; ctx.lineWidth = A.hw * 0.7; ctx.stroke();
+      const hx = a.x + a.ux * 6, hy = a.y + a.uy * 6, nx = -a.uy, ny = a.ux;
+      ctx.beginPath(); ctx.moveTo(hx + a.ux * 8, hy + a.uy * 8); ctx.lineTo(hx + nx * 9, hy + ny * 9); ctx.lineTo(hx - nx * 9, hy - ny * 9); ctx.closePath();
+      ctx.fillStyle = BT.pCore; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = BT.pEdgeDark; ctx.stroke();
+    }
   }
   // popups
   for (const p of S.pops) {

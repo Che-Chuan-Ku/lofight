@@ -11,6 +11,10 @@ DayWar（repo 名 lofight）：HTML5 canvas 塔防遊戲，React 19 + Vite 8 前
 
 每個 commit 前先改版號，三處同步：`package.json`（用 `npm version X.Y.Z --no-git-tag-version`，會連 `package-lock.json` 一起改）與 `backend/pom.xml` 第 16 行 `<version>`。遊戲右下角顯示的版號來自 package.json。
 
+**版號同時是賽季鍵**：後端從 `backend/pom.xml` 版號取「大.中」當排行榜 boardVersion（`game.build-version` 由 Maven resource filtering 填入，無法解析則啟動失敗）。升**大版本或中版本**＝開新賽季：部署後後端啟動時會自動把上一賽季（最早 19.0）兩榜前 5 名的已綁定玩家發放 1,200／800／400／200／100 金幣，**不可撤回**，升版前先確認排行榜狀態。小版本不切賽季。
+
+每次升版同時在 `src/content/changelog.js` 新增該版摘要（首頁「開發者日誌」頁顯示；玩家視角、不寫數值與機制）。
+
 | 位 | 何時進位 | 例子 |
 |---|---|---|
 | 大版本 X | 系統性更換：風格、遊戲玩法、遊戲模式 | 階層改制、整體視覺換風格 |

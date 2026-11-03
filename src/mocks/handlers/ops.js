@@ -12,10 +12,12 @@ export const opsHandlers = [
     const buys = getDb().ledger.filter(e => e.ledgerSource === 'BUFF_PURCHASE' && Date.parse(e.occurredAt) >= f && Date.parse(e.occurredAt) < t);
     const byItem = {};
     for (const b of buys) { byItem[b.buffItem] = byItem[b.buffItem] || { buffItem: b.buffItem, count: 0, totalCoins: 0 }; byItem[b.buffItem].count++; byItem[b.buffItem].totalCoins -= b.coinDelta; }
-    const ads = getDb().ledger.filter(e => e.ledgerSource === 'AD_REWARD' && Date.parse(e.occurredAt) >= f && Date.parse(e.occurredAt) < t);
+    const inRange = src => getDb().ledger.filter(e => e.ledgerSource === src && Date.parse(e.occurredAt) >= f && Date.parse(e.occurredAt) < t);
+    const ads = inRange('AD_REWARD'), seasons = inRange('SEASON_REWARD');
     return ok({ from, to,
       eventTotals: [{ eventKind: 'SHOP_VIEW', count: 0, uniquePlayers: 0 }, { eventKind: 'BUFF_PURCHASE', count: buys.length, uniquePlayers: new Set(buys.map(b => b.playerId)).size },
-        { eventKind: 'AD_REWARD', count: ads.length, uniquePlayers: new Set(ads.map(b => b.playerId)).size }],
+        { eventKind: 'AD_REWARD', count: ads.length, uniquePlayers: new Set(ads.map(b => b.playerId)).size },
+        { eventKind: 'SEASON_REWARD', count: seasons.length, uniquePlayers: new Set(seasons.map(b => b.playerId)).size }],
       purchasesByItem: Object.values(byItem) });
   })
 ];

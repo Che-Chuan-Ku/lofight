@@ -25,8 +25,10 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.slf4j.Logger;
@@ -42,6 +44,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class RunSettlementService {
 
     private static final Logger log = LoggerFactory.getLogger(RunSettlementService.class);
+
+    /** Silver boss 7 enters only after boss 6 is killed (D39, INF-X21). */
+    private static final int SILVER_LAST_BOSS_SEQ = 7;
 
     private final RunRepository runRepository;
     private final RunBossKillRepository runBossKillRepository;
@@ -128,20 +133,29 @@ public class RunSettlementService {
     }
 
     /**
-     * The six plausibility checks (D17, ASM-03, GAP-03, audit fix 2026-10-30): sequence in range, no duplicates,
-     * kill not before spawn, victory at or beyond threshold with all bosses, server elapsed time >= game seconds.
-     * D-09 (2026-11-02): victory gameSeconds equal to the threshold is accepted (>=), so a boss-6 kill
-     * within its entry second (floor(t) = 84 on silver) settles.
+     * The seven plausibility checks (D17, ASM-03, GAP-03, audit fix 2026-10-30): sequence in range, no duplicates,
+     * kill not before spawn, silver boss 7 not killed before boss 6, victory at or beyond threshold with all bosses,
+     * server elapsed time >= game seconds.
+     * D-09 (2026-11-02): victory gameSeconds equal to the threshold is accepted (>=).
+     * D39 (2026-11-03): silver has 7 bosses; boss 7 enters after boss 6 dies, so its kill second must be >= the
+     * boss 6 kill second, checked only when both are listed (INF-X21); bronze has no relative check (INF-X22).
      */
     private boolean isPlausible(Run run, RunSettleRequest request, Instant now) {
         TierRule rule = gameProperties.tierRule(run.getTier());
         Set<Integer> seen = new HashSet<>();
+        Map<Integer, Integer> killedAt = new HashMap<>();
         for (BossKillRequest kill : request.bossKills()) {
             int bossSeq = kill.bossSeq();
             if (bossSeq < 1 || bossSeq > rule.bossCount() || !seen.add(bossSeq)
                     || kill.killedAtSecond() < rule.spawnSecondOf(bossSeq)) {
                 return false;
             }
+            killedAt.put(bossSeq, kill.killedAtSecond());
+        }
+        if (run.getTier() == Tier.SILVER && killedAt.containsKey(SILVER_LAST_BOSS_SEQ)
+                && killedAt.containsKey(SILVER_LAST_BOSS_SEQ - 1)
+                && killedAt.get(SILVER_LAST_BOSS_SEQ) < killedAt.get(SILVER_LAST_BOSS_SEQ - 1)) {
+            return false;
         }
         if (request.isVictory() && (request.gameSeconds() < rule.getVictoryThresholdSeconds()
                 || seen.size() < rule.bossCount())) {

@@ -27,6 +27,8 @@ public interface CoinLedgerEntryRepository extends JpaRepository<CoinLedgerEntry
     long countByPlayerIdAndLedgerSourceAndCreatedAtGreaterThanEqualAndCreatedAtLessThan(
             Long playerId, LedgerSource ledgerSource, Instant from, Instant to);
 
+    List<CoinLedgerEntry> findByPlayerIdAndLedgerSource(Long playerId, LedgerSource ledgerSource);
+
     Optional<CoinLedgerEntry> findFirstByPlayerIdAndLedgerSourceOrderByCreatedAtDescIdDesc(
             Long playerId, LedgerSource ledgerSource);
 }

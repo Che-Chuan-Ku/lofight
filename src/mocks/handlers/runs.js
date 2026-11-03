@@ -51,7 +51,13 @@ export const runHandlers = [
       if (k.bossSeq < 1 || k.bossSeq > rule.bossCount || seen.has(k.bossSeq) || k.killedAtSecond < rule.spawn[k.bossSeq - 1]) plausible = false;
       seen.add(k.bossSeq);
     }
-    if (body.isVictory && (body.gameSeconds <= rule.victoryAbove || seen.size < rule.bossCount)) plausible = false;
+    // silver: boss 7 cannot fall before boss 6 when both are listed (D39 X15=a, INF-X21)
+    if (rule.lastNotBefore) {
+      const [late, early] = rule.lastNotBefore, kl = body.bossKills.find(k => k.bossSeq === late), ke = body.bossKills.find(k => k.bossSeq === early);
+      if (kl && ke && kl.killedAtSecond < ke.killedAtSecond) plausible = false;
+    }
+    // victory threshold is inclusive since D-09 (gameSeconds >= threshold passes)
+    if (body.isVictory && (body.gameSeconds < rule.victoryMin || seen.size < rule.bossCount)) plausible = false;
     if (!plausible) { run.runState = 'CHECK_FAILED'; persist(); return fail('gam003'); }
     const p = db.players[run.playerId];
     const kills = [...body.bossKills].sort((a, b) => a.bossSeq - b.bossSeq);

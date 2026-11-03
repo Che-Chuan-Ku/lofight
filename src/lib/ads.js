@@ -5,7 +5,11 @@ import { adsensePublisherId } from './env.js';
 const SCRIPT_SRC = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js';
 let installed = false;
 
-/** Loads adsbygoogle.js once when a publisher id is configured; without one nothing is loaded (D35). */
+/**
+ * Loads adsbygoogle.js once when a publisher id is configured; without one nothing is loaded (D35).
+ * Not called at boot (FE-56): the first caller is requestRewardAd(), i.e. the shop's ad card once listShopItems
+ * reports adReward.isEnabled, so the home screen never fetches the ad script.
+ */
 export function installAds() {
   const id = adsensePublisherId();
   if (!id || installed || typeof window === 'undefined') return !!id;

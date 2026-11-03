@@ -56,7 +56,8 @@ Feature: 查詢金幣帳本
         | page | totalCount | hasNext |
         | 1    | 3          | false   |
 
-  Rule: 後置（回應）- 應回傳金幣入帳與扣款明細，每筆含來源（過關入帳、合併入帳、廣告獎勵或購買扣款）、金額與時間
+  Rule: 後置（回應）- 應回傳金幣入帳與扣款明細，每筆含來源（過關入帳、合併入帳、廣告獎勵、賽季獎勵或購買扣款）、金額與時間
+    # CHANGE 2026-11-03（D38）：新增來源「賽季獎勵」SEASON_REWARD（發放賽季獎勵.feature）；該來源列另帶賽季、榜別、名次（INF-S8），其他來源三欄為 null；錢包頁顯示文案「賽季獎勵 NORMAL 第 N 名 +X」屬前端（AMB-S5＝a，ui/錢包頁.md）
     # CHANGE 2026-11-02（D34）：新增來源「廣告獎勵」AD_REWARD（領取廣告獎勵.feature）；錢包頁顯示文案「廣告獎勵 +200」屬前端（AMB-A4，ui/錢包頁.md）；回應不含裝置識別（僅供後端稽核，AMB-A5）
     # 澄清 GAP-11（2026-10-29）採 A：依時間新到舊排序，每頁 20 筆；查詢範圍為該玩家全部帳本紀錄
     # 推論（Consistency Sweep）：同一時間以帳本流水號新到舊排序；回應附總筆數與是否有下一頁；頁碼超過最後一頁回空列表（不報錯）；只回查詢者本人的帳本（guest 以 guest id）
@@ -114,6 +115,21 @@ Feature: 查詢金幣帳本
         | ledgerSource | coinDelta | coinsAfter | occurredAt           |
         | AD_REWARD    | 200       | 201        | 2026-11-02T03:00:00Z |
         | BOSS_REWARD  | 1         | 1          | 2026-11-02T02:00:00Z |
+
+    Example: 賽季獎勵入帳以賽季獎勵來源列出並帶賽季、榜別與名次
+      Given 玩家 "小明" 有以下金幣帳本：
+        | ledgerSource  | coinDelta | coinsAfter | seasonBoardVersion | seasonTier | seasonRank | occurredAt           |
+        | SEASON_REWARD | 1200      | 1301       | 19.1               | BRONZE     | 1          | 2026-12-01T00:00:00Z |
+      When 查詢金幣帳本：
+        | page |
+        | 1    |
+      Then 操作成功
+      And 回應中的 "items" 應為：
+        | ledgerSource  | coinDelta | coinsAfter | seasonBoardVersion | seasonTier | seasonRank | occurredAt           |
+        | SEASON_REWARD | 1200      | 1301       | 19.1               | BRONZE     | 1          | 2026-12-01T00:00:00Z |
+        | BUFF_PURCHASE | -400      | 101        |                    |            |            | 2026-11-01T11:00:00Z |
+        | MERGE_IN      | 500       | 501        |                    |            |            | 2026-11-01T10:30:00Z |
+        | BOSS_REWARD   | 1         | 1          |                    |            |            | 2026-11-01T10:00:00Z |
 
   Rule: 後置（回應）- guest 合併而來的金幣應以一筆合併入帳顯示
     # 依 guest 合併（D03）；澄清 ASM-05（2026-10-29）採 A：合併保留，帳本以單筆「合併入帳」追溯合併來源

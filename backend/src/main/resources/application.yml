@@ -48,7 +48,8 @@ jwt:
   access-token-ttl: 15m
 
 game:
-  board-version: "19.0"
+  # Current season = "major.minor" of this build version (AMB-S6=b); filled from pom.xml by resource filtering.
+  build-version: "@project.version@"
   refresh-token-ttl: 30d
   abandon-timeout: 24h
   ledger-page-size: 20
@@ -68,8 +69,9 @@ game:
       boss-coins: [1, 2, 4, 8, 16, 24, 48, 96]
       victory-threshold-seconds: 98
     SILVER:
-      boss-spawn-seconds: [14, 28, 42, 56, 70, 84]
-      boss-coins: [4, 8, 16, 32, 64, 128]
+      # D39 (2026-11-03): silver has 7 bosses; boss 7 enters after boss 6 is killed, floor 84 (AMB-X15=a), coins 192 (AMB-X14=b).
+      boss-spawn-seconds: [14, 28, 42, 56, 70, 84, 84]
+      boss-coins: [4, 8, 16, 32, 64, 128, 192]
       victory-threshold-seconds: 84
 
 ad-reward:
@@ -78,6 +80,13 @@ ad-reward:
   coins: 200
   daily-limit: 5
   cooldown: 60s
+
+season-reward:
+  # Season reward (D38): coins for ranks 1-N per tier, N = list length (INF-S1); seasons before first-eligible-season never pay (INF-S11).
+  # Amounts revised by user 2026-11-03: top 5 = 1200/800/400/200/100 (was top 6 = 3200/1600/800/400/200/100).
+  # S9 revised 2026-11-03: season 19.0 is the first paid season (deploying 19.1.0 settles 19.0).
+  rank-coins: [1200, 800, 400, 200, 100]
+  first-eligible-season: "19.0"
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:}

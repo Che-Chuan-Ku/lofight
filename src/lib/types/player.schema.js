@@ -1,6 +1,6 @@
 // Players tag: progress, nickname, wallet, ledger, buff inventory (specs/api.yml).
 import { z } from 'zod';
-import { PlayerKindSchema, LedgerSourceSchema, BuffItemSchema, BuffQuantitySchema, DateTimeSchema } from './common.schema.js';
+import { PlayerKindSchema, TierSchema, LedgerSourceSchema, BuffItemSchema, BuffQuantitySchema, DateTimeSchema } from './common.schema.js';
 
 export const PlayerDetailResponseSchema = z.object({
   playerId: z.string(),
@@ -15,8 +15,23 @@ export const PlayerUpdateRequestSchema = z.object({
   nickname: z.string().max(12)
 });
 
+// D38 season reward: one item per board (BRONZE before SILVER).
+export const SeasonRewardItemSchema = z.object({
+  tier: TierSchema,
+  rank: z.number().int().min(1).max(5),
+  coins: z.number().int().min(1)
+});
+
+export const LatestSeasonRewardSchema = z.object({
+  boardVersion: z.string().max(16),
+  awardedAt: DateTimeSchema,
+  items: z.array(SeasonRewardItemSchema).min(1).max(2)
+});
+
 export const WalletDetailResponseSchema = z.object({
-  coins: z.number().int().min(0)
+  coins: z.number().int().min(0),
+  // null for guests and players who never received a season reward
+  latestSeasonReward: LatestSeasonRewardSchema.nullable().optional()
 });
 
 export const CoinLedgerEntryListResponseSchema = z.object({
@@ -27,6 +42,9 @@ export const CoinLedgerEntryListResponseSchema = z.object({
   bossSeq: z.number().int().nullable().optional(),
   buffItem: BuffItemSchema.nullable().optional(),
   runId: z.string().nullable().optional(),
+  seasonBoardVersion: z.string().max(16).nullable().optional(),
+  seasonTier: TierSchema.nullable().optional(),
+  seasonRank: z.number().int().min(1).max(5).nullable().optional(),
   occurredAt: DateTimeSchema
 });
 

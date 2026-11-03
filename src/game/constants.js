@@ -1,7 +1,7 @@
 // Game constants (logical playfield is 390x780, letterboxed by the stage).
 export const W = 390, H = 780, GATE_Y = 430, GATE_H = 28, PATH_HW = 30;
 export const GATE_MULT = 10;
-export const MAX_EXTRA_H = 160;   // tall screens: extra logical height added above the battlefield (more red sea)
+export const MAX_EXTRA_H = 160;   // tall screens: extra logical height added above the battlefield (more sky / canopy)
 export const MAX_CROP_H = 140;    // short portrait screens: how much of the top may be cropped to reach full width
 export const SHOT_SPEED = 420;        // px/s, soldiers fired from the turret
 export const MAXB = 9999, MAXR = 4500;   // over MAXB the rear of the blue column is culled; the turret never stops
@@ -31,18 +31,21 @@ export const BOSS_PLAN = [
   { at: 98, hp: 90000, v: 21, r: 30 },
   { at: Infinity, hp: 120000, v: 21, r: 32, summon: { n: 5, hp: 2000, v: 26, cd: 5 } }
 ];
-// EXTRA (API tier SILVER, D29-D32; specs/ui/遊戲畫面.md "EXTRA 魔王機制"): six bosses, boss 6 down = victory.
+// EXTRA (API tier SILVER, D29-D32, D39; specs/ui/遊戲畫面.md "EXTRA 魔王機制" / "EXTRA 第 7 王"): seven bosses, boss 7 down = victory.
 // Own hp table (bosses 4-6 = NORMAL 20000 x1.3 / 38000 x1.6 / 70000 x2, FE-40); speed / size of NORMAL bosses 1-6; red spawn as NORMAL (the old x1.2 is gone, AMB-E8=B).
 // `minAt`: a held boss (at = Infinity) never enters before this game second (backend appearance floors 70 / 84).
 // `after`: what releases a held boss — 'rest' (rest pick once the field is clear, as NORMAL boss 8) or 'kill' (the
-// previous boss falls). `skills`: 'beam' = hidden-stage beams, 'storm' = lightning sweep + lightning orbs.
+// previous boss falls). `skills`: 'beam' = hidden-stage beams, 'storm' = lightning sweep + lightning orbs,
+// 'purple' = boss 7 purple lightning (BOSS7 below).
 export const EXTRA_PLAN = [
   { at: 14, hp: 2400, v: 14, r: 16 },
   { at: 28, hp: 8000, v: 15, r: 18 },
   { at: 42, hp: 15000, v: 16, r: 20 },
   { at: 56, hp: 26000, v: 17, r: 22, summon: { n: 5, hp: 500, v: 26, cd: 5 } },   // only boss 4 summons (AMB-E2=D)
   { at: Infinity, minAt: 70, after: 'rest', hp: 60800, v: 18, r: 24, skills: 'beam' },
-  { at: Infinity, minAt: 84, after: 'kill', hp: 140000, v: 20, r: 27, skills: 'storm' }
+  { at: Infinity, minAt: 84, after: 'kill', hp: 140000, v: 20, r: 27, skills: 'storm' },
+  // boss 7 (D39): enters right after boss 6 falls (X1=b), backend floor 84 s; own hp, speed / size of the NORMAL hidden boss (X9=a)
+  { at: Infinity, minAt: 84, after: 'kill', hp: 180000, v: 19, r: 34, skills: 'purple' }
 ];
 // EXTRA boss 6 (D32). Sweep: the logical width (0-390) is cut into `strips` equal columns (65 px >= 2 x turret hit
 // width 32); one column at a time in random order, each `warn` s telegraph (harmless) then `fire` s lightning that
@@ -65,3 +68,18 @@ export const SECRET_BOSS = {
   rays: 12                                             // star beams (lines through the boss = rays / 2)
 };
 export const BEAM_HIT_R = 16;   // turret radius for beam hits
+// EXTRA boss 7 (D39, specs/ui/遊戲畫面.md "EXTRA 第 7 王"). Columns are the boss-6 strips (6 x 65 px).
+// Centre phase: the boss appears (and on every cd comes back) at `center`, invulnerable for `inv` s while it waves,
+// then casts the full-screen lightning: one random safe column, the other 5 fire in a random order that passes the
+// dodge guarantee (INF-X14); the k-th column telegraphs at k*step, fires at k*step + warn for `fire` s (2.2 s round).
+// After the round the boss teleports back to the path (first round: path top; later: where it left), `cd` s after
+// the round ends it returns to the centre. On the path: one random column every bolt.cd s (first one bolt.cd s after
+// the opening round) and `arrows.n` arrows every arrows.cd s (angle minDeg-maxDeg each, 90 = straight down; speed =
+// boss-6 orb x1.3; width = half the orb diameter, length = twice it; no bounce, gone once fully off screen).
+// Both timers pause while the boss is in the centre phase. Nothing here touches soldiers.
+export const BOSS7 = {
+  center: { x: W / 2, y: 390 }, inv: 1,
+  sweep: { strips: 6, step: 0.2, warn: 0.8, fire: 0.6, cd: 20 },
+  bolt: { cd: 5, warn: 0.8, fire: 0.6 },
+  arrows: { n: 3, cd: 7, minDeg: 20, maxDeg: 160, speed: 195 /* boss-6 orb 150 x 1.3 */, len: 36 * Math.SQRT2 /* 50.9 px, FE-69 */, hw: 4.5 * Math.SQRT2 /* width 12.7 px */ }
+};

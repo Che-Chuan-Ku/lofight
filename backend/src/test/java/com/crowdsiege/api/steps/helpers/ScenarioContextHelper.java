@@ -29,6 +29,13 @@ public class ScenarioContextHelper {
         return playerId;
     }
 
+    /**
+     * Gherkin player name of a database id (reverse lookup), or null when the id was never labelled.
+     */
+    public String playerLabelOf(Long playerId) {
+        return scenarioContext.labelOf(PLAYER_KEY, playerId);
+    }
+
     public void putRunId(String runLabel, Long runId) {
         scenarioContext.putId(RUN_KEY + runLabel, runId);
     }

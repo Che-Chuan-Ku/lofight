@@ -1,6 +1,6 @@
 // 首頁 (specs/ui/首頁.md; prototype home()). Nickname, tier cards, coin chip, shop / leaderboard entries, login state.
 import { useEffect, useRef, useState } from 'react';
-import { CoinChip, useTitleFocus, ConfirmDialog } from '../components/ui/Common.jsx';
+import { CoinChip, useTitleFocus, ConfirmDialog, SeasonNotice } from '../components/ui/Common.jsx';
 import { TierBadge, BuffMark, LinktreeMark } from '../components/ui/Icons.jsx';
 import { updateMyNickname } from '../lib/api/index.js';
 import { lockLine, nicknameError, NETWORK_MSG } from '../lib/labels.js';
@@ -43,7 +43,7 @@ function NicknameField({ progress, onSaved, notice, onNoticeShown }) {
   );
 }
 
-export default function HomePage({ session, progress, coins, loadError, onRetry, onNickname, nickNotice, onNickNoticeShown, onBronze, onSilver, onGo, onLogin, onLogout, loginAvailable, starting }) {
+export default function HomePage({ session, progress, coins, loadError, onRetry, onNickname, nickNotice, onNickNoticeShown, onBronze, onSilver, onGo, onLogin, onLogout, loginAvailable, starting, seasonNotice, onSeasonNoticeShown, onSeasonNoticeClose }) {
   const h1 = useTitleFocus();
   const [shake, setShake] = useState(false);
   const [dialog, setDialog] = useState(false);
@@ -73,6 +73,7 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
           <CoinChip coins={coins} onClick={() => onGo('wallet')} />
         </div>
       </div>
+      {seasonNotice && seasonNotice.length > 0 && <SeasonNotice key={seasonNotice.map(l => l.key).join(',')} lines={seasonNotice} onShown={onSeasonNoticeShown} onClose={onSeasonNoticeClose} />}
       <main className="content" style={{ overflow: 'hidden', paddingBottom: 'var(--space-12)', gap: 'var(--space-4)' }}>
         <div className="hero"><h1 tabIndex={-1} ref={h1}>DayWar</h1><p>左右移動砲台，守住陣地。</p></div>
         <NicknameField progress={progress} onSaved={onNickname} notice={nickNotice} onNoticeShown={onNickNoticeShown} />
@@ -108,7 +109,11 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
         </nav>
       </main>
       <footer className="sitefoot">
-        <button type="button" className="linkbtn" onClick={() => onGo('privacy')}>隱私權政策</button>
+        <nav className="footlinks" aria-label="網站資訊">
+          <button type="button" className="linkbtn" onClick={() => onGo('changelog')}>開發者日誌</button>
+          <span className="sep" aria-hidden="true">|</span>
+          <button type="button" className="linkbtn" onClick={() => onGo('privacy')}>隱私權政策</button>
+        </nav>
         <span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span>
       </footer>
       {dialog && (

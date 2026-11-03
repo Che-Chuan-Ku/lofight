@@ -1,6 +1,7 @@
 package com.crowdsiege.api.config;
 
 import com.crowdsiege.api.model.BuffItem;
+import com.crowdsiege.api.model.Season;
 import com.crowdsiege.api.model.Tier;
 import java.time.Duration;
 import java.time.ZoneId;
@@ -8,14 +9,20 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * Backend game settings (erm.dbml "config-only values"): board version, TTLs, prices, coin tables, thresholds.
+ * Backend game settings (erm.dbml "config-only values"): build version, TTLs, prices, coin tables, thresholds.
+ * The current board version (season) is derived from the build version's "major.minor" (AMB-S6=b).
  */
 @ConfigurationProperties(prefix = "game")
-public class GameProperties {
+public class GameProperties implements InitializingBean {
 
+    /**
+     * Build version (pom.xml project.version, injected by Maven resource filtering), e.g. 19.1.0-SNAPSHOT.
+     */
+    private String buildVersion;
     private String boardVersion;
     private Duration refreshTokenTtl;
     private Duration abandonTimeout;
@@ -36,10 +43,36 @@ public class GameProperties {
         return shopPrices.get(buffItem);
     }
 
+    /**
+     * Fails startup when the build version has no numeric "major.minor" prefix (no fallback season).
+     */
+    @Override
+    public void afterPropertiesSet() {
+        this.boardVersion = Season.of(buildVersion).key();
+    }
+
+    public String getBuildVersion() {
+        return buildVersion;
+    }
+
+    public void setBuildVersion(String buildVersion) {
+        this.buildVersion = buildVersion;
+    }
+
+    /**
+     * Current season key written to new runs and used as the default leaderboard version.
+     */
     public String getBoardVersion() {
         return boardVersion;
     }
 
+    public Season currentSeason() {
+        return Season.of(boardVersion);
+    }
+
+    /**
+     * Overrides the derived season at runtime (test stub for "後端設定的目前版本前兩碼為").
+     */
     public void setBoardVersion(String boardVersion) {
         this.boardVersion = boardVersion;
     }

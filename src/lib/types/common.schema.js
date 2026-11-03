@@ -10,8 +10,8 @@ export const BuffItemSchema = z.enum(['ATTACK_SPEED', 'ATTACK', 'CANNON', 'LASER
 export const TierSchema = z.enum(['BRONZE', 'SILVER']);
 export const RunStateSchema = z.enum(['OPEN', 'SETTLED', 'CHECK_FAILED', 'ABANDONED']);
 export const DeathCauseSchema = z.enum(['RED_BREACH', 'BOSS_REACHED']);
-export const LedgerSourceSchema = z.enum(['BOSS_REWARD', 'MERGE_IN', 'BUFF_PURCHASE', 'AD_REWARD']);
-export const EventKindSchema = z.enum(['SHOP_VIEW', 'BUFF_PURCHASE', 'AD_REWARD']);
+export const LedgerSourceSchema = z.enum(['BOSS_REWARD', 'MERGE_IN', 'BUFF_PURCHASE', 'AD_REWARD', 'SEASON_REWARD']);
+export const EventKindSchema = z.enum(['SHOP_VIEW', 'BUFF_PURCHASE', 'AD_REWARD', 'SEASON_REWARD']);
 export const MergeTargetKindSchema = z.enum(['NEW', 'EXISTING']);
 
 export const ManageResponseSchema = z.object({

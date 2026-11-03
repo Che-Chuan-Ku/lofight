@@ -1,8 +1,44 @@
 // Simulation: state, spawning, movement, combat, gates, bosses, rest/choice pauses.
 // Copied from the single-file v17 game; UI changes are reported through `onChange` instead of touching the DOM.
-import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, FIRE_MIN_BUFF, BOSS_PLAN, EXTRA_PLAN, STORM, H, LASER, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R } from './constants.js';
+import { W, GATE_Y, GATE_H, PATH_HW, GATE_MULT, SHOT_SPEED, MAXB, MAXR, FIRE_INTERVAL, FIRE_MIN, FIRE_MIN_BUFF, BOSS_PLAN, EXTRA_PLAN, STORM, H, LASER, GATE_RESPAWN, GATE_X0, GATE_GAP, GATE_MIN, GATE_STEP, SECRET_BOSS, BEAM_HIT_R, BOSS7 } from './constants.js';
 import { PATH_LEN, pathPos } from './path.js';
 import { ABILITIES, CHOICES, BONUS, cardFor, spreadMaxed } from './abilities.js';
+
+// Keeps the elements passing `keep`, in order, in the same array (no per-frame allocation).
+function compact(a, keep) {
+  let j = 0;
+  for (let i = 0; i < a.length; i++) { const x = a[i]; if (keep(x)) a[j++] = x; }
+  a.length = j;
+}
+// 1px arc-length histogram for the blue cull (reused every frame)
+const CULL_BINS = new Uint32Array(Math.ceil(PATH_LEN) + 2);
+
+// ---- EXTRA boss 7 full-screen lightning order (D39, INF-X14 dodge guarantee) ----
+// `order` lists the 5 firing columns (every column but the safe one `s`) in firing order; `p` is the turret column
+// when the round starts. Valid when (1) the columns from p towards s (p included, s excluded) fire in strictly
+// increasing order, and (2) every column on the far side of p (away from s) fires before p. p === s: anything goes.
+export function sweepOrderOk(order, p, s) {
+  if (p === s) return true;
+  const rank = []; order.forEach((c, i) => { rank[c] = i; });
+  const dir = s > p ? 1 : -1;
+  for (let c = p; c + dir !== s; c += dir) if (!(rank[c] < rank[c + dir])) return false;
+  for (let c = p - dir; c >= 0 && c < BOSS7.sweep.strips; c -= dir) if (!(rank[c] < rank[p])) return false;
+  return true;
+}
+// Uniformly random permutation of the non-safe columns, redrawn until it passes sweepOrderOk (worst case p and s at
+// opposite edges: 1 valid order out of 120). The fallback (never reached in practice) is the sweep from p towards s.
+export function sweepOrder(p, s, rand = Math.random) {
+  const cols = [];
+  for (let c = 0; c < BOSS7.sweep.strips; c++) if (c !== s) cols.push(c);
+  for (let tries = 0; tries < 5000; tries++) {
+    const o = cols.slice();
+    for (let i = o.length - 1; i > 0; i--) { const j = (rand() * (i + 1)) | 0; const t = o[i]; o[i] = o[j]; o[j] = t; }
+    if (sweepOrderOk(o, p, s)) return o;
+  }
+  return cols.slice().sort((a, b) => Math.abs(a - s) === Math.abs(b - s) ? a - b : Math.abs(b - s) - Math.abs(a - s));
+}
+// column (0 = leftmost) holding x
+export const stripOf = x => Math.max(0, Math.min(BOSS7.sweep.strips - 1, Math.floor(x / (W / BOSS7.sweep.strips))));
 
 export function createGame(onChange) {
   const notify = () => { if (onChange) onChange(); };
@@ -66,6 +102,8 @@ export function createGame(onChange) {
     S.bossQueue = (tier === 'silver' ? EXTRA_PLAN : BOSS_PLAN).map(b => ({ ...b }));
     // EXTRA boss 6: current sweep column (telegraph or firing; nothing is kept once it has fired) and orbs
     S.bolts = []; S.orbs = [];
+    // EXTRA boss 7: purple columns (full-screen round and single ones; t < 0 = not shown yet) and lightning arrows
+    S.pbolts = []; S.arrows = [];
     // settlement data: every planned boss kill (appearance order + game second) and how the run was lost
     S.kills = []; S.death = null;
     S.shake = 0;
@@ -103,6 +141,8 @@ export function createGame(onChange) {
     // EXTRA boss 5 fights with the hidden-stage beams (no enraged triple, D31); boss 6 with the lightning storm (D32)
     if (b.skills === 'beam') Object.assign(bo, { beam: true, soloCd: 4, wideCd: 0, enraged: false });
     if (b.skills === 'storm') { bo.storm = { round: null, gap: 0, orbT: STORM.orbs.first }; startSweep(bo); }
+    // EXTRA boss 7 (D39): appears straight in the centre; single column / arrow timers start after the opening round
+    if (b.skills === 'purple') { bo.purple = { first: true, round: null, ct: 0, gap: 0, boltT: BOSS7.bolt.cd, arrowT: BOSS7.arrows.cd, home: null }; enterCenter(bo); }
     S.bosses.push(bo);
     addPop('BOSS!', W / 2, 120, '#ff6b6b');
   }
@@ -113,7 +153,7 @@ export function createGame(onChange) {
     if (win && S.stage !== 9) S.clearT = S.t;
     S.result = win ? (S.stage === 9 ? 'secret' : 'win') : (S.stage === 9 ? 'secretfail' : 'lose');
     S.choosing = false; S.resting = false; S.choiceCards = null;
-    S.offering = false; S.bonusing = false; S.bonusCards = null; S.beams = []; S.bolts = []; S.orbs = [];
+    S.offering = false; S.bonusing = false; S.bonusCards = null; S.beams = []; S.bolts = []; S.orbs = []; S.pbolts = []; S.arrows = [];
     notify();
   }
 
@@ -121,7 +161,7 @@ export function createGame(onChange) {
     // arena threats first (closest to the turret), otherwise the front of the path (red or boss, lowest s)
     const T = S.turret; let best = null, bd = 1e9;
     for (const r of S.red) if (r.alive && r.mode === 0) { const d = Math.hypot(r.x - T.x, r.y - T.y); if (d < bd) { bd = d; best = [r.x, r.y]; } }
-    for (const b of S.bosses) if (b.alive && b.mode === 0) { const d = Math.hypot(b.x - T.x, b.y - T.y); if (d < bd) { bd = d; best = [b.x, b.y]; } }
+    for (const b of S.bosses) if (b.alive && (b.mode === 0 || b.mode === 3)) { const d = Math.hypot(b.x - T.x, b.y - T.y); if (d < bd) { bd = d; best = [b.x, b.y]; } }
     if (best) return best;
     let ms = 1e9;
     for (const r of S.red) if (r.alive && r.mode === 1 && r.s < ms) { ms = r.s; best = [r.x, r.y]; }
@@ -131,7 +171,7 @@ export function createGame(onChange) {
   function explode(x, y) {
     const lv = S.cannon.level, R = 34 + lv * 4, dmg = 350 * lv;
     for (const r of S.red) if (r.alive && Math.abs(r.x - x) < R && Math.abs(r.y - y) < R && Math.hypot(r.x - x, r.y - y) < R) r.alive = false;
-    for (const b of S.bosses) if (b.alive && Math.hypot(b.x - x, b.y - y) < R + b.r) { b.hp -= dmg; b.hitT = 0.12; if (b.hp <= 0) killBoss(b); }
+    for (const b of S.bosses) if (b.alive && !(b.inv > 0) && Math.hypot(b.x - x, b.y - y) < R + b.r) { b.hp -= dmg; b.hitT = 0.12; if (b.hp <= 0) killBoss(b); }
     addFx(x, y, '#ffb347', 18, 200); addFx(x, y, '#fff2a8', 10, 120); S.shake = Math.max(S.shake, 0.35);
     S.booms.push({ x, y, t: 0, R });
   }
@@ -188,7 +228,10 @@ export function createGame(onChange) {
     for (const bo of S.bosses) {
       if (!bo.alive) continue;
       bo.hitT = Math.max(0, bo.hitT - dt);
-      if (bo.mode === 1) {
+      if (bo.inv > 0) bo.inv = Math.max(0, bo.inv - dt);
+      if (bo.mode === 3) {
+        // EXTRA boss 7 centre phase: stands still at the centre while it casts (D39)
+      } else if (bo.mode === 1) {
         bo.s -= bo.v * dt;
         if (bo.s <= 0) { bo.mode = 0; }
         const p = pathPos(Math.max(bo.s, 0), 0); bo.x = p[0]; bo.y = p[1];
@@ -202,6 +245,7 @@ export function createGame(onChange) {
       if (bo.summon) { bo.cd -= dt; if (bo.cd <= 0) { bo.cd = bo.summon.cd; for (let i = 0; i < bo.summon.n; i++) spawnMinion(bo); addFx(bo.x, bo.y, '#ff4b4b', 16, 160); } }
       if (bo.secret || bo.beam) secretSkills(bo, dt);
       if (bo.storm && stormSkills(bo, dt)) return;
+      if (bo.purple) purpleSkills(bo, dt);
     }
     // laser buff: a vertical sweep up from the turret every few seconds (GAP-05=A)
     if (S.laser) {
@@ -231,8 +275,26 @@ export function createGame(onChange) {
       if (o.y < R) { o.y = R; o.vy = Math.abs(o.vy); } else if (o.y > H - R) { o.y = H - R; o.vy = -Math.abs(o.vy); }
       if (Math.hypot(o.x - T.x, o.y - T.y) < R + BEAM_HIT_R) { addFx(T.x, T.y, '#b98cff', 40, 220); S.shake = 1; endGame(false, { cause: 'RED_BREACH', bossSeq: null }); return; }
     }
+    // EXTRA boss 7 purple lightning (D39): a firing column (full-screen round or single) or an arrow touching the
+    // turret ends the run (RED_BREACH, X10=a); soldiers pass through. A column is gone the moment its firing time ends.
+    for (let i = S.pbolts.length - 1; i >= 0; i--) {
+      const bl = S.pbolts[i]; bl.t += dt;
+      if (bl.t >= bl.warn + bl.fire) { S.pbolts.splice(i, 1); continue; }
+      if (bl.t >= bl.warn && T.x + BEAM_HIT_R > bl.x0 && T.x - BEAM_HIT_R < bl.x1) { addFx(T.x, T.y, '#d36bff', 40, 220); S.shake = 1; endGame(false, { cause: 'RED_BREACH', bossSeq: null }); return; }
+    }
+    for (let i = S.arrows.length - 1; i >= 0; i--) {
+      const a = S.arrows[i], A = BOSS7.arrows;
+      a.x += a.ux * A.speed * dt; a.y += a.uy * A.speed * dt;
+      // (x, y) is the head; the tail trails by `len`. No bounce: gone once the tail is off screen and moving away.
+      const tx = a.x - a.ux * A.len, ty = a.y - a.uy * A.len;
+      if ((tx < 0 && a.ux <= 0) || (tx > W && a.ux >= 0) || (ty < 0 && a.uy <= 0) || (ty > H && a.uy >= 0)) { S.arrows.splice(i, 1); continue; }
+      // capsule (shaft segment, half-width hw) vs turret circle
+      const k = Math.max(0, Math.min(A.len, (T.x - tx) * a.ux + (T.y - ty) * a.uy));
+      if (Math.hypot(tx + a.ux * k - T.x, ty + a.uy * k - T.y) < A.hw + BEAM_HIT_R) { addFx(T.x, T.y, '#d36bff', 40, 220); S.shake = 1; endGame(false, { cause: 'RED_BREACH', bossSeq: null }); return; }
+    }
     if (S.bosses.some(b => b.minion && !b.alive)) S.bosses = S.bosses.filter(b => b.alive || !b.minion);
     const pathBosses = S.bosses.filter(b => b.alive && b.mode === 1), arenaBosses = S.bosses.filter(b => b.alive && b.mode === 0);
+    const centerBosses = S.bosses.filter(b => b.alive && b.mode === 3);
 
     // blue movement + gate crossing
     const mg = gates[1];
@@ -302,6 +364,10 @@ export function createGame(onChange) {
       for (const bo of pathBosses) {
         if (bo.alive && Math.abs(bo.s - u.s) < 12) { u.alive = false; bo.hp -= u.hp; bo.hitT = 0.08; hitBoss = true; if (bo.hp <= 0) killBoss(bo); break; }
       }
+      // EXTRA boss 7 in the centre: path soldiers passing within reach hit it (no damage while invulnerable)
+      if (!hitBoss) for (const bo of centerBosses) {
+        if (bo.alive && Math.abs(bo.x - u.x) < bo.r + 4 && Math.abs(bo.y - u.y) < bo.r + 4 && Math.hypot(bo.x - u.x, bo.y - u.y) < bo.r + 4) { u.alive = false; hurtBoss(bo, u.hp, 0.08); hitBoss = true; break; }
+      }
       if (hitBoss) continue;
       const k = (u.s / BK) | 0;
       let killed = false;
@@ -317,14 +383,27 @@ export function createGame(onChange) {
         }
       }
     }
-    S.blue = S.blue.filter(u => u.alive);
-    if (S.blue.length > MAXB) {
-      const ss = []; for (const u of S.blue) if (u.mode === 1) ss.push(u.s);
-      ss.sort((a, b) => a - b);
-      const thr = ss[Math.min(ss.length - 1, S.blue.length - MAXB)];
-      S.blue = S.blue.filter(u => u.mode !== 1 || u.s > thr);
+    // drop dead units: in-place compaction, no new arrays per frame (FE-59). The same pass fills a 1px arc-length
+    // histogram of path units for the cap below.
+    const BL = S.blue, top = CULL_BINS.length - 1;
+    CULL_BINS.fill(0);
+    let nBlue = 0;
+    for (let i = 0; i < BL.length; i++) {
+      const u = BL[i]; if (!u.alive) continue;
+      BL[nBlue++] = u;
+      if (u.mode === 1) { const b = u.s | 0; CULL_BINS[b < 0 ? 0 : b > top ? top : b]++; }
     }
-    S.red = S.red.filter(r => r.alive);
+    BL.length = nBlue;
+    if (nBlue > MAXB) {
+      // Over the cap: cull the rear of the path column. Walk the histogram from the rear until the excess is covered and
+      // drop every path unit in those buckets (at most one bucket more than the exact excess). O(n), no sort.
+      let need = nBlue - MAXB, k = 0;
+      while (k <= top && need > 0) need -= CULL_BINS[k++];
+      let n = 0;
+      for (let i = 0; i < nBlue; i++) { const u = BL[i]; if (u.mode !== 1 || (u.s | 0) >= k) BL[n++] = u; }
+      BL.length = n;
+    }
+    compact(S.red, r => r.alive);
 
     // shells
     for (let i = S.shells.length - 1; i >= 0; i--) {
@@ -351,6 +430,7 @@ export function createGame(onChange) {
     for (const b of S.bosses) {
       if (!b.alive || Math.abs(b.x - T.x) >= hw + b.r || b.y >= T.y) continue;
       if (b.minion) { killBoss(b); continue; }
+      if (b.inv > 0) continue;   // EXTRA boss 7 during its invulnerable second
       b.hp -= LASER.bossDamage * S.blueHp; b.hitT = 0.12;
       if (b.hp <= 0) killBoss(b);
     }
@@ -395,6 +475,65 @@ export function createGame(onChange) {
       }
     }
     return false;
+  }
+  // ---- EXTRA boss 7 (D39): centre phase + full-screen lightning, single columns, lightning arrows ----
+  // damage that respects the invulnerable second (the dev hook uses it too); returns whether it landed.
+  // Nothing lands once the run is over, so no hp loss and no extra kills after the result is decided.
+  function hurtBoss(bo, dmg, flash) {
+    if (S.over || !bo || !bo.alive || bo.inv > 0) return false;
+    bo.hp -= dmg; bo.hitT = flash || 0.1;
+    if (bo.hp <= 0) killBoss(bo);
+    return true;
+  }
+  function enterCenter(bo) {
+    const P = bo.purple, C = BOSS7.center;
+    if (!P.first) P.home = { mode: bo.mode, s: bo.s, x: bo.x, y: bo.y };   // a later round goes back to this spot
+    bo.mode = 3; bo.x = C.x; bo.y = C.y; bo.inv = BOSS7.inv; P.ct = 0; P.round = null;
+    addFx(C.x, C.y, '#d36bff', 30, 200);
+  }
+  function leaveCenter(bo) {
+    const P = bo.purple;
+    if (P.first || !P.home) { bo.mode = 1; bo.s = PATH_LEN - 1; const p = pathPos(bo.s, 0); bo.x = p[0]; bo.y = p[1]; }
+    else { bo.mode = P.home.mode; bo.s = P.home.s; bo.x = P.home.x; bo.y = P.home.y; }
+    addFx(bo.x, bo.y, '#d36bff', 20, 160);
+    P.first = false; P.home = null; P.round = null; P.gap = BOSS7.sweep.cd;   // cd counts from the end of the round
+  }
+  function startPurpleRound(bo, dt) {
+    const P = bo.purple, SW = BOSS7.sweep, w = W / SW.strips;
+    const p = stripOf(S.turret.x), s = (Math.random() * SW.strips) | 0, order = sweepOrder(p, s);
+    P.round = { p, s, order, t0: S.t };
+    // bolt clocks are advanced later this frame: start them so that the k-th shows at k * step after the round start
+    const over = P.ct - BOSS7.inv - dt;
+    order.forEach((c, k) => S.pbolts.push({ strip: c, x0: c * w, x1: (c + 1) * w, t: over - k * SW.step, warn: SW.warn, fire: SW.fire, sweep: true, k }));
+  }
+  function purpleSkills(bo, dt) {
+    const P = bo.purple, B = BOSS7;
+    if (bo.mode === 3) {
+      P.ct += dt;
+      if (!P.round) { if (P.ct >= B.inv) startPurpleRound(bo, dt); }
+      else if (!S.pbolts.some(b => b.sweep)) leaveCenter(bo);
+      return;
+    }
+    // cd over: back to the centre once no single column is in progress (INF-X6); timers stay paused meanwhile
+    P.gap -= dt;
+    if (P.gap <= 0) { if (!S.pbolts.length) enterCenter(bo); return; }
+    const w = W / B.sweep.strips;
+    P.boltT -= dt;
+    if (P.boltT <= 0) {
+      const c = (Math.random() * B.sweep.strips) | 0;
+      S.pbolts.push({ strip: c, x0: c * w, x1: (c + 1) * w, t: -P.boltT - dt, warn: B.bolt.warn, fire: B.bolt.fire, sweep: false });
+      P.boltT += B.bolt.cd;
+    }
+    P.arrowT -= dt;
+    if (P.arrowT <= 0) {
+      P.arrowT += B.arrows.cd;
+      const A = B.arrows;
+      for (let i = 0; i < A.n; i++) {
+        const a = (A.minDeg + Math.random() * (A.maxDeg - A.minDeg)) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a);
+        // the tail leaves from the boss; (x, y) is the head
+        S.arrows.push({ x: bo.x + ux * A.len, y: bo.y + uy * A.len, ux, uy, t0: S.t });
+      }
+    }
   }
   // ---- hidden stage 9 ----
   function openOffer() { S.clearT = S.t; S.offering = true; notify(); }
@@ -475,10 +614,11 @@ export function createGame(onChange) {
     if (!bo.secret) S.kills.push({ bossSeq: bo.idx, killedAtSecond: Math.floor(S.t) });
     if (bo.secret || bo.beam) S.beams = [];
     if (bo.storm) { S.bolts = []; S.orbs = []; bo.storm = null; }
+    if (bo.purple) { S.pbolts = []; S.arrows = []; bo.purple = null; bo.inv = 0; }   // INF-X7
     addFx(bo.x, bo.y, '#ff4b4b', 40, 220); addPop('BOSS DOWN', W / 2, 200, '#ffe066');
     if (bo.summon) for (const m of S.bosses) if (m.minion && m.alive) killBoss(m);
     // a held boss waits in the queue: with the field clear it is released by the rest pick (NORMAL boss 8, EXTRA
-    // boss 5) or right away for 'kill' (EXTRA boss 6), never before its minAt second (spawned by the update loop)
+    // boss 5) or right away for 'kill' (EXTRA bosses 6 and 7), never before its minAt second (spawned by the update loop)
     const head = S.bossQueue[0];
     if (head && head.at === Infinity && !S.bosses.some(b => b.alive && !b.minion)) {
       if (head.after === 'kill') head.at = Math.max(S.t, head.minAt || 0);
@@ -522,7 +662,7 @@ export function createGame(onChange) {
   function setPaused(v) { if (S.started && !S.over && S.paused !== !!v) { S.paused = !!v; notify(); } }
   function setTurretX(x) { if (Number.isFinite(x)) S.turret.x = Math.max(22, Math.min(W - 22, x)); }
 
-  const api = { S, reset, update, startGame, restart, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, acceptOffer, declineOffer, pickBonus, beamHits, loseNow, rebuildGate, onReward };
+  const api = { S, reset, update, startGame, restart, setPaused, setTurretX, openChoice, pickChoice, openRest, pickRest, killBoss, hurtBoss, acceptOffer, declineOffer, pickBonus, beamHits, loseNow, rebuildGate, onReward };
   reset();
   return api;
 }

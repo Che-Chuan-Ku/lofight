@@ -20,7 +20,7 @@ Feature: 開局
     And 目前以玩家 "小明" 的有效存取權杖操作
 
   Rule: 前置（參數）- 階層必須為 bronze 或 silver
-    # 原文 D07「原八關成為 bronze 階層…新增 silver 階層共六關」
+    # 原文 D07「原八關成為 bronze 階層…新增 silver 階層共六關」；CHANGE 2026-11-03（D39，人裁決 H1）：silver 改為共 7 王（開局 Rule 不變，王數影響見 結算對局.feature）
 
     Scenario Outline: 階層缺漏或不是 bronze／silver 時操作失敗
       When 開局：
@@ -138,6 +138,7 @@ Feature: 開局
 
   Rule: 後置（狀態）- 系統應建立一筆 run，記錄階層、裝填的 buff 與目前版本前兩碼
     # 澄清 GAP-16（2026-10-29）採 B：版本前兩碼取自後端設定檔的目前版本，於開局時寫入 run；前端開局不帶版本；改版時更新設定檔即換榜
+    # CHANGE 2026-11-03（D38）澄清 AMB-S6＝b：目前版本前兩碼改由後端建置版號（pom.xml version）自動取「大.中」，不再手填設定檔；測試仍以 `Given 後端設定的目前版本前兩碼為` 注入
     # 原文 D21「開局取得 run_id；記錄 tier、裝備 buff」
 
     Scenario Outline: 建立 run 記錄階層、裝填的 buff 與目前版本前兩碼

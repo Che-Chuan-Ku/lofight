@@ -109,6 +109,9 @@ public class PlayerStateAssertions {
             actual.put("bossSeq", entry.getBossSeq());
             actual.put("buffItem", Objects.toString(entry.getBuffItem(), null));
             actual.put("deviceId", entry.getDeviceId());
+            actual.put("seasonBoardVersion", entry.getSeasonBoardVersion());
+            actual.put("seasonTier", Objects.toString(entry.getSeasonTier(), null));
+            actual.put("seasonRank", entry.getSeasonRank());
             CellValues.assertRowMatches(expectedRows.get(i), actual);
         }
     }

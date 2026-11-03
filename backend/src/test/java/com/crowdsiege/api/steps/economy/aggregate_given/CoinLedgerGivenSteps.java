@@ -3,6 +3,7 @@ package com.crowdsiege.api.steps.economy.aggregate_given;
 import com.crowdsiege.api.model.BuffItem;
 import com.crowdsiege.api.model.CoinLedgerEntry;
 import com.crowdsiege.api.model.LedgerSource;
+import com.crowdsiege.api.model.Tier;
 import com.crowdsiege.api.repository.CoinLedgerEntryRepository;
 import com.crowdsiege.api.steps.helpers.CellValues;
 import com.crowdsiege.api.steps.helpers.ScenarioContextHelper;
@@ -54,6 +55,9 @@ public class CoinLedgerGivenSteps {
                     -coinDelta, coinsAfter, occurredAt);
             case AD_REWARD -> CoinLedgerEntry.adReward(playerId, row.get("deviceId"), coinDelta, coinsAfter,
                     occurredAt);
+            case SEASON_REWARD -> CoinLedgerEntry.seasonReward(playerId, row.get("seasonBoardVersion"),
+                    Tier.valueOf(row.get("seasonTier")), Integer.parseInt(row.get("seasonRank")), coinDelta,
+                    coinsAfter, occurredAt);
         };
     }
 }

@@ -64,7 +64,8 @@ public class AdRewardService {
             throw new BusinessException(EconomyErrorCode.AD_REWARD_NOT_ENABLED);
         }
         Player player = playerService.getPlayer(playerId);
-        walletRepository.lockByPlayerId(playerId);
+        walletRepository.lockByPlayerId(playerId)
+                .orElseThrow(() -> new IllegalStateException("Wallet not found for player " + playerId));
         Instant now = clock.instant();
         AdRewardQuota before = quotaOf(playerId, now);
         if (before.remainingCount() == 0) {

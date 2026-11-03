@@ -1,7 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
-import { installAds } from './lib/ads.js';
 import './styles.css';
 import './menu.css';
 
@@ -12,7 +11,7 @@ async function boot() {
     const { startMocks } = await import('./mocks/browser.js');
     await startMocks();
   }
-  installAds();   // Ad Placement API only when a publisher id is configured (D35)
+  // No ad script at boot (FE-56): lib/ads.js loads it on the shop page, once listShopItems.adReward.isEnabled is true.
   createRoot(document.getElementById('root')).render(
     <React.StrictMode>
       <App />

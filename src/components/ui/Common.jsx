@@ -111,6 +111,18 @@ export function LoginBanner({ text, onLogin, onClose, onShown, loginLabel = '登
   );
 }
 
+/** D38 one-time season reward notice: login-banner look, one line per board, closable, non-blocking. */
+export function SeasonNotice({ lines, onClose, onShown }) {
+  const shown = useRef(onShown);
+  useEffect(() => { if (shown.current) shown.current(); }, []);
+  return (
+    <div className="banner in season" role="region" aria-label="賽季獎勵">
+      <p aria-live="polite">{lines.map(l => <span key={l.key} className="line">{l.text}</span>)}</p>
+      <button type="button" className="icon-btn sm" onClick={onClose} aria-label="關閉提示"><IcClose /></button>
+    </div>
+  );
+}
+
 /** Destructive-action dialog: focus starts on 取消, Tab is trapped, Esc cancels, scrim clicks do nothing. */
 export function ConfirmDialog({ title, desc, action, onCancel, onConfirm }) {
   const box = useRef(null), cancel = useRef(null);

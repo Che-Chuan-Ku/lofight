@@ -3,13 +3,18 @@ import { useEffect, useState } from 'react';
 import { PageHeader, RetryBox, Skeletons } from '../components/ui/Common.jsx';
 import { IcEmptyLedger, PixelCoin } from '../components/ui/Icons.jsx';
 import { getMyWallet, listMyCoinLedgerEntries } from '../lib/api/index.js';
-import { BUFFS } from '../lib/labels.js';
+import { BUFFS, tierName } from '../lib/labels.js';
 
 const pad = n => String(n).padStart(2, '0');
 const when = iso => { const d = new Date(iso); return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 // AD_REWARD = 廣告獎勵 (AMB-A4 final ruling, AdSense wording); BUFF_PURCHASE falls through to 購買 <buff>
 const LEDGER_LABEL = { BOSS_REWARD: '對局獲得', MERGE_IN: '帳號合併', AD_REWARD: '廣告獎勵' };
+
+// D38 (AMB-S5=a): 賽季獎勵 NORMAL 第 N 名; the amount column carries +X
+const ledgerLabel = e => (e.ledgerSource === 'SEASON_REWARD'
+  ? '賽季獎勵 ' + tierName(e.seasonTier) + ' 第 ' + e.seasonRank + ' 名'
+  : LEDGER_LABEL[e.ledgerSource] || '購買 ' + (e.buffItem ? BUFFS[e.buffItem].name : 'buff'));
 
 // GAP-4: the API books one BOSS_REWARD entry per boss; consecutive entries of the same run show as one 對局獲得 row.
 export function groupLedger(items) {
@@ -19,7 +24,7 @@ export function groupLedger(items) {
     if (e.ledgerSource === 'BOSS_REWARD' && e.runId && last && last.runId === e.runId && last.source === 'BOSS_REWARD') { last.amount += e.coinDelta; continue; }
     rows.push({
       key: e.ledgerEntryId, source: e.ledgerSource, runId: e.ledgerSource === 'BOSS_REWARD' ? e.runId : null, amount: e.coinDelta, at: e.occurredAt,
-      label: LEDGER_LABEL[e.ledgerSource] || '購買 ' + (e.buffItem ? BUFFS[e.buffItem].name : 'buff')
+      label: ledgerLabel(e)
     });
   }
   return rows;

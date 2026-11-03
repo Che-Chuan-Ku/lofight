@@ -34,9 +34,13 @@ const TAB = new Float32Array((Math.ceil(PATH_LEN) + 2) * 4);
     TAB[s * 4 + 2] = -dy; TAB[s * 4 + 3] = dx;
   }
 })();
-function pathPos(s, lat) {
+// Point at arc length s, offset `lat` along the normal. Writes into `out` (default: one shared 2-slot scratch) instead of
+// allocating, since it runs per unit per frame. Callers must read [0]/[1] right away and never keep the array (FE-58).
+const SCRATCH = [0, 0];
+function pathPos(s, lat, out = SCRATCH) {
   const i = Math.max(0, Math.min(TAB.length / 4 - 1, Math.round(s))) * 4;
-  return [TAB[i] + TAB[i + 2] * lat, TAB[i + 1] + TAB[i + 3] * lat];
+  out[0] = TAB[i] + TAB[i + 2] * lat; out[1] = TAB[i + 1] + TAB[i + 3] * lat;
+  return out;
 }
 
 export { PL, PATH_LEN, TAB, pathPos };

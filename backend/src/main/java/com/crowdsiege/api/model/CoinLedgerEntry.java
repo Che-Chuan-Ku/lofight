@@ -46,6 +46,15 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
     @Column(name = "device_id", length = 64)
     private String deviceId;
 
+    @Column(name = "season_board_version", length = 16)
+    private String seasonBoardVersion;
+
+    @Column(name = "season_tier")
+    private Tier seasonTier;
+
+    @Column(name = "season_rank")
+    private Integer seasonRank;
+
     protected CoinLedgerEntry() {
     }
 
@@ -87,6 +96,18 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
         return entry;
     }
 
+    /**
+     * SEASON_REWARD credit carrying the awarded season, tier and rank (INF-S8); created_by is the recipient (INF-S7).
+     */
+    public static CoinLedgerEntry seasonReward(Long playerId, String boardVersion, Tier tier, int rank, int coins,
+                                               int coinsAfter, Instant now) {
+        CoinLedgerEntry entry = new CoinLedgerEntry(playerId, LedgerSource.SEASON_REWARD, coins, coinsAfter, now);
+        entry.seasonBoardVersion = boardVersion;
+        entry.seasonTier = tier;
+        entry.seasonRank = rank;
+        return entry;
+    }
+
     public Long getId() {
         return id;
     }
@@ -125,5 +146,17 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
 
     public String getDeviceId() {
         return deviceId;
+    }
+
+    public String getSeasonBoardVersion() {
+        return seasonBoardVersion;
+    }
+
+    public Tier getSeasonTier() {
+        return seasonTier;
+    }
+
+    public Integer getSeasonRank() {
+        return seasonRank;
     }
 }

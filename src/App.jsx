@@ -11,11 +11,13 @@ import LoadoutPage from './pages/LoadoutPage.jsx';
 import ResultPage from './pages/ResultPage.jsx';
 import WalletPage from './pages/WalletPage.jsx';
 import PrivacyPage from './pages/PrivacyPage.jsx';
+import ChangelogPage from './pages/ChangelogPage.jsx';
 import ShopPage from './pages/ShopPage.jsx';
 import LeaderboardPage from './pages/LeaderboardPage.jsx';
 import { getMyProgress, getMyWallet, createRun, settleRun, updateMyNickname } from './lib/api/index.js';
 import { ensureSession, applyLogin, logout, subscribe, getSession } from './lib/session.js';
 import { buildSettlement } from './lib/settlement.js';
+import { pendingSeasonNotice, markSeasonNoticeShown } from './lib/seasonNotice.js';
 import { bannerAllowed, dismissBanner, markBannerShown, markRunSettled, shopBannerDue } from './lib/banner.js';
 import { nextGoal, nicknameError } from './lib/labels.js';
 import { LOGIN_AVAILABLE } from './lib/env.js';
@@ -24,7 +26,7 @@ import { TILES_DATA_URI } from './game/tiles.js';
 // settleRun error codes that mean the run is finished without a result (BDY-02 check failed, BDY-06 abandoned)
 const SETTLE_INVALID_CODES = new Set(['gam003', 'gam004']);
 
-// Screens: home | login | ready (silver loadout) | game | result | wallet | shop | board | privacy.
+// Screens: home | login | ready (silver loadout) | game | result | wallet | shop | board | privacy | changelog.
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
   const sceneryRef = useRef(true);
@@ -40,6 +42,7 @@ export default function App() {
   const [starting, setStarting] = useState(null);
   const [run, setRun] = useState(null);              // { runId|null, tier, buff, status, body, result, settlement, seen }
   const [lastBuff, setLastBuff] = useState(null);
+  const [seasonNotice, setSeasonNotice] = useState(null);   // D38: [{ key, text }] lines still owed on 首頁
   const [banner, setBanner] = useState(null);        // { text, on: 'result' | 'shop', kind: 'coins' | 'silver' | 'shop' }
   // the bonus cards appear where the offer buttons were: ignore taps for a moment so a double tap cannot pick one
   const [bonusLock, setBonusLock] = useState(false);
@@ -53,6 +56,8 @@ export default function App() {
       await ensureSession();
       const [p, w] = await Promise.all([getMyProgress(), getMyWallet()]);
       setProgress(p); setCoins(w.coins);
+      // FE-53: the season notice rides on the wallet call 首頁 already makes (no extra request)
+      setSeasonNotice(pendingSeasonNotice(w.latestSeasonReward));
       return p;
     } catch (_) { setLoadError(true); return null; }
   }, []);
@@ -172,7 +177,8 @@ export default function App() {
     page = <HomePage session={session} progress={progress} coins={coins} loadError={loadError} onRetry={refreshAccount}
       onNickname={setProgress} nickNotice={nickNotice} onNickNoticeShown={() => setNickNotice(null)} onBronze={startBronze} onSilver={() => go('ready')} onGo={go} starting={starting}
       onLogin={() => openLogin('home')} onLogout={async () => { try { await logout(); } catch (_) { /* offline: next call recovers */ } refreshAccount(); }}
-      loginAvailable={LOGIN_AVAILABLE} />;
+      loginAvailable={LOGIN_AVAILABLE} seasonNotice={seasonNotice}
+      onSeasonNoticeShown={() => { if (seasonNotice) markSeasonNoticeShown(seasonNotice); }} onSeasonNoticeClose={() => setSeasonNotice(null)} />;
   } else if (screen === 'login') page = <LoginPage onBack={() => go(loginFrom)} onLoggedIn={onLoggedIn} />;
   else if (screen === 'ready') page = <LoadoutPage preselect={lastBuff} onBack={() => go('home')} onStart={startSilver} />;
   else if (screen === 'result' && run && run.body) {
@@ -185,6 +191,7 @@ export default function App() {
       onBannerLogin={() => openLogin('shop')} onBannerClose={closeBanner} onBannerShown={bannerShown} />;
   } else if (screen === 'board') page = <LeaderboardPage onBack={() => go('home')} onPlay={() => go('home')} />;
   else if (screen === 'privacy') page = <PrivacyPage onBack={() => go('home')} />;
+  else if (screen === 'changelog') page = <ChangelogPage onBack={() => go('home')} />;
 
   return (
     <div id="app" ref={appRef}>

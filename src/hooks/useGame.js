@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createGame } from '../game/engine.js';
-import { render } from '../game/render.js';
+import { render, themeKey } from '../game/render.js';
 import { loadSprites } from '../game/tiles.js';
-import { W, H, MAX_EXTRA_H, MAX_CROP_H } from '../game/constants.js';
+import { W, H, MAX_EXTRA_H, MAX_CROP_H, BOSS7 } from '../game/constants.js';
 
 const phaseOf = S => !S.started ? 'intro' : S.over ? 'end' : S.paused ? 'paused' : S.choosing ? 'choice' : S.resting ? 'rest' : S.offering ? 'offer' : S.bonusing ? 'bonus' : 'play';
 const snapshot = S => ({ phase: phaseOf(S), result: S.result, time: S.t.toFixed(0), clearTime: S.clearT.toFixed(0), choiceCards: S.choiceCards, bonusCards: S.bonusCards });
@@ -33,9 +33,9 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
 
     // ---- sizing; `lite` drops to dpr 1 + squares after sustained slow frames ----
     // Width is always 390 logical px. Taller viewports get extra logical height above the battlefield
-    // (more red sea, up to MAX_EXTRA_H); shorter portrait viewports crop the top (up to MAX_CROP_H).
+    // (more sky / canopy, up to MAX_EXTRA_H); shorter portrait viewports crop the top (up to MAX_CROP_H).
     // Either way a phone fills the whole screen; landscape/desktop simply fits the height.
-    let scale = 1, lite = false, slowN = 0;
+    let scale = 1, lite = false, slowN = 0, sceneKey = '';
     const view = { h: H, oy: 0 };
     function resize() {
       const app = appRef.current, stage = stageRef.current;
@@ -55,6 +55,7 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
       const full = Math.abs(W * scale - cw) < 2 && Math.abs(view.h * scale - ch) < 2;
       if (full) stage.dataset.full = ''; else delete stage.dataset.full;
       ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
+      sceneKey = '';   // assigning canvas width/height clears the bitmap, even to the same size: menus must repaint
     }
     window.addEventListener('resize', resize); resize();
     // WebKit can mount React before the viewport has its final size; observe the container, not just the window.
@@ -68,7 +69,16 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
       if (S.started && !S.over && dt > 0.045) { if (++slowN > 45 && !lite) { lite = true; resize(); } } else slowN = Math.max(0, slowN - 1);
       game.update(dt);
       view.scenery = !!(sceneryRef && sceneryRef.current);
-      try { render(ctx, S, SPR, lite, view); } catch (err) { if (!renderErr) { renderErr = true; console.error(err); } }
+      // Menus (scenery) are a still picture: paint once per (theme, oy, transform, canvas size) and skip the other
+      // frames (FE-57). Shake is cleared on the way in, otherwise a run that ended on a boss kill leaves S.shake > 0
+      // (the engine stops updating, so it never decays) and the result screen jitters every frame (FE-57).
+      let paint = true;
+      if (view.scenery) {
+        S.shake = 0;
+        const key = themeKey(S, view) + '|' + view.oy + '|' + ctx.getTransform().a + '|' + cv.width + 'x' + cv.height;
+        paint = key !== sceneKey; sceneKey = key;
+      } else sceneKey = '';
+      if (paint) try { render(ctx, S, SPR, lite, view); } catch (err) { if (!renderErr) { renderErr = true; console.error(err); } }
       hudT += dt;
       if (hudT > 0.1) { hudT = 0; updateHud(); }
       raf = requestAnimationFrame(frame);
@@ -118,8 +128,15 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
       if (v) game.setTurretX(S.turret.x + v * 5);
     }, 16);
 
-    // fast-forward helper: keep the turret out of the EXTRA boss 6 lightning column
-    const dodge = () => { const b = S.bolts[0]; if (b && S.turret.x + 16 > b.x0 && S.turret.x - 16 < b.x1) game.setTurretX(b.x0 > W / 2 ? W / 4 : W * 3 / 4); };
+    // fast-forward helper: keep the turret out of the EXTRA boss 6 lightning column and the boss 7 purple columns
+    const dodge = () => {
+      const b = S.bolts[0]; if (b && S.turret.x + 16 > b.x0 && S.turret.x - 16 < b.x1) game.setTurretX(b.x0 > W / 2 ? W / 4 : W * 3 / 4);
+      const shown = S.pbolts.filter(p => p.t >= 0);
+      if (shown.some(p => S.turret.x + 16 > p.x0 && S.turret.x - 16 < p.x1)) {
+        const w = W / 6, free = [0, 1, 2, 3, 4, 5].filter(c => !S.pbolts.some(p => p.strip === c));
+        if (free.length) game.setTurretX(free[0] * w + w / 2);
+      }
+    };
     // dev-only inspection hook; stripped from production builds so scores cannot be forged through it
     if (import.meta.env.MODE !== 'production' && location.search.includes('debug')) window.__game = {
       start() { game.reset({ tier: S.tier, buff: S.buff }); S.started = true; sync(); },
@@ -150,9 +167,33 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
           for (const b of S.bosses) if (b.alive && !b.minion) { if (b.bornT === undefined) b.bornT = S.t; if (S.t - b.bornT > 1.5) game.killBoss(b); }
           if (S.resting) game.pickRest(1);
           if (S.choosing) game.pickChoice(0);
+          dodge();
         }
         S.redReserve = calm ? 0 : reserve; S.red = []; render(ctx, S, SPR, lite, view); updateHud(); sync();
       },
+      // EXTRA boss 7 (D39) fast-forward: bosses 1-6 fall as in extra(); returns right as boss 7 appears in the centre
+      boss7(calm) { this.extra(7, calm); return this.purple(); },
+      // EXTRA boss 7 state: phase (center | path | arena), invulnerable seconds left, centre clock, position, current
+      // full-screen round {p turret column, s safe column, order}, purple columns [strip, sweep?, t, warn, fire]
+      // (t < 0 = not shown yet), arrows [x, y, angle deg, speed px/s, tail x, tail y], timers
+      purple() {
+        const bo = S.bosses.find(b => b.alive && b.purple);
+        const A = BOSS7.arrows;
+        return {
+          boss: bo ? { idx: bo.idx, hp: bo.hp, max: bo.max, v: bo.v, r: bo.r, x: Math.round(bo.x), y: Math.round(bo.y), s: Math.round(bo.s), phase: bo.mode === 3 ? 'center' : bo.mode === 1 ? 'path' : 'arena', inv: +bo.inv.toFixed(3), ct: +bo.purple.ct.toFixed(3), gap: +bo.purple.gap.toFixed(3), boltT: +bo.purple.boltT.toFixed(3), arrowT: +bo.purple.arrowT.toFixed(3), round: bo.purple.round && { p: bo.purple.round.p, s: bo.purple.round.s, order: bo.purple.round.order.slice() } } : null,
+          bolts: S.pbolts.map(b => [b.strip, b.sweep, +b.t.toFixed(3), b.warn, b.fire]),
+          arrows: S.arrows.map(a => [Math.round(a.x), Math.round(a.y), Math.round(Math.atan2(a.uy, a.ux) * 180 / Math.PI), A.speed, Math.round(a.x - a.ux * A.len), Math.round(a.y - a.uy * A.len)]),
+          // unrounded geometry of each arrow as drawn and hit-tested: [head-to-tail length px, shaft width px]
+          arrowGeom: S.arrows.map(a => [+Math.hypot(a.ux * A.len, a.uy * A.len).toFixed(3), +(A.hw * 2).toFixed(3)]),
+          t: S.t, over: S.over, result: S.result, kills: S.kills.slice(), death: S.death
+        };
+      },
+      // damage through the game's own rules (ignored while the boss is invulnerable); returns whether it landed
+      hit(idx, dmg) { const b = S.bosses.find(x => x.alive && x.idx === idx && !x.minion); const ok = game.hurtBoss(b, dmg); sync(); return ok; },
+      // move a planned boss along its path (arc length s; 0 = mouth): lets a test walk boss 7 to the turret quickly
+      bossTo(idx, s) { const b = S.bosses.find(x => x.alive && x.idx === idx && !x.minion && x.mode === 1); if (b) b.s = s; return !!b; },
+      // spawn arrows from (x, y) at given angles (deg) — lets a test aim one at the turret
+      arrowsAt(x, y, degs) { const A = BOSS7.arrows; for (const d of degs) { const a = d * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a); S.arrows.push({ x: x + ux * A.len, y: y + uy * A.len, ux, uy, t0: S.t }); } },
       // EXTRA boss 6 lightning state: current column (firing or warning), columns still marked on the field (only the
       // current one, FE-41), orbs [x, y, age, angle deg, speed px/s]
       storm() { const b = S.bolts[0]; return { bolt: b ? { strip: b.strip, x0: b.x0, x1: b.x1, firing: b.t >= b.warn, t: +b.t.toFixed(2) } : null, marked: S.bolts.map(x => x.strip), orbs: S.orbs.map(o => [Math.round(o.x), Math.round(o.y), +o.t.toFixed(2), Math.round(Math.atan2(o.vy, o.vx) * 180 / Math.PI), Math.round(Math.hypot(o.vx, o.vy))]), beams: S.beams.length, t: S.t, over: S.over }; },
@@ -160,6 +201,8 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
       spread(n) { if (n != null) S.spread = n; return S.spread; }, gateAbility(i, ab) { if (ab) S.gates[i].ability = ab; return S.gates[i].ability; },
       rollGate(i) { game.rebuildGate(S.gates[i]); return S.gates[i].ability; },
       breakGate(i) { const g = S.gates[i]; g.hp = 0; g.dead = true; g.respawnT = 999; game.onReward(g); render(ctx, S, SPR, lite, view); sync(); },
+      // current visual theme key ('bronze' forest | 'silver' cloud sky, FE-52)
+      theme() { return themeKey(S, view); },
       turretX() { return S.turret.x; }, loadout() { return { tier: S.tier, buff: S.buff, fireMin: S.fireMin, cannon: S.cannon.level, laser: !!S.laser }; }, lite() { return lite; }, choose(i) { game.pickChoice(i); }, mystery(a, b) { game.openChoice(a && b ? [a, b] : null); }, choice() { return S.choosing ? S.choice : null; }, rest(i) { game.pickRest(i); }, openRest() { game.openRest(); }, offer(yes) { yes ? game.acceptOffer() : game.declineOffer(); }, bonus(i) { game.pickBonus(i); }, bonusCards() { return S.bonusing ? S.bonus : null; }, hits(x) { return S.beams.some(b => game.beamHits(b, x, S.turret.y, 16)); }, hurt(idx, dmg) { for (const b of S.bosses) if (b.alive && b.idx === idx) { b.hp -= dmg; if (b.hp <= 0) game.killBoss(b); } }, cannon() { return S.cannon.level; },
       bench(n) { let t0 = performance.now(); for (let i = 0; i < n; i++) game.update(1 / 60); const up = (performance.now() - t0) / n; t0 = performance.now(); for (let i = 0; i < n; i++) render(ctx, S, SPR, lite, view); return { update: +up.toFixed(2), render: +((performance.now() - t0) / n).toFixed(2) }; },
       state() { let minS = 1e9, arena = 0, maxB = -1; for (const r of S.red) { if (r.mode === 0) arena++; else if (r.s < minS) minS = r.s; } for (const u of S.blue) if (u.mode === 1 && u.s > maxB) maxB = u.s; return { minRedS: Math.round(minS), redArena: arena, maxBlueS: Math.round(maxB), shots: S.blue.filter(u => u.mode === 2).length, t: S.t, over: S.over, result: S.result, blue: S.blue.length, red: S.red.length, reserve: S.redReserve, spread: S.spread, armor: S.blueHp, speed: S.blueSpeed, fireMul: +S.fireMul.toFixed(3), kills: S.bossKills, choosing: S.choosing, resting: S.resting, cannon: S.cannon.level, stage: S.stage, clearT: +S.clearT.toFixed(1), beams: S.beams.map(b => b.kind + ':' + b.t.toFixed(2)), gateX: S.gates.map(g => [g.x0, g.x1]), minions: S.bosses.filter(b => b.minion && b.alive).length, gates: S.gates.map(g => g.kind === 'hp' ? g.hp + '/' + g.max + ':' + g.ability + ':g' + g.gen : 'x' + g.mult), bosses: S.bosses.filter(b => b.alive && !b.minion).map(b => [b.idx, b.hp, b.mode, Math.round(b.s)]) }; }

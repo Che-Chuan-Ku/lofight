@@ -1,6 +1,6 @@
 // Players tag handlers (progress, nickname, wallet, ledger, buff inventory).
 import { route, ok, fail, authenticate, blank } from './util.js';
-import { getDb, persist, addLedger, adRewardStatus, now, BANNED_WORDS, LEDGER_PAGE_SIZE, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ, AD_REWARD } from '../db.js';
+import { getDb, persist, addLedger, adRewardStatus, latestSeasonReward, now, BANNED_WORDS, LEDGER_PAGE_SIZE, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ, AD_REWARD } from '../db.js';
 
 export const progressOf = p => ({
   playerId: p.playerId, nickname: p.nickname, playerKind: p.playerKind, isSilverUnlocked: p.isSilverUnlocked,
@@ -27,7 +27,7 @@ export const playerHandlers = [
 
   route('getMyWallet', ({ request }) => {
     const auth = authenticate(request);
-    return auth.error || ok({ coins: auth.player.coins });
+    return auth.error || ok({ coins: auth.player.coins, latestSeasonReward: latestSeasonReward(auth.player.playerId) });
   }),
 
   route('listMyCoinLedgerEntries', ({ request, url }) => {

@@ -3,7 +3,7 @@ module: backend_development
 test_strategy: e2e
 stack: {java: 17, spring_boot: "3.2", cucumber: "7.15", testcontainers_postgresql: "1.21.4"}
 base_package: com.crowdsiege.api
-current_step: completed   # 2026-11-02 CHANGE round D33-D35 (rewarded ad) gates re-run
+current_step: completed   # 2026-11-03 CHANGE round D39 (EXTRA boss 7)
 red_green_refactor: completed   # 18 active features; CHANGE 2026-11-02: red 20 failed -> green 167/167
 deferred:
   - feature: specs/features/account/Apple登入.feature   # @ignore, BDY-01=B, user_response A (2026-10-30)
@@ -17,9 +17,24 @@ changes:
       - "/ads.txt endpoint (infrastructure.yml ads_txt) not implemented: no feature / api.yml operation; awaiting decision"
   - date: "2026-11-02"
     scope: "D-09=A victory threshold > -> >= (bronze 98, silver 84); RunSettlementService.isPlausible; 結算對局.feature +1 Example (silver 84 accepted); red 1 failed -> green 168/168"
+  - date: "2026-11-03"
+    scope: "D38 season reward: @batch startup settlement (SeasonRewardStartup/Service/Payout), season = pom version major.minor (game.build-version filtered from @project.version@), getMyWallet.latestSeasonReward, ledger season fields, SEASON_REWARD ledger/event"
+    migration: V3__season_reward.sql
+    red_green: "red 26 (9 failed + 17 undefined) -> green 189/189"
+    open_items:
+      - "resolved: 發放賽季獎勵.feature:77 Example fixed by spec (19.9 score now MEMBER 乙), human choice A"
+      - "CLAUDE.md version rule table: season now auto-derived from pom major.minor (INF-S17) - repo CLAUDE.md not edited (shared contract file)"
+  - date: "2026-11-03"
+    scope: "S9 revised by user: first-eligible-season 19.1 -> 19.0 (application.yml); 發放賽季獎勵.feature Background 19.0 row -> 18.7, +1 Example (19.1.0 startup pays 19.0 BRONZE 1/3200, SILVER 0/0), 18.x-not-paid Example; no Java change"
+    red_green: "red 1 failed/190 (new Example) -> green 190/190 scenarios, 1628 steps"
+    open_items:
+      - "repo CLAUDE.md still says previous season (>= 19.1) - shared contract file, not edited; integration-test/REPORT.md:150 deploy note (19.0 not paid) now stale"
+  - date: "2026-11-03"
+    scope: "D39 EXTRA boss 7: game.tiers.SILVER 7 bosses (spawn [..,84,84], coins [..,128,192], threshold 84); RunSettlementService seventh check silver boss7 killedAt >= boss6 killedAt when both listed (INF-X21, bronze N/A INF-X22); bossSeq/deathBossSeq 1-7; gam003; no migration"
+    red_green: "結算對局.feature red 4 failed/40 -> green 40/40; full suite 195/195"
 gates:
-  gate1_features: "19/19 bound (symlinked to specs/features)"
+  gate1_features: "20/20 bound (symlinked to specs/features)"
   gate2_service_ut: N/A (e2e)
   gate3_controller_slice: N/A (e2e)
-  gate4_cucumber: "PASSED 168/168 scenarios, 1440 steps (not @ignore)"
+  gate4_cucumber: "PASSED 195/195 scenarios, 1700 steps (not @ignore)"
   gate5_api: "17/17 active operations implemented, 0 extra; 1 N/A (x-deferred loginApple)"

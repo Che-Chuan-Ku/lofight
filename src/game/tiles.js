@@ -8,7 +8,7 @@ export const TILES_DATA_URI = 'data:image/png;base64,' + TILE_B64;
 
 // Builds the sprite set asynchronously; `ready` flips once the tilemap decodes.
 export function loadSprites() {
-  const SPR = { ready: false, blue: null, red: null, bosses: [], minion: null };
+  const SPR = { ready: false, blue: null, red: null, bosses: [], minion: null, purple: null };
   const tileImg = new Image();
   function tileCanvas(idx, size, tint, flip) {
     const c = document.createElement('canvas'); c.width = size; c.height = size;
@@ -26,6 +26,8 @@ export function loadSprites() {
     // hidden boss is the 9th entry (boss idx 9), a dark-tinted wizard
     const ssz = SECRET_BOSS.r * 2 + 12;
     SPR.bosses.push([tileCanvas(SECRET_TILE, ssz, 'rgba(120,0,40,.45)', false), tileCanvas(SECRET_TILE, ssz, 'rgba(255,255,255,.85)', false)]);
+    // EXTRA boss 7 (D39, X9=a): the same wizard tile in a purple tint (same size: r 34)
+    SPR.purple = [tileCanvas(SECRET_TILE, ssz, 'rgba(150,40,255,.5)', false), tileCanvas(SECRET_TILE, ssz, 'rgba(255,255,255,.85)', false)];
     SPR.ready = true;
   };
   tileImg.src = 'data:image/png;base64,' + TILE_B64;

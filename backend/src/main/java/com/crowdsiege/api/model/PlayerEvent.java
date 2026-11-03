@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 
 /**
- * Append-only backend event (shop view, buff purchase, ad reward); created_at is the occurred time.
+ * Append-only backend event (shop view, buff purchase, ad reward, season reward); created_at is the occurred time.
  */
 @Entity
 @Table(name = "player_events")
@@ -57,6 +57,13 @@ public class PlayerEvent extends AppendOnlyEntity {
         PlayerEvent event = new PlayerEvent(EventKind.AD_REWARD, playerId, silverUnlocked, null, null, now);
         event.deviceId = deviceId;
         return event;
+    }
+
+    /**
+     * SEASON_REWARD event, one per credited (player, season, tier) (AMB-S12=b); silver state at payout time.
+     */
+    public static PlayerEvent seasonReward(Long playerId, boolean silverUnlocked, Instant now) {
+        return new PlayerEvent(EventKind.SEASON_REWARD, playerId, silverUnlocked, null, null, now);
     }
 
     public Long getId() {
