@@ -48,7 +48,8 @@ export default function LeaderboardPage({ onBack, onPlay }) {
     );
     if (!d.myRank) mine = <p className="msg info center" style={{ padding: '8px 0' }}>尚無成績</p>;
     else {
-      const around = [...d.neighbors, d.myRank].sort((a, b) => a.rank - b.rank);
+      // Only the player's own row (user ruling 2026-11-03); the API's neighbours are ignored.
+      const around = [d.myRank];
       mine = <ol className="rows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>{around.map(e => <Row key={'m' + e.rank + ':' + e.playerId} e={e} me={d.myRank} extra={d.tier === 'SILVER'} />)}</ol>;
     }
   }
