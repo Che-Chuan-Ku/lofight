@@ -75,11 +75,15 @@ export const BEAM_HIT_R = 16;   // turret radius for beam hits
 // After the round the boss teleports back to the path (first round: path top; later: where it left), `cd` s after
 // the round ends it returns to the centre. On the path: one random column every bolt.cd s (first one bolt.cd s after
 // the opening round) and `arrows.n` arrows every arrows.cd s (angle minDeg-maxDeg each, 90 = straight down; speed =
-// boss-6 orb x1.3; width = half the orb diameter, length = twice it; no bounce, gone once fully off screen).
+// boss-6 orb x1.3 x1.5 (user 2026-11-03); width = half the orb diameter, length = twice it; no bounce, gone once fully off screen).
 // Both timers pause while the boss is in the centre phase. Nothing here touches soldiers.
 export const BOSS7 = {
   center: { x: W / 2, y: 390 }, inv: 1,
-  sweep: { strips: 6, step: 0.2, warn: 0.8, fire: 0.6, cd: 20 },
+  sweep: { strips: 6, step: 0.4, warn: 0.8, fire: 0.6, cd: 20 },   // step 0.2 -> 0.4 s (user 2026-11-03)
   bolt: { cd: 5, warn: 0.8, fire: 0.6 },
-  arrows: { n: 3, cd: 7, minDeg: 20, maxDeg: 160, speed: 195 /* boss-6 orb 150 x 1.3 */, len: 36 * Math.SQRT2 /* 50.9 px, FE-69 */, hw: 4.5 * Math.SQRT2 /* width 12.7 px */ }
+  // casting pause (user 2026-11-03): the boss stands still and plays the cast pose for this long (s); path progress frozen,
+  // other timers keep running, still hittable. sweep = from the start of each full-screen round; bolt / arrows = per cast.
+  cast: { sweep: 2, bolt: 0.2, arrows: 0.2 },
+  slantMax: 130,   // visual only: each band's x drift at y = 0 vs the turret row, random in [-130, +130] px (0-2 columns either way) per band per cast (user 2026-11-03, third)
+  arrows: { n: 3, cd: 6 /* 7 -> 6 s (user 2026-11-03) */, minDeg: 20, maxDeg: 160, speed: 292.5 /* boss-6 orb 150 x 1.3 x 1.5 (user 2026-11-03) */, len: 36 * Math.SQRT2 /* 50.9 px, FE-69 */, hw: 4.5 * Math.SQRT2 /* width 12.7 px */ }
 };

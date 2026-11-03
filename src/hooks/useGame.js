@@ -174,14 +174,14 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
       // EXTRA boss 7 (D39) fast-forward: bosses 1-6 fall as in extra(); returns right as boss 7 appears in the centre
       boss7(calm) { this.extra(7, calm); return this.purple(); },
       // EXTRA boss 7 state: phase (center | path | arena), invulnerable seconds left, centre clock, position, current
-      // full-screen round {p turret column, s safe column, order}, purple columns [strip, sweep?, t, warn, fire]
+      // full-screen round {p turret column, s safe column, order}, purple columns [strip, sweep?, t, warn, fire, slant px at y = 0 (+ = right)]
       // (t < 0 = not shown yet), arrows [x, y, angle deg, speed px/s, tail x, tail y], timers
       purple() {
         const bo = S.bosses.find(b => b.alive && b.purple);
         const A = BOSS7.arrows;
         return {
-          boss: bo ? { idx: bo.idx, hp: bo.hp, max: bo.max, v: bo.v, r: bo.r, x: Math.round(bo.x), y: Math.round(bo.y), s: Math.round(bo.s), phase: bo.mode === 3 ? 'center' : bo.mode === 1 ? 'path' : 'arena', inv: +bo.inv.toFixed(3), ct: +bo.purple.ct.toFixed(3), gap: +bo.purple.gap.toFixed(3), boltT: +bo.purple.boltT.toFixed(3), arrowT: +bo.purple.arrowT.toFixed(3), round: bo.purple.round && { p: bo.purple.round.p, s: bo.purple.round.s, order: bo.purple.round.order.slice() } } : null,
-          bolts: S.pbolts.map(b => [b.strip, b.sweep, +b.t.toFixed(3), b.warn, b.fire]),
+          boss: bo ? { idx: bo.idx, hp: bo.hp, max: bo.max, v: bo.v, r: bo.r, x: Math.round(bo.x), y: Math.round(bo.y), s: Math.round(bo.s), phase: bo.mode === 3 ? 'center' : bo.mode === 1 ? 'path' : 'arena', inv: +bo.inv.toFixed(3), ct: +bo.purple.ct.toFixed(3), gap: +bo.purple.gap.toFixed(3), boltT: +bo.purple.boltT.toFixed(3), arrowT: +bo.purple.arrowT.toFixed(3), casting: +bo.purple.cast.toFixed(3), round: bo.purple.round && { p: bo.purple.round.p, s: bo.purple.round.s, order: bo.purple.round.order.slice() } } : null,
+          bolts: S.pbolts.map(b => [b.strip, b.sweep, +b.t.toFixed(3), b.warn, b.fire, b.slant]),
           arrows: S.arrows.map(a => [Math.round(a.x), Math.round(a.y), Math.round(Math.atan2(a.uy, a.ux) * 180 / Math.PI), A.speed, Math.round(a.x - a.ux * A.len), Math.round(a.y - a.uy * A.len)]),
           // unrounded geometry of each arrow as drawn and hit-tested: [head-to-tail length px, shaft width px]
           arrowGeom: S.arrows.map(a => [+Math.hypot(a.ux * A.len, a.uy * A.len).toFixed(3), +(A.hw * 2).toFixed(3)]),

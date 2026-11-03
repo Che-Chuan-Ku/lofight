@@ -220,10 +220,13 @@ export function render(ctx, S, SPR, lite, view) {
     const bset = bo.minion ? SPR.minion : bo.purple ? SPR.purple : SPR.bosses[bo.idx - 1];   // idx is 1-based
     // EXTRA boss 7 in the centre: invulnerable ring, and the wave (sprite hops up + swells) while invulnerable,
     // then the raised pose (held larger) while the round is cast (D39, X9=a)
+    // casting pause (user 2026-11-03): the same wave while bo.purple.cast > 0, in the centre or on the path
     let lift = 0, grow = 1;
+    const castPose = !!bo.purple && bo.purple.cast > 0;
+    if (castPose && bo.mode !== 3) { const wv = Math.abs(Math.sin(S.t * 10)); lift = 4 + wv * 8; grow = 1.08 + wv * 0.14; }
     if (bo.purple && bo.mode === 3) {
       const wv = Math.abs(Math.sin(S.t * 10));
-      if (bo.inv > 0) { lift = 4 + wv * 8; grow = 1.08 + wv * 0.14; } else { lift = 6; grow = 1.16; }
+      if (bo.inv > 0 || castPose) { lift = 4 + wv * 8; grow = 1.08 + wv * 0.14; } else { lift = 6; grow = 1.16; }
       if (bo.inv > 0) {
         ctx.strokeStyle = THEME.silver.pEdge; ctx.globalAlpha = 0.5 + 0.3 * wv; ctx.lineWidth = 3;
         ctx.beginPath(); ctx.arc(bo.x, bo.y, R + 10, 0, 6.28); ctx.stroke(); ctx.globalAlpha = 1;
@@ -384,20 +387,28 @@ export function render(ctx, S, SPR, lite, view) {
     ctx.fillStyle = '#b98cff'; ctx.beginPath(); ctx.arc(o.x, o.y, R, 0, 6.28); ctx.fill();
     ctx.fillStyle = '#fbf4ff'; ctx.beginPath(); ctx.arc(o.x, o.y, R * 0.45, 0, 6.28); ctx.fill();
   }
-  // EXTRA boss 7 purple lightning (D39): same column look as boss 6 in a purple palette; columns with t < 0 are not
-  // shown yet; a column that has fired is gone (INF-X4). The safe column carries no mark (X3=b). No text.
+  // EXTRA boss 7 purple lightning (D39): columns with t < 0 are not shown yet; a column that has fired is gone
+  // (INF-X4). The safe column carries no mark (X3=b). No text. User rulings 2026-11-03 (second + third): every band
+  // is a slanted parallelogram — at the turret row it is exactly the 65 px hit column, and by the top of the
+  // battlefield (y = 0) it has drifted bl.slant px (random per band per cast, -130..+130, set by the engine when the
+  // column is created) so bands may cross and leave the screen. Drawn with a shear so the bolt keeps the original
+  // straight-bolt look along the slanted axis. Hit test is unchanged (turret-row column).
+  const shY = S.turret.y;
   for (const bl of S.pbolts || []) {
     if (bl.t < 0) continue;
-    const top = -MAX_EXTRA_H, bot = H + 20, bw = bl.x1 - bl.x0, cx = (bl.x0 + bl.x1) / 2;
+    const top = -MAX_EXTRA_H, bot = H + 20, bw = bl.x1 - bl.x0, cx = (bl.x0 + bl.x1) / 2, shear = -(bl.slant || 0) / shY;
+    ctx.save();
+    ctx.transform(1, 0, shear, 1, -shear * shY, 0);   // x' = x + shear * (y - turretY)
     if (bl.t < bl.warn) {
+      // telegraph: pale translucent band (no solid edge) + thin purple centre line on the slanted axis
       ctx.globalAlpha = 1;
-      ctx.fillStyle = BT.pWarn + (0.14 + 0.14 * (0.5 + 0.5 * Math.sin(S.t * 9))) + ')';
+      ctx.fillStyle = BT.pWarn + (0.16 + 0.08 * (0.5 + 0.5 * Math.sin(S.t * 9))) + ')';
       ctx.fillRect(bl.x0, top, bw, bot - top);
-      ctx.beginPath(); ctx.moveTo(bl.x0 + 1, top); ctx.lineTo(bl.x0 + 1, bot); ctx.moveTo(bl.x1 - 1, top); ctx.lineTo(bl.x1 - 1, bot);
+      ctx.beginPath(); ctx.moveTo(cx, top); ctx.lineTo(cx, bot);
       ctx.strokeStyle = BT.pEdgeDark; ctx.lineWidth = 4; ctx.stroke();
-      ctx.strokeStyle = BT.pEdge; ctx.lineWidth = 2; ctx.setLineDash([8, 6]); ctx.lineDashOffset = -S.t * 40; ctx.stroke();
-      ctx.setLineDash([]);
+      ctx.strokeStyle = BT.pEdge; ctx.lineWidth = 2; ctx.stroke();
     } else {
+      // original (v19.1.0) straight bolt, drawn in sheared space so it runs down the slanted band
       const k = 1 - (bl.t - bl.warn) / bl.fire;
       ctx.globalAlpha = 0.35 + 0.65 * k;
       ctx.fillStyle = BT.pGlow; ctx.fillRect(bl.x0, top, bw, bot - top);
@@ -411,6 +422,7 @@ export function render(ctx, S, SPR, lite, view) {
       ctx.strokeStyle = BT.pCore; ctx.lineWidth = bw * 0.14; ctx.stroke();
       ctx.lineJoin = 'round';
     }
+    ctx.restore();
   }
   ctx.globalAlpha = 1;
   // lightning arrows: shaft along the flight direction (len x width as the hit capsule), dark outline, bright core, arrowhead

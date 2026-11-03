@@ -142,7 +142,7 @@ export function createGame(onChange) {
     if (b.skills === 'beam') Object.assign(bo, { beam: true, soloCd: 4, wideCd: 0, enraged: false });
     if (b.skills === 'storm') { bo.storm = { round: null, gap: 0, orbT: STORM.orbs.first }; startSweep(bo); }
     // EXTRA boss 7 (D39): appears straight in the centre; single column / arrow timers start after the opening round
-    if (b.skills === 'purple') { bo.purple = { first: true, round: null, ct: 0, gap: 0, boltT: BOSS7.bolt.cd, arrowT: BOSS7.arrows.cd, home: null }; enterCenter(bo); }
+    if (b.skills === 'purple') { bo.purple = { first: true, round: null, ct: 0, gap: 0, boltT: BOSS7.bolt.cd, arrowT: BOSS7.arrows.cd, home: null, cast: 0 }; enterCenter(bo); }
     S.bosses.push(bo);
     addPop('BOSS!', W / 2, 120, '#ff6b6b');
   }
@@ -229,7 +229,10 @@ export function createGame(onChange) {
       if (!bo.alive) continue;
       bo.hitT = Math.max(0, bo.hitT - dt);
       if (bo.inv > 0) bo.inv = Math.max(0, bo.inv - dt);
-      if (bo.mode === 3) {
+      // EXTRA boss 7 casting pause (user 2026-11-03): no movement while casting; path progress s stays put
+      const casting = !!bo.purple && bo.purple.cast > 1e-6;
+      if (casting) bo.purple.cast = Math.max(0, bo.purple.cast - dt);
+      if (bo.mode === 3 || casting) {
         // EXTRA boss 7 centre phase: stands still at the centre while it casts (D39)
       } else if (bo.mode === 1) {
         bo.s -= bo.v * dt;
@@ -502,16 +505,21 @@ export function createGame(onChange) {
     const P = bo.purple, SW = BOSS7.sweep, w = W / SW.strips;
     const p = stripOf(S.turret.x), s = (Math.random() * SW.strips) | 0, order = sweepOrder(p, s);
     P.round = { p, s, order, t0: S.t };
+    P.cast = BOSS7.cast.sweep;   // casting pose for the whole round's telegraph sequence
     // bolt clocks are advanced later this frame: start them so that the k-th shows at k * step after the round start
     const over = P.ct - BOSS7.inv - dt;
-    order.forEach((c, k) => S.pbolts.push({ strip: c, x0: c * w, x1: (c + 1) * w, t: over - k * SW.step, warn: SW.warn, fire: SW.fire, sweep: true, k }));
+    order.forEach((c, k) => S.pbolts.push({ strip: c, x0: c * w, x1: (c + 1) * w, t: over - k * SW.step, warn: SW.warn, fire: SW.fire, sweep: true, k, slant: randSlant() }));
   }
+  // visual-only drift of a purple band at y = 0 relative to the turret row (px, + = right); drawn once per column
+  // when it is created, shared by its telegraph and its firing. Hit test ignores it (turret-row column only).
+  function randSlant() { return Math.round((Math.random() * 2 - 1) * BOSS7.slantMax); }
   function purpleSkills(bo, dt) {
     const P = bo.purple, B = BOSS7;
     if (bo.mode === 3) {
       P.ct += dt;
       if (!P.round) { if (P.ct >= B.inv) startPurpleRound(bo, dt); }
-      else if (!S.pbolts.some(b => b.sweep)) leaveCenter(bo);
+      // the centre phase lasts at least until the 2 s cast is over (user 2026-11-03), then the existing rule applies
+      else if (P.cast <= 1e-6 && !S.pbolts.some(b => b.sweep)) leaveCenter(bo);
       return;
     }
     // cd over: back to the centre once no single column is in progress (INF-X6); timers stay paused meanwhile
@@ -521,12 +529,14 @@ export function createGame(onChange) {
     P.boltT -= dt;
     if (P.boltT <= 0) {
       const c = (Math.random() * B.sweep.strips) | 0;
-      S.pbolts.push({ strip: c, x0: c * w, x1: (c + 1) * w, t: -P.boltT - dt, warn: B.bolt.warn, fire: B.bolt.fire, sweep: false });
+      S.pbolts.push({ strip: c, x0: c * w, x1: (c + 1) * w, t: -P.boltT - dt, warn: B.bolt.warn, fire: B.bolt.fire, sweep: false, slant: randSlant() });
       P.boltT += B.bolt.cd;
+      P.cast = Math.max(P.cast, B.cast.bolt);
     }
     P.arrowT -= dt;
     if (P.arrowT <= 0) {
       P.arrowT += B.arrows.cd;
+      P.cast = Math.max(P.cast, B.cast.arrows);
       const A = B.arrows;
       for (let i = 0; i < A.n; i++) {
         const a = (A.minDeg + Math.random() * (A.maxDeg - A.minDeg)) * Math.PI / 180, ux = Math.cos(a), uy = Math.sin(a);

@@ -1,29 +1,35 @@
 // 開發者日誌 data (specs/ui/開發者日誌頁.md, D40). Newest first; add one entry on every version bump (CLAUDE.md).
 // Player-facing summary only: no numbers (HP, seconds, coins, cooldowns), no system mechanics, no forbidden words.
+// Tone: cool and dry humour; changes to the same boss / area are merged into one line (user ruling 2026-11-03).
+// The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
+  {
+    version: '19.1.1',
+    date: '2026-11-03',
+    items: [
+      'EXTRA 第 7 王換了一套劈法，你會喜歡的。',
+      '開發者日誌換了個說話的方式。內容還是真的。'
+    ]
+  },
   {
     version: '19.1.0',
     date: '2026-11-03',
     items: [
-      'NORMAL 與 EXTRA 的對局畫面各有專屬風格',
-      'EXTRA 新增第 7 關',
-      'EXTRA 魔王招式調整：第 5 王的光束、第 6 王的閃電與閃電球',
-      '商店新增 ATK+1 道具',
-      '賽季獎勵：新賽季開始時，依上一季排行榜名次發放金幣給已登入的玩家',
-      '排行榜 EXTRA 分頁會標示是否裝填道具',
-      '首頁與商店介面整理',
-      '效能優化：選單畫面更省電，對局更流暢'
+      'NORMAL 住森林，EXTRA 住雲端。兩邊都不歡迎你。',
+      'EXTRA 多了第 7 關，第 5、6 王的招式也重新磨過。前六關只是暖身。',
+      '商店上架 ATK+1，排行榜會標出你有沒有帶道具。全場都看得到。',
+      '賽季獎勵登場：新賽季開跑時，上一季榜上有名的登入玩家會收到金幣。沒登入的，就當作替別人慶祝。',
+      '首頁與商店整理過，選單也不再偷偷燒你的電。不客氣。'
     ]
   },
   {
     version: '19.0.x',
     date: '2026-11-02',
     items: [
-      '帳號登入，進度可跨裝置保存',
-      '金幣與商店上線',
-      '排行榜上線',
-      '看廣告領金幣（核准後開放）',
-      '新增隱私權政策頁'
+      '帳號登入上線，進度跟著你走。藉口不再成立。',
+      '金幣、商店、排行榜開張。錢從魔王身上掉，名次所有人都看得到。',
+      '看廣告領金幣：核准後開放。目前只能看。',
+      '新增隱私權政策頁。我們沒那麼好奇，但法律要我們寫。'
     ]
   }
 ];
