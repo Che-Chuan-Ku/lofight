@@ -4,6 +4,7 @@
 #   PORT                                                          ->  SERVER_PORT
 #   GOOGLE_CLIENT_ID                                              ->  /app/static/index.html (meta google-client-id)
 #   ADSENSE_PUBLISHER_ID (ca-pub-<digits>)                        ->  /app/static/index.html (meta adsense-publisher-id) + /app/static/ads.txt
+#   /app/web/*.html (not index), robots.txt, sitemap.xml            ->  copied to /app/static (D41 static pages)
 # Explicit DB_URL / DB_USERNAME / DB_PASSWORD / SERVER_PORT always win (local docker-compose sets DB_* directly).
 set -eu
 
@@ -79,6 +80,14 @@ if [ -f /app/web/index.html ]; then
     echo "entrypoint: index.html rendered without ADSENSE_PUBLISHER_ID (ads off)"
   fi
 fi
+
+# D41 static pages from the build (guide / about / updates / privacy .html, robots.txt, sitemap.xml): served as-is.
+# index.html is excluded here; it is rendered above with the runtime ids.
+for f in /app/web/*.html /app/web/robots.txt /app/web/sitemap.xml; do
+  [ -f "$f" ] || continue
+  [ "$(basename "$f")" = "index.html" ] && continue
+  cp "$f" /app/static/
+done
 
 # ads.txt at the site root (infrastructure.yml site_ads.ads_txt): only when a publisher id is set, otherwise /ads.txt is 404.
 # AdSense writes the seller id without the ca- prefix; f08c47fec0942fa0 is Google's certification authority id.

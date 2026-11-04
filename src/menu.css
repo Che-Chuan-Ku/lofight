@@ -444,9 +444,12 @@
 .v19 .adcard.idle > .ticon { filter: grayscale(1) brightness(0.75); }
 .v19 .adcard .buy .btn-primary { min-width: 76px; }
 .v19 .adcard .msgline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.v19 .sitefoot { position: absolute; left: 0; right: 0; bottom: 0; height: var(--touch-min); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 4px 0 2px; }
+.v19 .sitefoot { position: absolute; left: 0; right: 0; bottom: 0; min-height: var(--touch-min); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 4px 0 2px; }
 /* D40: footer links centred as one row; version stays at the right edge */
 .v19 .sitefoot .footlinks { grid-column: 2; display: flex; align-items: center; justify-content: center; }
+/* D41: four links (guide / about / log / privacy); they may wrap onto a second line on narrow screens */
+.v19 .sitefoot .footlinks { flex-wrap: wrap; }
+.v19 a.linkbtn { display: inline-flex; align-items: center; }
 .v19 .sitefoot .sep { color: var(--color-text-secondary); font-size: var(--text-xs); opacity: 0.6; }
 .v19 .sitefoot .ver { position: static; grid-column: 3; justify-self: end; }
 .v19 .linkbtn { min-height: var(--touch-min); padding: 0 10px; border: 0; background: none; color: var(--color-text-secondary); font: var(--weight-bold) var(--text-xs) var(--font-body);
@@ -459,3 +462,4 @@
 .v19 .changelog section { display: flex; flex-direction: column; gap: 6px; }
 .v19 .changelog section + section { margin-top: 8px; }
 .v19 .changelog .cl-date { color: var(--color-text-secondary); font-size: var(--text-xs); }
+.v19 .policy .updated { margin-top: 12px; color: var(--color-text-secondary); font-size: var(--text-xs); }

@@ -6,6 +6,7 @@
 !index.html
 !vite.config.js
 !src/
+!scripts/
 !backend/
 **/.env*
 **/node_modules

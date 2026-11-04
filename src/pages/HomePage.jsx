@@ -110,6 +110,11 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
       </main>
       <footer className="sitefoot">
         <nav className="footlinks" aria-label="網站資訊">
+          {/* D41: crawlable static pages (scripts/build-pages.mjs), opened in a new tab so the game state stays */}
+          <a className="linkbtn" href="/guide.html" target="_blank" rel="noopener noreferrer">遊戲指南</a>
+          <span className="sep" aria-hidden="true">|</span>
+          <a className="linkbtn" href="/about.html" target="_blank" rel="noopener noreferrer">關於</a>
+          <span className="sep" aria-hidden="true">|</span>
           <button type="button" className="linkbtn" onClick={() => onGo('changelog')}>開發者日誌</button>
           <span className="sep" aria-hidden="true">|</span>
           <button type="button" className="linkbtn" onClick={() => onGo('privacy')}>隱私權政策</button>

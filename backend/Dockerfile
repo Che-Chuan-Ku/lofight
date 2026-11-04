@@ -9,6 +9,8 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY index.html vite.config.js ./
 COPY src/ src/
+# scripts/build-pages.mjs writes the D41 static pages (guide / about / updates / privacy, robots.txt, sitemap.xml) into dist/
+COPY scripts/ scripts/
 RUN npm run build
 
 # Stage 2: JDK 17 builds the Spring Boot fat jar (infrastructure.yml containerization).
@@ -27,8 +29,9 @@ WORKDIR /app
 RUN useradd --system --uid 1001 app && mkdir -p /app/web /app/static && chown app /app/static
 COPY --from=build /workspace/target/api-*.jar /app/app.jar
 # Page template keeps the __GOOGLE_CLIENT_ID__ placeholder; docker-entrypoint.sh renders it into /app/static
-# (served at / and /index.html) with the runtime GOOGLE_CLIENT_ID.
-COPY --from=web /web/dist/index.html /app/web/index.html
+# (served at / and /index.html) with the runtime GOOGLE_CLIENT_ID. The rest of dist/ (D41 static pages, robots.txt,
+# sitemap.xml) is copied as-is into /app/static by the entrypoint.
+COPY --from=web /web/dist/ /app/web/
 # Entrypoint maps Render's DATABASE_URL / PORT onto the Spring settings (local compose passes DB_* directly).
 COPY backend/docker-entrypoint.sh /app/docker-entrypoint.sh
 RUN chmod 755 /app/docker-entrypoint.sh

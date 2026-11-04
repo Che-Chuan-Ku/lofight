@@ -5,14 +5,36 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="claude:viewport-fit-sides" content="cover">
 <title>DayWar</title>
+<meta name="description" content="DayWar 是一款免費線上 HTML5 塔防射擊遊戲，無需下載，使用瀏覽器即可遊玩。操控砲台發射藍軍士兵，利用倍率門擴充兵力、突破強化道具，迎戰紅軍與強大的魔王。挑戰 NORMAL 與 EXTRA 關卡、擊敗魔王賺取金幣、解鎖商店道具，並登上全球排行榜！">
 <!-- Google client id, filled at container start by backend/docker-entrypoint.sh (placeholder = not configured) -->
 <meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">
 <!-- AdSense publisher id (ca-pub-...), filled at container start by backend/docker-entrypoint.sh; without it no ad script loads -->
 <meta name="adsense-publisher-id" content="__ADSENSE_PUBLISHER_ID__">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Noto+Sans+TC:wght@500;700&display=swap">
+<style>
+#intro { max-width: 720px; margin: 0 auto; padding: 16px; color: #eef1f7; background: #14171f; font: 16px/1.75 "Noto Sans TC", system-ui, sans-serif; }
+#intro h1 { margin: 8px 0; font-size: 28px; }
+#intro p { margin: 0 0 8px; }
+#intro nav { display: flex; flex-wrap: wrap; gap: 0 16px; }
+#intro a { display: inline-flex; align-items: center; min-height: 44px; color: #8fd3ff; font-weight: 700; }
+#root:not(:empty) ~ #intro { display: none; }
+</style>
 </head>
 <body>
 <div id="root"></div>
+<!-- D41: crawlable intro for visitors without JS and for crawlers; hidden once React has rendered into #root -->
+<section id="intro">
+<h1>DayWar</h1>
+<p>DayWar 是一款打開瀏覽器就能玩的 HTML5 塔防遊戲。你守在山路底下，左右拖曳砲台射出藍軍士兵，讓他們穿過倍率門變多、打破道具門變強，一路攻向紅軍與魔王。</p>
+<p>先打通 NORMAL，再去 EXTRA 見識會出招的魔王。打倒魔王賺金幣，在商店換道具，然後到排行榜上看看自己排第幾。不用下載，手機與電腦都能玩。</p>
+<p>魔王不會等你準備好。</p>
+<nav aria-label="網站資訊">
+<a href="/guide.html">遊戲指南</a>
+<a href="/about.html">關於</a>
+<a href="/updates.html">開發者日誌</a>
+<a href="/privacy.html">隱私權政策</a>
+</nav>
+</section>
 <script type="module" src="/src/main.jsx"></script>
 </body>
 </html>

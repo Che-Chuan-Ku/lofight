@@ -16,6 +16,7 @@ services:
     buildFilter:
       paths:
         - src/**
+        - scripts/**
         - backend/**
         - package*.json
         - vite.config.js

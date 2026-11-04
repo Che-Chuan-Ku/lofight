@@ -4,6 +4,13 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.1.2',
+    date: '2026-11-04',
+    items: [
+      '多了遊戲指南和關於頁。現在輸了不能說沒人教。'
+    ]
+  },
+  {
     version: '19.1.1',
     date: '2026-11-03',
     items: [
