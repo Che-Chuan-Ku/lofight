@@ -1,6 +1,6 @@
 // Gate rewards and the pick-one-of-two pool. `apply(S, game)` mutates the game state directly.
 // Soldiers per shot (S.spread): multiplying rewards (`mult: true`) stop at SPREAD_CAP and leave the pools once it is reached;
-// additive "?" picks and the hidden-stage bonus are not capped (FE-27).
+// additive "?" picks are not capped (FE-27).
 export const SPREAD_CAP = 24;
 export const spreadMaxed = S => S.spread >= SPREAD_CAP;
 // never lowers a spread that additive picks already pushed past the cap
@@ -23,16 +23,6 @@ export const CHOICES = {
   gateP10: { title: 'GATE+10', desc: '中門倍率 +10', good: true, apply: S => { S.gates[1].mult += 10; } },
   spdP6: { title: 'SPD+6', desc: '士兵速度 +6、攻速 +5%', good: false, apply: S => { S.blueSpeed += 6; S.fireMul *= 0.95; } },
   spdP40: { title: 'SPD+40', desc: '士兵速度 +40、攻速 +25%', good: true, apply: S => { S.blueSpeed += 40; S.fireMul *= 0.8; } }
-};
-
-// Pick-one-of-three offered before the hidden stage: the ordinary crate rewards (no "?" picks), with card text.
-// The shot multipliers here are uncapped and stay in the pool past SPREAD_CAP.
-export const BONUS = {
-  shot2: { title: 'x2', desc: '每發士兵 x2', good: true, apply: S => { S.spread *= 2; } },
-  shot3: { title: 'x3', desc: '每發士兵 x3', good: true, apply: S => { S.spread *= 3; } },
-  armor: { title: 'ATK+1', desc: '士兵攻擊 +1', good: true, apply: ABILITIES.armor.apply },
-  gate: { title: 'GATE+5', desc: '中門倍率 +5', good: true, apply: ABILITIES.gate.apply },
-  speed: { title: 'SPD+', desc: '士兵速度 +18、攻速 +15%', good: true, apply: ABILITIES.speed.apply }
 };
 
 // Card text shown on the choice screen.

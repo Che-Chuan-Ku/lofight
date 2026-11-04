@@ -54,6 +54,7 @@ Feature: 查詢玩家進度
 
   Rule: 後置（回應）- silver 未解鎖時應回傳解鎖條件與目前 bronze 最佳擊破王數
     # 依據 G20；澄清 ASM-07（2026-10-29）採 A：silver 上鎖可見，顯示解鎖條件與目前 bronze 最佳王數（取代 D14 原文「看不到入口」）
+    # CHANGE 2026-11-04（D42）澄清 AMB-N2：解鎖條件改為擊破 bronze 第 9 王（NORMAL 通關），silverUnlockBossSeq 由 8 改 9
 
     Example: silver 未解鎖時回傳解鎖條件與目前 bronze 最佳擊破王數（只計已結算的 run）
       Given 目前以玩家 "小明" 的有效存取權杖操作
@@ -61,7 +62,7 @@ Feature: 查詢玩家進度
       Then 操作成功
       And 回應資料應為：
         | isSilverUnlocked | silverUnlockBossSeq | bronzeBestBossesKilled |
-        | false            | 8                   | 5                      |
+        | false            | 9                   | 5                      |
 
     Example: silver 已解鎖時不回傳解鎖條件
       Given 目前以玩家 "阿明" 的有效存取權杖操作

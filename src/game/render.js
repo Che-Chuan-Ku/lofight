@@ -1,6 +1,6 @@
 // Canvas drawing for one frame. Pure function of the state; `lite` drops sprites for slow devices.
 // `view.oy` shifts the world: positive adds sky / canopy above the battlefield (tall screens), negative crops the top.
-import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, SECRET_BOSS, LASER, MAX_EXTRA_H, STORM, BOSS7 } from './constants.js';
+import { W, H, GATE_Y, GATE_H, PATH_HW, GATE_RESPAWN, UNIT_PX, BEAM, LASER, MAX_EXTRA_H, STORM, BOSS7 } from './constants.js';
 import { PL, PATH_LEN, pathPos } from './path.js';
 import { ABILITIES, spreadMaxed } from './abilities.js';
 
@@ -33,7 +33,7 @@ export const THEME = {
     pWarn: 'rgba(190,40,255,', pEdge: '#fbe6ff', pEdgeDark: '#22042f', pGlow: 'rgba(214,90,255,.45)', pBody: '#c23cff', pCore: '#fff0ff'
   }
 };
-// Menus (scenery) and the hidden stage 9 always use NORMAL's forest; a run uses its own tier.
+// Menus (scenery) always use NORMAL's forest; a run uses its own tier.
 export function themeKey(S, view) { return view && view.scenery ? 'bronze' : S.tier === 'silver' ? 'silver' : 'bronze'; }
 
 // Deterministic decoration layouts (built once; cheap rects per frame).
@@ -319,7 +319,7 @@ export function render(ctx, S, SPR, lite, view) {
   }
   // hidden-boss beams: a pulsing dashed telegraph while warning, then a glowing beam. Each kind is a path:
   // pillar (straight down), scurve (sinusoidal down), cross (star of lines through the boss).
-  const L = 1400, TAU = Math.PI * 2, SB = SECRET_BOSS;
+  const L = 1400, TAU = Math.PI * 2, SB = BEAM;
   function beamPath(b) {
     ctx.beginPath();
     if (b.kind === 'pillar') { ctx.moveTo(b.x, b.y); ctx.lineTo(b.x, H + 20); }

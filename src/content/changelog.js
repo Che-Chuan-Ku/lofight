@@ -4,6 +4,14 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.1.3',
+    date: '2026-11-04',
+    items: [
+      'NORMAL 不再問你要不要挑戰隱藏王。它現在就是第 9 王，打不打由不得你。',
+      '金幣曲線重新鋪過，打到後面的王比較有感。'
+    ]
+  },
+  {
     version: '19.1.2',
     date: '2026-11-04',
     items: [

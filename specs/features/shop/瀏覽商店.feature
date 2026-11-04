@@ -38,6 +38,7 @@ Feature: 瀏覽商店
   Rule: 後置（回應）- silver 未解鎖時每個品項應標示為不可購買並附解鎖條件與目前 bronze 最佳擊破王數
     # 原文 D09「bronze 玩家可看不可用」；澄清 ASM-07（2026-10-29）採 A：上鎖可見、未解鎖不可購買，顯示解鎖條件與目前 bronze 最佳王數
     # 審核修正（2026-10-30）：商店頁需顯示 bronze 最佳王數，改由瀏覽商店回應一併提供（一次請求）；計算同 查詢玩家進度.feature（只計已結算 run）
+    # CHANGE 2026-11-04（D42）澄清 AMB-N2：解鎖條件改為擊破 bronze 第 9 王，silverUnlockBossSeq 由 8 改 9
 
     Example: silver 未解鎖時每個品項標示不可購買並附解鎖條件與目前 bronze 最佳擊破王數（只計已結算的 run）
       Given 玩家 "小明" 有以下 run：
@@ -50,10 +51,10 @@ Feature: 瀏覽商店
       Then 操作成功
       And 回應中的 "items" 應為：
         | buffItem     | price | isPurchasable | silverUnlockBossSeq | bronzeBestBossesKilled |
-        | ATTACK_SPEED | 200   | false         | 8                   | 5                      |
-        | ATTACK       | 200   | false         | 8                   | 5                      |
-        | CANNON       | 400   | false         | 8                   | 5                      |
-        | LASER        | 600   | false         | 8                   | 5                      |
+        | ATTACK_SPEED | 200   | false         | 9                   | 5                      |
+        | ATTACK       | 200   | false         | 9                   | 5                      |
+        | CANNON       | 400   | false         | 9                   | 5                      |
+        | LASER        | 600   | false         | 9                   | 5                      |
 
   Rule: 後置（回應）- 應回傳看廣告選項狀態：是否開放、今日剩餘次數與下次可領取時間
     # CHANGE 2026-11-02（D33–D35）澄清 AMB-A6＝a：瀏覽商店回應附 adReward，商店卡片一次請求即可顯示（lock exception：Scope Lock 暫掛時已預告）

@@ -45,9 +45,6 @@ public class RunSettlementService {
 
     private static final Logger log = LoggerFactory.getLogger(RunSettlementService.class);
 
-    /** Silver boss 7 enters only after boss 6 is killed (D39, INF-X21). */
-    private static final int SILVER_LAST_BOSS_SEQ = 7;
-
     private final RunRepository runRepository;
     private final RunBossKillRepository runBossKillRepository;
     private final WalletRepository walletRepository;
@@ -134,11 +131,13 @@ public class RunSettlementService {
 
     /**
      * The seven plausibility checks (D17, ASM-03, GAP-03, audit fix 2026-10-30): sequence in range, no duplicates,
-     * kill not before spawn, silver boss 7 not killed before boss 6, victory at or beyond threshold with all bosses,
+     * kill not before spawn, last boss not killed before the one before it, victory at or beyond threshold with all bosses,
      * server elapsed time >= game seconds.
      * D-09 (2026-11-02): victory gameSeconds equal to the threshold is accepted (>=).
      * D39 (2026-11-03): silver has 7 bosses; boss 7 enters after boss 6 dies, so its kill second must be >= the
-     * boss 6 kill second, checked only when both are listed (INF-X21); bronze has no relative check (INF-X22).
+     * boss 6 kill second, checked only when both are listed (INF-X21).
+     * D42 (2026-11-04): bronze boss 9 likewise enters after boss 8 dies, so the relative check now applies to every
+     * tier's last boss (taken from the tier's boss count).
      */
     private boolean isPlausible(Run run, RunSettleRequest request, Instant now) {
         TierRule rule = gameProperties.tierRule(run.getTier());
@@ -152,9 +151,9 @@ public class RunSettlementService {
             }
             killedAt.put(bossSeq, kill.killedAtSecond());
         }
-        if (run.getTier() == Tier.SILVER && killedAt.containsKey(SILVER_LAST_BOSS_SEQ)
-                && killedAt.containsKey(SILVER_LAST_BOSS_SEQ - 1)
-                && killedAt.get(SILVER_LAST_BOSS_SEQ) < killedAt.get(SILVER_LAST_BOSS_SEQ - 1)) {
+        int lastBossSeq = rule.bossCount();
+        if (killedAt.containsKey(lastBossSeq) && killedAt.containsKey(lastBossSeq - 1)
+                && killedAt.get(lastBossSeq) < killedAt.get(lastBossSeq - 1)) {
             return false;
         }
         if (request.isVictory() && (request.gameSeconds() < rule.getVictoryThresholdSeconds()
@@ -189,7 +188,7 @@ public class RunSettlementService {
     }
 
     /**
-     * First kill of the bronze unlock boss (8th) unlocks silver permanently (D14).
+     * First kill of the bronze unlock boss (9th since D42) unlocks silver permanently (D14).
      */
     private boolean unlockSilverIfFirstClear(Run run, List<BossKillRequest> kills, Instant now) {
         boolean clearedUnlockBoss = run.getTier() == Tier.BRONZE && kills.stream()

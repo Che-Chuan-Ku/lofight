@@ -16,9 +16,10 @@ export const tierName = t => TIER_NAME[t] || '';
 // gam001 / shp002 carry the old tier name in the backend message: the screen uses this copy instead (INF-1)
 export const EXTRA_LOCKED_MSG = 'EXTRA 尚未解鎖';
 
-// FE-47: no result yet reads 尚無成績 instead of 第 0 王
+// FE-47: no result yet reads 尚無成績 instead of 第 0 王. D42: the condition is "NORMAL cleared" (backend: boss `seq` = 9
+// down), so the boss number is no longer part of the copy; `seq` is kept for the call sites.
 export function lockLine(seq, best) {
-  return '擊敗 NORMAL 第 ' + (seq ?? 8) + ' 王解鎖（目前最佳：' + (best ? '第 ' + best + ' 王' : '尚無成績') + '）';
+  return 'NORMAL 通關後解鎖（目前最佳：' + (best ? '第 ' + best + ' 王' : '尚無成績') + '）';
 }
 
 export function nicknameError(code) {
@@ -33,7 +34,7 @@ export function nextGoal(progress) {
   if (!progress) return null;
   if (!progress.isSilverUnlocked) {
     const best = progress.bronzeBestBossesKilled ?? 0;
-    const seq = progress.silverUnlockBossSeq ?? 8;
+    const seq = progress.silverUnlockBossSeq ?? 9;
     if (best >= seq - 1) return { text: '挑戰 NORMAL 第 ' + seq + ' 王，解鎖 EXTRA' };
     return { pre: '擊敗第 ', num: best + 1, post: ' 王就破紀錄' };
   }

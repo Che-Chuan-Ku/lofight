@@ -51,8 +51,7 @@ export default function ResultPage({ run, goal, banner, onAgain, onHome, onRetry
   const { status, body, settlement } = run;
   const invalid = status === 'invalid';
   const win = body.isVictory && !invalid;
-  const title = run.result === 'secret' && !invalid ? '㊙ Secret Clear!' : run.result === 'secretfail' && !invalid ? '第八關通關'
-    : body.isVictory ? 'Victory!' : 'Defeat in Battle';
+  const title = body.isVictory ? 'Victory!' : 'Defeat in Battle';
 
   // long submit (> 2 s): add the progress sentence above the skeleton
   useEffect(() => {
@@ -101,7 +100,7 @@ export default function ResultPage({ run, goal, banner, onAgain, onHome, onRetry
       <div>{banner && <LoginBanner text={banner} onLogin={onBannerLogin} onClose={onBannerClose} onShown={onBannerShown} />}</div>
       <div className="result-title">
         <h1 tabIndex={-1} ref={h1} className={win ? undefined : 'lose'}>{title}</h1>
-        <p>{deathLine(body, invalid || status === 'offline' ? null : run.result)}</p>
+        <p>{deathLine(body)}</p>
       </div>
       <main className={'content' + (scrolled ? ' scrolled' : '')} ref={content} style={{ paddingTop: 'var(--space-4)' }}
         onScroll={e => setScrolled(e.currentTarget.scrollTop > 0)}>

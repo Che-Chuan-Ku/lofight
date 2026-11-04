@@ -4,7 +4,6 @@ import Hud from './components/Hud.jsx';
 import ChoiceBox from './components/ChoiceBox.jsx';
 import RestBox from './components/RestBox.jsx';
 import ConfirmBox from './components/ConfirmBox.jsx';
-import OfferBox from './components/OfferBox.jsx';
 import HomePage from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import LoadoutPage from './pages/LoadoutPage.jsx';
@@ -30,7 +29,7 @@ const SETTLE_INVALID_CODES = new Set(['gam003', 'gam004']);
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
   const sceneryRef = useRef(true);
-  const { ui, hint, start, restart, pause, pickChoice, pickRest, acceptOffer, declineOffer, pickBonus, summary } = useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef });
+  const { ui, hint, start, restart, pause, pickChoice, pickRest, summary } = useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef });
 
   const session = useSyncExternalStore(subscribe, getSession);
   const [screen, setScreen] = useState('home');
@@ -44,9 +43,6 @@ export default function App() {
   const [lastBuff, setLastBuff] = useState(null);
   const [seasonNotice, setSeasonNotice] = useState(null);   // D38: [{ key, text }] lines still owed on 首頁
   const [banner, setBanner] = useState(null);        // { text, on: 'result' | 'shop', kind: 'coins' | 'silver' | 'shop' }
-  // the bonus cards appear where the offer buttons were: ignore taps for a moment so a double tap cannot pick one
-  const [bonusLock, setBonusLock] = useState(false);
-  const acceptSecret = () => { setBonusLock(true); setTimeout(() => setBonusLock(false), 400); acceptOffer(); };
 
   useEffect(() => { document.documentElement.style.setProperty('--tiles', `url("${TILES_DATA_URI}")`); }, []);
 
@@ -206,8 +202,6 @@ export default function App() {
         {screen === 'game' && ui.phase === 'paused' && <ConfirmBox onYes={restartNow} onNo={() => pause(false)} />}
         {screen === 'game' && ui.phase === 'rest' && <RestBox onPick={pickRest} />}
         {screen === 'game' && ui.phase === 'choice' && <ChoiceBox cards={ui.choiceCards} onPick={pickChoice} />}
-        {screen === 'game' && ui.phase === 'offer' && <OfferBox onYes={acceptSecret} onNo={declineOffer} />}
-        {screen === 'game' && ui.phase === 'bonus' && <ChoiceBox title="三選一" cards={ui.bonusCards} onPick={bonusLock ? () => {} : pickBonus} />}
         {page && <div className="v19">{page}</div>}
       </div>
     </div>

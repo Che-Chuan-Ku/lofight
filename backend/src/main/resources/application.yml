@@ -55,7 +55,8 @@ game:
   ledger-page-size: 20
   leaderboard-size: 15
   leaderboard-neighbor-span: 2
-  silver-unlock-boss-seq: 8
+  # D42 (2026-11-04): silver unlocks on the first NORMAL clear = first kill of bronze boss 9 (AMB-N2).
+  silver-unlock-boss-seq: 9
   response-zone: Asia/Taipei
   banned-words: []
   shop-prices:
@@ -65,8 +66,10 @@ game:
     LASER: 600
   tiers:
     BRONZE:
-      boss-spawn-seconds: [14, 28, 42, 56, 70, 84, 98, 98]
-      boss-coins: [1, 2, 4, 8, 16, 24, 48, 96]
+      # D42 (2026-11-04): bronze has 9 bosses; the former hidden boss is boss 9, entering after boss 8 is killed
+      # (floor 98, same as boss 8); coins 1..90, full clear 241 (AMB-N3).
+      boss-spawn-seconds: [14, 28, 42, 56, 70, 84, 98, 98, 98]
+      boss-coins: [1, 2, 4, 8, 16, 24, 36, 60, 90]
       victory-threshold-seconds: 98
     SILVER:
       # D39 (2026-11-03): silver has 7 bosses; boss 7 enters after boss 6 is killed, floor 84 (AMB-X15=a), coins 192 (AMB-X14=b).

@@ -54,7 +54,7 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
 
   // GAP-1: getMyProgress only reports the bronze best while silver is locked; once unlocked the line is hidden.
   let bronzeBest = null;
-  if (progress && !unlocked) bronzeBest = best >= 8 ? '目前最佳：全破' : best ? '目前最佳：第 ' + best + ' 王' : '目前最佳：尚無成績';
+  if (progress && !unlocked) bronzeBest = best >= 9 ? '目前最佳：全破' : best ? '目前最佳：第 ' + best + ' 王' : '目前最佳：尚無成績';
 
   const tapLocked = () => { setShake(false); requestAnimationFrame(() => setShake(true)); };
   const closeDialog = () => { setDialog(false); requestAnimationFrame(() => logoutBtn.current && logoutBtn.current.focus()); };

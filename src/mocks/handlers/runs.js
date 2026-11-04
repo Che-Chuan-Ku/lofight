@@ -51,7 +51,7 @@ export const runHandlers = [
       if (k.bossSeq < 1 || k.bossSeq > rule.bossCount || seen.has(k.bossSeq) || k.killedAtSecond < rule.spawn[k.bossSeq - 1]) plausible = false;
       seen.add(k.bossSeq);
     }
-    // silver: boss 7 cannot fall before boss 6 when both are listed (D39 X15=a, INF-X21)
+    // the last boss cannot fall before the one before it when both are listed (silver 7/6: D39 X15=a, INF-X21; bronze 9/8: D42)
     if (rule.lastNotBefore) {
       const [late, early] = rule.lastNotBefore, kl = body.bossKills.find(k => k.bossSeq === late), ke = body.bossKills.find(k => k.bossSeq === early);
       if (kl && ke && kl.killedAtSecond < ke.killedAtSecond) plausible = false;

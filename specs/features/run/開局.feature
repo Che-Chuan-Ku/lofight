@@ -41,6 +41,7 @@ Feature: 開局
 
   Rule: 前置（狀態）- 開 silver 局時玩家必須已解鎖 silver
     # 原文 D14「通關 bronze 第八關一次後永久解鎖 silver」
+    # CHANGE 2026-11-04（D42）澄清 AMB-N2：解鎖條件改為 NORMAL 通關＝首次擊破 bronze 第 9 王
 
     @error:gam001
     Example: 未解鎖 silver 的玩家開 silver 局時操作失敗

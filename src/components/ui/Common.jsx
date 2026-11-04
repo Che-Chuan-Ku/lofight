@@ -1,8 +1,11 @@
 // Shared building blocks for the v19 screens (prototype class names, see src/menu.css).
 import { useEffect, useRef, useState } from 'react';
 import { IcBack, IcClose, IcWarn, PixelCoin } from './Icons.jsx';
-import { BOSS_TILES } from '../../game/constants.js';
+import { BOSS_TILES, BOSS9_TILE } from '../../game/constants.js';
 import { NETWORK_MSG } from '../../lib/labels.js';
+
+// boss sprite per appearance order; NORMAL boss 9 (D42) is the wizard tile
+const ICON_TILES = [...BOSS_TILES, BOSS9_TILE];
 
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -25,7 +28,7 @@ export function PageHeader({ title, onBack, right, titleId }) {
 }
 
 export function BossIcon({ seq, size = 22 }) {
-  const tile = BOSS_TILES[Math.max(0, Math.min(BOSS_TILES.length - 1, seq - 1))], k = size / 16;
+  const tile = ICON_TILES[Math.max(0, Math.min(ICON_TILES.length - 1, seq - 1))], k = size / 16;
   return (
     <i className="spr" aria-hidden="true" style={{
       width: size, height: size, backgroundSize: `${192 * k}px ${176 * k}px`,

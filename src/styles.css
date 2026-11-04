@@ -22,7 +22,7 @@
   #stage[data-full] #hud { border-radius: 0; padding-top: max(10px, env(safe-area-inset-top, 0px)); }
   #stage[data-full] #hint { bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
   #stage[data-full] #restart { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
-  #stage[data-full] #choice, #stage[data-full] #rest, #stage[data-full] #offer { border-radius: 0; }
+  #stage[data-full] #choice, #stage[data-full] #rest { border-radius: 0; }
   #app { position: relative; height: 100%; display: flex; align-items: center; justify-content: center; }
   #stage { position: relative; }
   canvas { display: block; touch-action: none; border-radius: 12px; box-shadow: 0 0 0 3px #0a0b0d, 0 20px 60px rgba(0,0,0,.6); }
@@ -74,16 +74,13 @@
   #choice .cards.three .ct { font-size: 22px; }
   #choice .cards.three .cd { font-size: 12px; }
   @media (prefers-reduced-motion: reduce) { #hint { transition: none; } }
-  #confirm, #offer { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px; text-align: center; }
-  #confirm h2, #offer h2 { font-family: var(--font-display); font-size: 32px; margin: 0; color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
-  #confirm p, #offer p { margin: 0; font-size: 14px; font-weight: 700; }
-  #confirm .row, #offer .row { display: flex; gap: 12px; margin-top: 6px; }
-  #confirm button, #offer button { touch-action: manipulation; font-family: var(--font-body); font-weight: 700; font-size: 16px; color: #fff; border: 0; border-radius: 10px; padding: 10px 22px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  #confirm { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: rgba(10,11,14,.6); border-radius: 12px; padding: 24px; text-align: center; }
+  #confirm h2 { font-family: var(--font-display); font-size: 32px; margin: 0; color: var(--gold); text-shadow: 0 3px 0 #6b4e00, 0 6px 18px rgba(0,0,0,.8); }
+  #confirm p { margin: 0; font-size: 14px; font-weight: 700; }
+  #confirm .row { display: flex; gap: 12px; margin-top: 6px; }
+  #confirm button { touch-action: manipulation; font-family: var(--font-body); font-weight: 700; font-size: 16px; color: #fff; border: 0; border-radius: 10px; padding: 10px 22px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
   #confirm .yes { background: var(--red); box-shadow: 0 4px 0 #7a1016; }
-  #offer h2 { color: #e9a6ff; text-shadow: 0 3px 0 #4a1060, 0 6px 18px rgba(0,0,0,.8); }
-  #offer p { line-height: 1.6; }
-  #offer .yes { background: #7a1a8f; box-shadow: 0 4px 0 #3d0a48; }
-  #confirm .no, #offer .no { background: #3a3f4a; box-shadow: 0 4px 0 #1a1c22; }
-  #confirm button:active, #offer button:active { transform: translateY(3px); box-shadow: none; }
+  #confirm .no { background: #3a3f4a; box-shadow: 0 4px 0 #1a1c22; }
+  #confirm button:active { transform: translateY(3px); box-shadow: none; }
   /* v19: menus cover the stage; the HUD belongs to the game screen only */
   #stage[data-menu] #hud, #stage[data-menu] #hint { visibility: hidden; }

@@ -18,9 +18,9 @@ export const UNIT_PX = 11;
 export const BLUE_TILE = 96, RED_TILE = 111;
 export const BOSS_TILES = [110, 112, 122, 120, 124, 109, 121, 123];
 export const MINION_TILE = 108;
-// Stages 1-8. `at`: game second the boss spawns (Infinity = held until the rest pick after boss 7),
-// `hp`, `v`: speed along the path in px/s (arena speed is fixed at 30 in the engine), `r`: body radius,
-// `summon`: minions (count, hp, speed, cooldown). Unchanged since v18.6.5.
+// NORMAL bosses 1-9 (D42: boss 9 down = victory). `at`: game second the boss spawns (Infinity = held, see `after` below;
+// boss 8 is released by the rest pick after boss 7), `hp`, `v`: speed along the path in px/s (arena speed is fixed at 30
+// in the engine), `r`: body radius, `summon`: minions (count, hp, speed, cooldown). Bosses 1-8 unchanged since v18.6.5.
 export const BOSS_PLAN = [
   { at: 14, hp: 2000, v: 14, r: 16 },
   { at: 28, hp: 5000, v: 15, r: 18 },
@@ -29,13 +29,16 @@ export const BOSS_PLAN = [
   { at: 70, hp: 38000, v: 18, r: 24 },
   { at: 84, hp: 70000, v: 20, r: 27 },
   { at: 98, hp: 90000, v: 21, r: 30 },
-  { at: Infinity, hp: 120000, v: 21, r: 32, summon: { n: 5, hp: 2000, v: 26, cd: 5 } }
+  { at: Infinity, hp: 120000, v: 21, r: 32, summon: { n: 5, hp: 2000, v: 26, cd: 5 } },
+  // boss 9 (D42, the former hidden boss): enters right after boss 8 falls, backend floor 98 s; full beam set (`enrage`:
+  // enraged triple S-curves + ENRAGE text, which EXTRA boss 5 does not have); reaching the turret counts as RED_BREACH
+  { at: Infinity, minAt: 98, after: 'kill', hp: 150000, v: 19, r: 34, skills: 'beam', enrage: true, breach: true }
 ];
 // EXTRA (API tier SILVER, D29-D32, D39; specs/ui/遊戲畫面.md "EXTRA 魔王機制" / "EXTRA 第 7 王"): seven bosses, boss 7 down = victory.
 // Own hp table (bosses 4-6 = NORMAL 20000 x1.3 / 38000 x1.6 / 70000 x2, FE-40); speed / size of NORMAL bosses 1-6; red spawn as NORMAL (the old x1.2 is gone, AMB-E8=B).
 // `minAt`: a held boss (at = Infinity) never enters before this game second (backend appearance floors 70 / 84).
 // `after`: what releases a held boss — 'rest' (rest pick once the field is clear, as NORMAL boss 8) or 'kill' (the
-// previous boss falls). `skills`: 'beam' = hidden-stage beams, 'storm' = lightning sweep + lightning orbs,
+// previous boss falls). `skills`: 'beam' = NORMAL boss 9 beams (BEAM below), 'storm' = lightning sweep + lightning orbs,
 // 'purple' = boss 7 purple lightning (BOSS7 below).
 export const EXTRA_PLAN = [
   { at: 14, hp: 2400, v: 14, r: 16 },
@@ -44,7 +47,7 @@ export const EXTRA_PLAN = [
   { at: 56, hp: 26000, v: 17, r: 22, summon: { n: 5, hp: 500, v: 26, cd: 5 } },   // only boss 4 summons (AMB-E2=D)
   { at: Infinity, minAt: 70, after: 'rest', hp: 60800, v: 18, r: 24, skills: 'beam' },
   { at: Infinity, minAt: 84, after: 'kill', hp: 140000, v: 20, r: 27, skills: 'storm' },
-  // boss 7 (D39): enters right after boss 6 falls (X1=b), backend floor 84 s; own hp, speed / size of the NORMAL hidden boss (X9=a)
+  // boss 7 (D39): enters right after boss 6 falls (X1=b), backend floor 84 s; own hp, speed / size of NORMAL boss 9 (X9=a)
   { at: Infinity, minAt: 84, after: 'kill', hp: 180000, v: 19, r: 34, skills: 'purple' }
 ];
 // EXTRA boss 6 (D32). Sweep: the logical width (0-390) is cut into `strips` equal columns (65 px >= 2 x turret hit
@@ -57,11 +60,10 @@ export const STORM = {
   sweep: { strips: 6, warn: 1.2, fire: 0.6, cd: 20 },
   orbs: { n: 3, minDeg: 20, maxDeg: 160, speed: 150, life: 8, first: 7, cd: 7, r: 9 * Math.SQRT2, blink: 1.5 }
 };
-// Hidden stage 9, offered once boss 8 falls. Every beam telegraphs for `warn` seconds before it
-// `fire`s; a turret inside a firing beam ends the run. `hw` is the beam half-width.
-export const SECRET_TILE = 84;
-export const SECRET_BOSS = {
-  hp: 150000, v: 19, r: 34,   // same fields as a BOSS_PLAN entry (boss 8 is 120000 / 21 / 32); no minions
+// Beam skills of NORMAL boss 9 (and EXTRA boss 5, without the enraged triple). Every beam telegraphs for `warn` seconds
+// before it `fire`s; a turret inside a firing beam ends the run. `hw` is the beam half-width.
+export const BOSS9_TILE = 84;   // NORMAL boss 9 sprite (dark-tinted wizard); EXTRA boss 7 uses it in purple
+export const BEAM = {
   solo: { cd: 5, warn: 1.2, fire: 0.6, hw: 14 },      // down from the boss: straight pillar or S-curve, picked at random
   wide: { cd: 10, warn: 1.5, fire: 0.7, hw: 11 },     // from half hp: twelve-ray star through the boss
   scurve: { amp: 60, wl: 260, triGap: 90 },            // lateral offset = amp * sin(2π * dy / wl); triGap spaces the enraged triple cast

@@ -8,11 +8,12 @@ export const BOARD_VERSION = '19.0';                       // 查詢排行榜.fe
 export const SHOP_PRICES = { ATTACK_SPEED: 200, ATTACK: 200, CANNON: 400, LASER: 600 };   // 瀏覽商店.feature / GAP-02=A, D37
 export const BUFF_ORDER = ['ATTACK_SPEED', 'ATTACK', 'CANNON', 'LASER'];
 export const TIER_RULES = {
-  BRONZE: { bossCount: 8, victoryMin: 98, spawn: [14, 28, 42, 56, 70, 84, 98, 98], coins: [1, 2, 4, 8, 16, 24, 48, 96] },
+  // D42: nine bosses (boss 9 floor 98, coins 1-90 = 241 in all); boss 9 kill second >= boss 8 kill second
+  BRONZE: { bossCount: 9, victoryMin: 98, spawn: [14, 28, 42, 56, 70, 84, 98, 98, 98], coins: [1, 2, 4, 8, 16, 24, 36, 60, 90], lastNotBefore: [9, 8] },
   // D39: seven bosses (boss 7 floor 84, coins 192, AMB-X14=b / X15=a); boss 7 kill second >= boss 6 kill second
   SILVER: { bossCount: 7, victoryMin: 84, spawn: [14, 28, 42, 56, 70, 84, 84], coins: [4, 8, 16, 32, 64, 128, 192], lastNotBefore: [7, 6] }
 };
-export const SILVER_UNLOCK_BOSS_SEQ = 8;
+export const SILVER_UNLOCK_BOSS_SEQ = 9;   // D42: EXTRA unlocks once NORMAL is cleared (boss 9 down)
 export const LEDGER_PAGE_SIZE = 20;
 export const BANNED_WORDS = ['管理員', 'GM'];             // backend keeps the real list in config; prototype simulates these two
 export const DEFAULT_GUEST_NICKNAME = '勇者248';           // 建立guest身分.feature: 系統預設暱稱產生器下一個值
@@ -33,8 +34,8 @@ function player(id, nickname, kind, extra) {
 
 export function seed() {
   const players = {
-    1001: player('1001', '勇者248', 'GUEST', { deviceId: 'dev-a', isSilverUnlocked: true, bronzeBest: 8 }),
-    1002: player('1002', '丙', 'MEMBER', { isSilverUnlocked: true, bronzeBest: 8 }),
+    1001: player('1001', '勇者248', 'GUEST', { deviceId: 'dev-a', isSilverUnlocked: true, bronzeBest: 9 }),
+    1002: player('1002', '丙', 'MEMBER', { isSilverUnlocked: true, bronzeBest: 9 }),
     1003: player('1003', '丁', 'GUEST', { deviceId: 'dev-d' }),
     1004: player('1004', '戊', 'GUEST', { deviceId: 'dev-e' }),
     1005: player('1005', '阿明', 'MEMBER', { coins: 300, googleSub: 'g-sub-1' })

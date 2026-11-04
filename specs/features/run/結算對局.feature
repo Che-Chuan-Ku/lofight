@@ -1,11 +1,13 @@
 @command
 Feature: 結算對局
-  一局結束（勝或敗）後玩家提交結算；後端校驗後依擊破王入帳金幣、記錄成績，首次通關 bronze 第 8 王時解鎖 silver（D06、D08、D14、D17、D21、D22）。
+  一局結束（勝或敗）後玩家提交結算；後端校驗後依擊破王入帳金幣、記錄成績，首次擊破 bronze 第 9 王（NORMAL 通關）時解鎖 silver（D06、D08、D14、D17、D21、D22、D42）。
   # 澄清 ASM-04（2026-10-29）：D06「API：提交成績」併入本 feature，結算即上榜、成績綁 run_id，不另立提交成績 feature 與 endpoint
 
   # CHANGE 2026-11-03（D38）：「後端設定的目前版本前兩碼」改由建置版號（pom.xml version）大.中推導（AMB-S6＝b），測試仍以同一 Given 注入；舊賽季 run 於賽季獎勵發放後才結算照常上榜、不重算獎勵（AMB-S10＝a）
 
   # CHANGE 2026-11-03（D39；人裁決 H1–H4、X14＝b、X15＝a）：silver 改為 7 王——序號範圍 1–7、勝局須擊破 7 王、第 7 王出場秒下限 84、第 7 王擊破秒不得早於第 6 王、第 7 王金幣 192（silver 全破合計 444）；勝利秒數門檻仍為 84
+
+  # CHANGE 2026-11-04（D42；人裁決 AMB-N1＝A、N2、N3）：bronze 改為 9 王——原隱藏王成為正式第 9 王（第 8 王擊破後自動進場）；序號範圍 1–9、勝局須擊破 9 王、第 9 王出場秒下限 98、第 9 王擊破秒不得早於第 8 王、金幣表 1,2,4,8,16,24,36,60,90（全破合計 241）、首次擊破 bronze 第 9 王解鎖 silver；勝利秒數門檻仍為 98
 
   # 澄清 ASM-02（2026-10-29）：結算以 run_id 為鍵、每個 run 只能結算一次；金幣僅於結算時入帳，未結算的 run 不入帳
 
@@ -133,6 +135,7 @@ Feature: 結算對局
     # 原文 D17「成績由後端做合理性校驗（秒數範圍、關卡順序）」；澄清 ASM-03（2026-10-29）採 A
     # 澄清 BDY-02（2026-10-29）採 A（適用本 Rule 及以下各條檢查 Rule，含審核修正新增的擊破王清單三條）：任一檢查未通過即整筆拒絕並回 gam 錯誤碼；run 標記為「檢查失敗」、不得再結算；金幣不入帳、成績不上榜
     # bronze 第 1–7 王出場秒數 14/28/42/56/70/84/98（BOSS_PLAN；第 8 王在休息選門後出場）
+    # CHANGE 2026-11-04（D42）：bronze 第 9 王於第 8 王擊破後自動進場，出場秒下限 98（同第 8 王），bronze 門檻表為 14/28/42/56/70/84/98/98/98
     # 澄清 GAP-03（2026-10-29）採 A：silver 第 1–6 王出場秒數門檻沿用 bronze 前六王 14/28/42/56/70/84；門檻表依階層（以 run 上的階層判定）放在後端設定檔
     # CHANGE 2026-11-03（D39）澄清 AMB-X15＝a：silver 第 7 王出場秒下限 84（同第 6 王；第 6 王擊破後立即進場），silver 門檻表為 14/28/42/56/70/84/84
 
@@ -169,9 +172,32 @@ Feature: 結算對局
       And 玩家 "阿銀" 的金幣餘額應為 0
       And 玩家 "阿銀" 的排行榜成績應為空
 
-  Rule: 前置（參數）- silver 擊破第 7 王的遊戲秒數必須不早於擊破第 6 王的遊戲秒數
+  Rule: 前置（參數）- 擊破最後一王的遊戲秒數必須不早於擊破前一王的遊戲秒數（bronze 第 9 王 ≥ 第 8 王、silver 第 7 王 ≥ 第 6 王）
     # CHANGE 2026-11-03（D39）澄清 AMB-X15＝a：第 7 王於第 6 王被擊破後才進場，擊破秒不得早於第 6 王擊破秒（鎖定例外：X15 選項 a 事先宣告新增本 Rule）
-    # 推論 INF-X21：清單同時含第 6、7 王時才檢查；未通過同其他合理性檢查（gam003、檢查失敗、不入帳、不上榜）；推論 INF-X22：bronze 不適用
+    # 推論 INF-X21：清單同時含最後一王與前一王時才檢查；未通過同其他合理性檢查（gam003、檢查失敗、不入帳、不上榜）
+    # CHANGE 2026-11-04（D42）：bronze 第 9 王於第 8 王擊破後才進場，比照 silver 適用本 Rule（取代推論 INF-X22「bronze 不適用」）
+
+    @error:gam003
+    Example: bronze 第 9 王擊破秒早於第 8 王擊破秒時整筆拒絕並標記檢查失敗
+      When 結算 run "r-b1"：
+        | gameSeconds | isVictory | bossKills                                      | deathCause | deathBossSeq |
+        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@120,9@119 |            |              |
+      Then 操作失敗，錯誤代碼為 "gam003"
+      And run "r-b1" 應為：
+        | runState     |
+        | CHECK_FAILED |
+      And 玩家 "小明" 的金幣餘額應為 10
+      And 玩家 "小明" 的排行榜成績應為空
+
+    Example: bronze 第 9 王與第 8 王同一秒擊破時接受
+      When 結算 run "r-b1"：
+        | gameSeconds | isVictory | bossKills                                      | deathCause | deathBossSeq |
+        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@120,9@120 |            |              |
+      Then 操作成功
+      And run "r-b1" 應為：
+        | runState |
+        | SETTLED  |
+      And 玩家 "小明" 的金幣餘額應為 251
 
     @error:gam003
     Example: silver 第 7 王擊破秒早於第 6 王擊破秒時整筆拒絕並標記檢查失敗
@@ -221,7 +247,7 @@ Feature: 結算對局
     Example: bronze 勝局秒數小於 98 時整筆拒絕
       When 結算 run "r-b1"：
         | gameSeconds | isVictory | bossKills                                 | deathCause | deathBossSeq |
-        | 97          | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@98   |            |              |
+        | 97          | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@98,9@98 |            |              |
       Then 操作失敗，錯誤代碼為 "gam003"
       And run "r-b1" 應為：
         | runState     |
@@ -282,13 +308,14 @@ Feature: 結算對局
         | runState     |
         | CHECK_FAILED |
 
-  Rule: 前置（參數）- 擊破王序號必須在該階層範圍內（bronze 1–8、silver 1–7）
+  Rule: 前置（參數）- 擊破王序號必須在該階層範圍內（bronze 1–9、silver 1–7）
     # 原文 D17「成績由後端做合理性校驗（秒數範圍、關卡順序）」
     # 審核修正（2026-10-30，人裁決）：序號越界統一視為合理性檢查未通過，回 gam003、run 標記「檢查失敗」、不入帳、不上榜（同 BDY-02=A），不回 400007
     # CHANGE 2026-11-03（D39，人裁決 H3）：silver 範圍 1–6 → 1–7；序號 7 合法（見勝利門檻 Rule 的 1–7 王接受例），8 起越界
+    # CHANGE 2026-11-04（D42）：bronze 範圍 1–8 → 1–9；序號 9 合法（見首次擊破第 9 王解鎖例），10 起越界
 
     @error:gam003
-    Scenario Outline: bronze 擊破王序號超出 1–8 時整筆拒絕並標記檢查失敗
+    Scenario Outline: bronze 擊破王序號超出 1–9 時整筆拒絕並標記檢查失敗
       When 結算 run "r-b1"：
         | gameSeconds   | isVictory | bossKills   | deathCause | deathBossSeq |
         | <gameSeconds> | false     | <bossKills> | RED_BREACH |              |
@@ -300,9 +327,9 @@ Feature: 結算對局
       And 玩家 "小明" 的排行榜成績應為空
 
       Examples:
-        | gameSeconds | bossKills  |
-        | 30          | 0@14       |
-        | 130         | 1@14,9@120 |
+        | gameSeconds | bossKills   |
+        | 30          | 0@14        |
+        | 130         | 1@14,10@120 |
 
     @error:gam003
     Example: silver 擊破王序號 8 超出 1–7 時整筆拒絕並標記檢查失敗
@@ -341,16 +368,17 @@ Feature: 結算對局
       And 玩家 "小明" 的金幣帳本筆數應為 0
       And 玩家 "小明" 的排行榜成績應為空
 
-  Rule: 前置（參數）- 勝局必須擊破該階層全部王（bronze 8 王、silver 7 王）
+  Rule: 前置（參數）- 勝局必須擊破該階層全部王（bronze 9 王、silver 7 王）
     # 原文 D17「關卡順序」校驗；審核修正（2026-10-30，人裁決）：勝局擊破王數不足視為合理性檢查未通過，回 gam003、run 標記「檢查失敗」、不入帳、不上榜
     # 敗局不受本 Rule 限制（擊破王數可為 0 至全部）
     # CHANGE 2026-11-03（D39，人裁決 H2）：silver 擊破第 7 王才算勝利；只擊破 1–6 王的勝局（19.0 舊規則下的全破）改為王數不足
+    # CHANGE 2026-11-04（D42）：bronze 擊破第 9 王才算勝利；只擊破 1–8 王的勝局（舊規則「死於隱藏王仍算通關」）改為王數不足
 
     @error:gam003
-    Example: bronze 勝局只擊破 7 王時整筆拒絕並標記檢查失敗
+    Example: bronze 勝局只擊破 8 王時整筆拒絕並標記檢查失敗
       When 結算 run "r-b1"：
-        | gameSeconds | isVictory | bossKills                          | deathCause | deathBossSeq |
-        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98 |            |              |
+        | gameSeconds | isVictory | bossKills                                | deathCause | deathBossSeq |
+        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@110 |            |              |
       Then 操作失敗，錯誤代碼為 "gam003"
       And run "r-b1" 應為：
         | runState     |
@@ -381,6 +409,7 @@ Feature: 結算對局
   Rule: 後置（狀態）- 本局每擊破一王應依其出場序號對應的階層金幣入帳一筆（勝負皆適用）
     # 原文 D08「bronze 八關依序 1,2,4,8,16,24,48,96；silver 六關依序 4,8,16,32,64,128」（clarify 裁決，合計 bronze 199、silver 252）
     # CHANGE 2026-11-03（D39）澄清 AMB-X14＝b：silver 第 7 王 192，silver 金幣表 4,8,16,32,64,128,192（合計 444）
+    # CHANGE 2026-11-04（D42）澄清 AMB-N3：bronze 金幣表改為 1,2,4,8,16,24,36,60,90（9 王，合計 241）
     # 澄清 ASM-01（2026-10-29）：「過第 N 關」＝本局擊破第 N 王，以魔王出場序號計（非擊殺順序）；勝敗皆依已擊破的王逐王入帳
     # 澄清 ASM-03（2026-10-29）：金幣一律由後端依擊破王序號自算，不接受前端回報金幣
 
@@ -433,6 +462,18 @@ Feature: 結算對局
         | BOSS_REWARD  | 7       | 192       | 444        |
         | BOSS_REWARD  | 6       | 128       | 252        |
 
+    Example: bronze 勝局第 7、8、9 王依 bronze 金幣表入帳 36、60、90
+      When 結算 run "r-b1"：
+        | gameSeconds | isVictory | bossKills                                      | deathCause | deathBossSeq |
+        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@110,9@120 |            |              |
+      Then 操作成功
+      And 玩家 "小明" 的金幣餘額應為 251
+      And 玩家 "小明" 的金幣帳本應依序包含：
+        | ledgerSource | bossSeq | coinDelta | coinsAfter |
+        | BOSS_REWARD  | 9       | 90        | 251        |
+        | BOSS_REWARD  | 8       | 60        | 161        |
+        | BOSS_REWARD  | 7       | 36        | 101        |
+
   Rule: 後置（狀態）- 重玩同一階層再次擊破同一王應再次入帳
     # 原文 D08「每次通關都給金幣（可重複刷）」
 
@@ -480,6 +521,22 @@ Feature: 結算對局
       And run "r-s1" 應為：
         | runState | gameSeconds | bossesKilled | isVictory | deathCause   | deathBossSeq | coinsAwarded | settledAt            |
         | SETTLED  | 130         | 6            | false     | BOSS_REACHED | 7            | 252          | 2026-11-01T12:10:00Z |
+
+    Example: bronze 死於第 9 王時為敗局並記錄已擊破的 1–8 王
+      # CHANGE 2026-11-04（D42）：死於第 9 王＝敗局（死因 RED_BREACH，比照 silver 第 7 王）；送已擊破的 1–8 王與存活秒數，不計入勝局
+      When 結算 run "r-b1"：
+        | gameSeconds | isVictory | bossKills                                | deathCause | deathBossSeq |
+        | 130         | false     | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@110 | RED_BREACH |              |
+      Then 操作成功
+      And run "r-b1" 應為：
+        | runState | gameSeconds | bossesKilled | isVictory | deathCause | coinsAwarded |
+        | SETTLED  | 130         | 8            | false     | RED_BREACH | 151          |
+      And 玩家 "小明" 應為：
+        | isSilverUnlocked | coins |
+        | false            | 161   |
+      And 玩家 "小明" 的排行榜成績應為：
+        | boardVersion | tier   | run  | isVictory | gameSeconds |
+        | 19.0         | BRONZE | r-b1 | false     | 130         |
 
   Rule: 後置（狀態）- 成績應以該階層排行榜規則保存（同帳號留最佳）並關聯本局 run_id
     # 原文 D06「同暱稱/同帳號留最佳」；澄清 ASM-06（2026-10-29）採 A：分榜鍵為 (版本前兩碼, 階層, 帳號)，guest 以 guest id 為帳號
@@ -554,17 +611,18 @@ Feature: 結算對局
         | 19.1         | BRONZE | 0              | 0          |
       And 玩家 "小明" 的金幣餘額應為 13
 
-  Rule: 後置（狀態）- 首次擊破 bronze 第 8 王時玩家應永久解鎖 silver
+  Rule: 後置（狀態）- 首次擊破 bronze 第 9 王時玩家應永久解鎖 silver
     # 原文 D14
+    # CHANGE 2026-11-04（D42）澄清 AMB-N2：解鎖條件改為 NORMAL 通關＝首次擊破 bronze 第 9 王（原為第 8 王）
 
-    Example: 首次擊破 bronze 第 8 王時永久解鎖 silver
+    Example: 首次擊破 bronze 第 9 王時永久解鎖 silver
       When 結算 run "r-b1"：
-        | gameSeconds | isVictory | bossKills                                | deathCause | deathBossSeq |
-        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@120 |            |              |
+        | gameSeconds | isVictory | bossKills                                      | deathCause | deathBossSeq |
+        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@110,9@120 |            |              |
       Then 操作成功
       And 玩家 "小明" 應為：
         | isSilverUnlocked | coins |
-        | true             | 209   |
+        | true             | 251   |
 
   Rule: 後置（回應）- 應回傳本局逐王入帳金幣明細與結算後錢包餘額
     # 原文 D22「本局金幣」；澄清 ASM-10（2026-10-29）採 C（回應內容同選項 A）
@@ -588,8 +646,8 @@ Feature: 結算對局
 
     Example: 本局首次通關 bronze 時回傳新解鎖 silver
       When 結算 run "r-b1"：
-        | gameSeconds | isVictory | bossKills                                | deathCause | deathBossSeq |
-        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@120 |            |              |
+        | gameSeconds | isVictory | bossKills                                      | deathCause | deathBossSeq |
+        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@110,9@120 |            |              |
       Then 操作成功
       And 回應資料應為：
         | isSilverNewlyUnlocked |
@@ -604,8 +662,8 @@ Feature: 結算對局
         | r-b2 | BRONZE |              | 19.0         | 2026-11-01T12:00:00Z | OPEN     |
       And 目前以玩家 "阿銀" 的有效存取權杖操作
       When 結算 run "r-b2"：
-        | gameSeconds | isVictory | bossKills                                | deathCause | deathBossSeq |
-        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@120 |            |              |
+        | gameSeconds | isVictory | bossKills                                      | deathCause | deathBossSeq |
+        | 130         | true      | 1@14,2@28,3@42,4@56,5@70,6@84,7@98,8@110,9@120 |            |              |
       Then 操作成功
       And 回應資料應為：
         | isSilverNewlyUnlocked |
