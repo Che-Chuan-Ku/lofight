@@ -225,6 +225,8 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
       return { tier: S.tier, buff: S.buff, result: S.result, t: S.t, kills: S.kills.slice(), death: S.death };
     },
     pause: v => gameRef.current && gameRef.current.setPaused(v),
+    // leave the run mid-game (restart box → 回首頁, user 2026-11-04): back to the intro state, nothing is settled
+    leave: () => gameRef.current && gameRef.current.reset(),
     pickChoice: i => gameRef.current && gameRef.current.pickChoice(i),
     pickRest: i => gameRef.current && gameRef.current.pickRest(i)
   };

@@ -4,6 +4,15 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.2.0',
+    date: '2026-11-04',
+    items: [
+      'NORMAL 的山路鋪成真正的木棧道。踩起來沒差，看起來有差。',
+      '重新開始的框多了「回首頁」。想走就走，不用先輸一次。',
+      '新賽季開始。上一季的帳已經結清，該拿的拿了。'
+    ]
+  },
+  {
     version: '19.1.3',
     date: '2026-11-04',
     items: [

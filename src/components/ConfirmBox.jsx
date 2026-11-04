@@ -1,7 +1,9 @@
 // Shown when the restart button is pressed mid-game; the simulation is paused meanwhile.
-export default function ConfirmBox({ onYes, onNo }) {
+// 回首頁 (user 2026-11-04) sits in the top-left corner of the overlay, like the back button on every other page.
+export default function ConfirmBox({ onYes, onNo, onHome }) {
   return (
     <div id="confirm">
+      <button type="button" className="home" onClick={onHome}>← 回首頁</button>
       <h2>重新開始？</h2>
       <p>目前這局的進度會消失。</p>
       <div className="row">

@@ -15,6 +15,10 @@ export const THEME = {
     gateBand: '#2a1c10',
     arenaRim: '#2f4f22', arena: '#5f8a3e', arenaLine: 'rgba(0,0,0,.08)', tuft: '#77a64f',
     pathEdge: '#2a1a0c', pathRim: '#4d7a2c', path: '#9a7044', pathSeam: 'rgba(58,34,14,.45)',
+    // boardwalk (user 2026-11-04): planks laid across the path over a dark underlay, each plank its own brown, a thin
+    // grain line, nail dots at both ends and two side beams. `len`/`gap` are along the path in px.
+    planks: { under: '#3a2412', tones: ['#a97c4c', '#9a6f42', '#b2855a', '#8f6539', '#a37548', '#9d7347'], len: 11, gap: 2,
+      grain: 'rgba(70,40,16,.38)', nail: 'rgba(40,22,8,.6)', beam: '#5c3b1c', beamHi: 'rgba(255,220,160,.12)' },
     gate: { multFrame: '#6b4420', multPost: '#c89b5e', crate: '#7a5526', hpBack: '#5c2412' },
     clouds: 0, fog: null, stars: false
   },
@@ -97,11 +101,47 @@ function backdrop(th, key, oy, scale) {
   for (let i = 1; i < PL.length; i++) c.lineTo(PL[i][0], PL[i][1]);
   c.strokeStyle = th.pathEdge; c.lineWidth = PATH_HW * 2 + 16; c.stroke();
   c.strokeStyle = th.pathRim; c.lineWidth = PATH_HW * 2 + 7; c.stroke();
-  c.strokeStyle = th.path; c.lineWidth = PATH_HW * 2; c.stroke();
-  c.lineCap = 'butt'; c.strokeStyle = th.pathSeam; c.lineWidth = PATH_HW * 2 - 4; c.setLineDash([2, 10]); c.stroke();
-  c.setLineDash([]); c.lineCap = 'round';
+  if (th.planks) boardwalk(c, th.planks);
+  else {
+    c.strokeStyle = th.path; c.lineWidth = PATH_HW * 2; c.stroke();
+    c.lineCap = 'butt'; c.strokeStyle = th.pathSeam; c.lineWidth = PATH_HW * 2 - 4; c.setLineDash([2, 10]); c.stroke();
+    c.setLineDash([]); c.lineCap = 'round';
+  }
   BG = { id, canvas: cv };
   return cv;
+}
+
+// Wooden boardwalk along the path (NORMAL): dark underlay, then one plank per `len` px laid across the path (a butt-capped
+// thick segment, so planks fan naturally on bends and the underlay shows through the gaps), grain + nails per plank,
+// then a side beam along each edge. Painted once into the backdrop, so the per-plank work costs nothing per frame.
+const PA = [0, 0], PB = [0, 0];
+function boardwalk(c, P) {
+  const hw = PATH_HW, step = P.len + P.gap, n = P.tones.length;
+  c.lineCap = 'butt'; c.lineJoin = 'miter';
+  c.strokeStyle = P.under; c.lineWidth = hw * 2; c.stroke();     // underlay on the current path (already begun by the caller)
+  for (let s = 0, i = 0; s < PATH_LEN; s += step, i++) {
+    const e = Math.min(s + P.len, PATH_LEN);
+    pathPos(s, 0, PA); pathPos(e, 0, PB);
+    c.strokeStyle = P.tones[((i * 2654435761) >>> 0) % n]; c.lineWidth = hw * 2 - 2;
+    c.beginPath(); c.moveTo(PA[0], PA[1]); c.lineTo(PB[0], PB[1]); c.stroke();
+    // grain: one thin line along the plank's long axis (across the path), nudged off centre per plank
+    const m = s + P.len * (0.35 + 0.3 * ((i * 7) % 3) / 2);
+    pathPos(m, -hw + 5, PA); pathPos(m, hw - 5, PB);
+    c.strokeStyle = P.grain; c.lineWidth = 1;
+    c.beginPath(); c.moveTo(PA[0], PA[1]); c.lineTo(PB[0], PB[1]); c.stroke();
+    // nails at both ends
+    const nm = s + P.len / 2;
+    pathPos(nm, -hw + 7, PA); pathPos(nm, hw - 7, PB);
+    c.fillStyle = P.nail; c.fillRect(PA[0] - 1, PA[1] - 1, 2, 2); c.fillRect(PB[0] - 1, PB[1] - 1, 2, 2);
+  }
+  // side beams (stringers) with a faint highlight on top
+  c.lineCap = 'round'; c.lineJoin = 'round';
+  for (const lat of [-hw + 2, hw - 2]) {
+    c.beginPath();
+    for (let s = 0; s <= PATH_LEN; s += 4) { pathPos(Math.min(s, PATH_LEN), lat, PA); s ? c.lineTo(PA[0], PA[1]) : c.moveTo(PA[0], PA[1]); }
+    c.strokeStyle = P.beam; c.lineWidth = 5; c.stroke();
+    c.strokeStyle = P.beamHi; c.lineWidth = 2; c.stroke();
+  }
 }
 
 export function render(ctx, S, SPR, lite, view) {

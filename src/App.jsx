@@ -29,7 +29,7 @@ const SETTLE_INVALID_CODES = new Set(['gam003', 'gam004']);
 export default function App() {
   const appRef = useRef(null), stageRef = useRef(null), canvasRef = useRef(null), startKeyRef = useRef(null);
   const sceneryRef = useRef(true);
-  const { ui, hint, start, restart, pause, pickChoice, pickRest, summary } = useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef });
+  const { ui, hint, start, restart, pause, pickChoice, pickRest, leave, summary } = useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef });
 
   const session = useSyncExternalStore(subscribe, getSession);
   const [screen, setScreen] = useState('home');
@@ -100,6 +100,9 @@ export default function App() {
   // same run, no new createRun, no buff spent again (AMB-01). The engine restarts with the tier and buff it is
   // running (FE-43), so the loadout can never be lost through React state; settlement keeps run.runId.
   const restartNow = () => restart();
+  // 回首頁 from the restart box (user 2026-11-04): the run is dropped unsettled (no coins, an equipped buff stays spent;
+  // the backend run is left open and times out as abandoned), the engine goes back to its intro state.
+  const leaveRun = () => { leave(); setRun(null); refreshAccount(); go('home'); };
 
   const settle = useCallback(async (r) => {
     setRun(x => ({ ...x, status: 'submitting' }));
@@ -199,7 +202,7 @@ export default function App() {
           <button id="restart" type="button" aria-label="重新開始" title="重新開始"
             onClick={e => { pause(true); e.currentTarget.blur(); }}>&#8635;</button>
         )}
-        {screen === 'game' && ui.phase === 'paused' && <ConfirmBox onYes={restartNow} onNo={() => pause(false)} />}
+        {screen === 'game' && ui.phase === 'paused' && <ConfirmBox onYes={restartNow} onNo={() => pause(false)} onHome={leaveRun} />}
         {screen === 'game' && ui.phase === 'rest' && <RestBox onPick={pickRest} />}
         {screen === 'game' && ui.phase === 'choice' && <ChoiceBox cards={ui.choiceCards} onPick={pickChoice} />}
         {page && <div className="v19">{page}</div>}

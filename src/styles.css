@@ -82,5 +82,7 @@
   #confirm .yes { background: var(--red); box-shadow: 0 4px 0 #7a1016; }
   #confirm .no { background: #3a3f4a; box-shadow: 0 4px 0 #1a1c22; }
   #confirm button:active { transform: translateY(3px); box-shadow: none; }
+  #confirm .home { position: absolute; top: calc(52px + env(safe-area-inset-top, 0px)); left: 12px; min-height: 44px; padding: 10px 14px; background: rgba(10,11,14,.72); box-shadow: 0 0 0 2px rgba(255,255,255,.25); font-size: 15px; }
+  #confirm .home:active { transform: none; box-shadow: 0 0 0 2px rgba(255,255,255,.25); opacity: .85; }
   /* v19: menus cover the stage; the HUD belongs to the game screen only */
   #stage[data-menu] #hud, #stage[data-menu] #hint { visibility: hidden; }
