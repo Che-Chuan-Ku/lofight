@@ -398,10 +398,11 @@ export function createGame(onChange) {
       if (u.mode === 1) { const b = u.s | 0; CULL_BINS[b < 0 ? 0 : b > top ? top : b]++; }
     }
     BL.length = nBlue;
-    if (nBlue > MAXB) {
+    const maxB = MAXB[S.tier] || MAXB.bronze;
+    if (nBlue > maxB) {
       // Over the cap: cull the rear of the path column. Walk the histogram from the rear until the excess is covered and
       // drop every path unit in those buckets (at most one bucket more than the exact excess). O(n), no sort.
-      let need = nBlue - MAXB, k = 0;
+      let need = nBlue - maxB, k = 0;
       while (k <= top && need > 0) need -= CULL_BINS[k++];
       let n = 0;
       for (let i = 0; i < nBlue; i++) { const u = BL[i]; if (u.mode !== 1 || (u.s | 0) >= k) BL[n++] = u; }
