@@ -13,15 +13,16 @@ COPY src/ src/
 COPY scripts/ scripts/
 RUN npm run build
 
-# Stage 2: JDK 17 builds the Spring Boot fat jar (infrastructure.yml containerization).
-FROM eclipse-temurin:17-jdk AS build
+# Stage 2: Maven 3.9.9 + JDK 17 builds the Spring Boot fat jar (infrastructure.yml containerization).
+# The image ships Maven itself, so the build no longer depends on the wrapper fetching the Maven tarball from Maven
+# Central (a Render build failed exactly there on 2026-11-04); only the project dependencies are downloaded.
+FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
-COPY backend/.mvn/ .mvn/
-COPY backend/mvnw backend/pom.xml ./
-RUN ./mvnw -B -q dependency:go-offline
+COPY backend/pom.xml ./
+RUN mvn -B -q dependency:go-offline
 COPY backend/src/main/ src/main/
 # Tests run outside the image (Testcontainers + specs/ live outside this build).
-RUN ./mvnw -B -q package -Dmaven.test.skip=true
+RUN mvn -B -q package -Dmaven.test.skip=true
 
 # Stage 3: JRE 17 runtime.
 FROM eclipse-temurin:17-jre
