@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Used only inside backend/Dockerfile. Maven Central is fetched through Google's public GCS mirror of it, which does not
+     rate-limit shared build hosts the way repo.maven.apache.org does (Render builds got HTTP 429 on 2026-11-04). -->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0">
+  <mirrors>
+    <mirror>
+      <id>central-gcs</id>
+      <mirrorOf>central</mirrorOf>
+      <url>https://maven-central.storage-download.googleapis.com/maven2/</url>
+    </mirror>
+  </mirrors>
+</settings>

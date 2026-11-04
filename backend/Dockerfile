@@ -16,13 +16,22 @@ RUN npm run build
 # Stage 2: Maven 3.9.9 + JDK 17 builds the Spring Boot fat jar (infrastructure.yml containerization).
 # The image ships Maven itself, so the build no longer depends on the wrapper fetching the Maven tarball from Maven
 # Central (a Render build failed exactly there on 2026-11-04); only the project dependencies are downloaded.
+# Stage 2a: pom.xml with the project <version> pinned to a constant. Every release bumps that version, which used to
+# invalidate the dependency layer below and re-download everything on each deploy; copying this normalised pom instead
+# keeps the layer cached until a dependency really changes (BuildKit keys COPY --from on file content).
+FROM maven:3.9.9-eclipse-temurin-17 AS pom
+COPY backend/pom.xml /pom.xml
+RUN sed -i '/<artifactId>api<\/artifactId>/{n;s#<version>[^<]*</version>#<version>0-deps</version>#;}' /pom.xml \
+    && grep -q '<version>0-deps</version>' /pom.xml
 FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
-COPY backend/pom.xml ./
-RUN mvn -B -q dependency:go-offline
+COPY backend/maven-settings.xml /root/.m2/settings.xml
+COPY --from=pom /pom.xml ./pom.xml
+RUN mvn -B -q -Daether.connector.http.retryHandler.count=5 dependency:go-offline
+COPY backend/pom.xml ./pom.xml
 COPY backend/src/main/ src/main/
 # Tests run outside the image (Testcontainers + specs/ live outside this build).
-RUN mvn -B -q package -Dmaven.test.skip=true
+RUN mvn -B -q -o package -Dmaven.test.skip=true || mvn -B -q package -Dmaven.test.skip=true
 
 # Stage 3: JRE 17 runtime.
 FROM eclipse-temurin:17-jre
