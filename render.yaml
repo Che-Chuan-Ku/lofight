@@ -7,7 +7,7 @@ services:
     runtime: docker
     name: lofight
     branch: main
-    plan: free
+    plan: starter # paid web instance (USD 7/month, user upgraded 2026-11-05); a sync with `free` here would downgrade it
     region: singapore # must match the database region for the internal connection string; immutable after creation
     dockerfilePath: ./backend/Dockerfile # relative to the repo root
     dockerContext: . # repo root: the image builds the front end too (root .dockerignore limits the context)
