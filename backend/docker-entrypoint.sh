@@ -44,7 +44,9 @@ fi
 # The placeholders live only in <meta name="google-client-id" content="__GOOGLE_CLIENT_ID__"> and
 # <meta name="adsense-publisher-id" content="__ADSENSE_PUBLISHER_ID__">; an empty or malformed value renders content=""
 # and the page hides the matching feature (login entries / rewarded-ad card, no ad script).
-publisher_id="${ADSENSE_PUBLISHER_ID:-}"
+publisher_id="$(printf '%s' "${ADSENSE_PUBLISHER_ID:-}" | tr -d '[:space:]')"
+# AdSense's account page shows the id as pub-<digits>; the ad script wants ca-pub-<digits>. Accept both.
+case "$publisher_id" in pub-*) publisher_id="ca-$publisher_id" ;; esac
 case "$publisher_id" in
   "") ;;
   ca-pub-*[!0-9]*|ca-pub-)
