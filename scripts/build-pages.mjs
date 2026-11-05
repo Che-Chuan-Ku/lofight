@@ -17,7 +17,7 @@ const { ABOUT } = await import('../src/content/about.js');
 const { PRIVACY } = await import('../src/content/privacy.js');
 const { CHANGELOG } = await import('../src/content/changelog.js');
 
-const SITE_URL = (process.env.SITE_URL || 'https://lofight.onrender.com').replace(/\/+$/, '');
+const SITE_URL = (process.env.SITE_URL || 'https://daywar.net').replace(/\/+$/, '');
 const SITE = 'DayWar';
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
