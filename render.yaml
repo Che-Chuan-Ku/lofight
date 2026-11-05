@@ -35,11 +35,11 @@ services:
       # page. Empty = login entries hidden. sync:false only prompts on the first Blueprint creation.
       - key: GOOGLE_CLIENT_ID
         sync: false
-      # Rewarded ad (shop "watch an ad") switch: leave EMPTY to keep the feature OFF (no ad script,
-      # no shop card, API answers eco003, no /ads.txt). Set to the AdSense publisher id (ca-pub-...)
-      # after AdSense + H5 Games Ads approval to turn it on; no rebuild needed, just redeploy.
+      # AdSense publisher id (ca-pub-...): drives /ads.txt, the page meta and the shop ad card. Empty = all off.
+      # sync:false so the value lives only in the Render dashboard: a pinned value: "" here was re-applied on every
+      # Blueprint sync and wiped the dashboard value (ads.txt went 404 after the 19.1.2 render.yaml change).
       - key: ADSENSE_PUBLISHER_ID
-        value: ""
+        sync: false
 
 databases:
   - name: lofight-db
