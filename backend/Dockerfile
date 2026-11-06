@@ -10,7 +10,9 @@ RUN npm ci --no-audit --no-fund
 COPY index.html vite.config.js ./
 COPY src/ src/
 # scripts/build-pages.mjs writes the D41 static pages (guide / bosses / faq / about / updates / privacy, robots.txt, sitemap.xml) into dist/
+# and copies logo-sprite.png plus game-thumb-daywar.png from public/assets.
 COPY scripts/ scripts/
+COPY public/assets/logo-sprite.png public/assets/game-thumb-daywar.png public/assets/
 RUN npm run build
 
 # Stage 2: Maven 3.9.9 + JDK 17 builds the Spring Boot fat jar (infrastructure.yml containerization).
@@ -27,7 +29,11 @@ FROM maven:3.9.9-eclipse-temurin-17 AS build
 WORKDIR /workspace
 COPY backend/maven-settings.xml /root/.m2/settings.xml
 COPY --from=pom /pom.xml ./pom.xml
-RUN mvn -B -q -Daether.connector.http.retryHandler.count=5 dependency:go-offline
+# go-offline does not download every jar `package` resolves, and it does not store
+# maven-metadata.xml, so a later offline build cannot re-resolve version ranges.
+# pom.xml pins io.cucumber:messages; resolve pulls the remaining jars into this layer.
+RUN mvn -B -q -Daether.connector.http.retryHandler.count=5 dependency:go-offline \
+ && mvn -B -q -Daether.connector.http.retryHandler.count=5 dependency:resolve -DincludeScope=test
 COPY backend/pom.xml ./pom.xml
 COPY backend/src/main/ src/main/
 # Tests run outside the image (Testcontainers + specs/ live outside this build).
