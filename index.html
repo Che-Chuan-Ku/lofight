@@ -10,7 +10,8 @@
 <meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">
 <!-- AdSense publisher id (ca-pub-...), filled at container start by backend/docker-entrypoint.sh; without it no ad script loads -->
 <meta name="adsense-publisher-id" content="__ADSENSE_PUBLISHER_ID__">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Noto+Sans+TC:wght@500;700&display=swap">
+<!-- Fonts load once. Static pages use the same URL from build-pages.mjs. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Noto+Sans+TC:wght@500;700;900&display=swap">
 <style>
 #intro { max-width: 720px; margin: 0 auto; padding: 16px; color: #eef1f7; background: #14171f; font: 16px/1.75 "Noto Sans TC", system-ui, sans-serif; }
 #intro h1 { margin: 8px 0; font-size: 28px; }

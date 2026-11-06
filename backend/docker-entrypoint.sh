@@ -90,6 +90,11 @@ for f in /app/web/*.html /app/web/robots.txt /app/web/sitemap.xml; do
   [ "$(basename "$f")" = "index.html" ] && continue
   cp "$f" /app/static/
 done
+# Tile sheet and cropped ground/wall tiles written by scripts/build-pages.mjs (static pages + home letterbox).
+if [ -d /app/web/assets ]; then
+  mkdir -p /app/static/assets
+  cp -a /app/web/assets/. /app/static/assets/
+fi
 
 # ads.txt at the site root (infrastructure.yml site_ads.ads_txt): only when a publisher id is set, otherwise /ads.txt is 404.
 # AdSense writes the seller id without the ca- prefix; f08c47fec0942fa0 is Google's certification authority id.

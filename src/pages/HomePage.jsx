@@ -126,6 +126,7 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
         </nav>
         <span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span>
       </footer>
+      <p className="morecue">往下看說明 ↓</p>
       {dialog && (
         <ConfirmDialog title="登出？" desc="這台裝置會從新的訪客開始。你的帳號進度不會消失，再登入就回來。" action="登出"
           onCancel={closeDialog} onConfirm={() => { setDialog(false); onLogout(); }} />
@@ -143,7 +144,7 @@ export function HomeIntro() {
   return (
     <section id="home-copy" className="home-copy" aria-label="遊戲說明">
       <h2>這款遊戲在做什麼</h2>
-      {HOME.paragraphs.map(p => <p key={p.slice(0, 12)}>{p}</p>)}
+      {HOME.paragraphs.map((p, i) => <p key={p.slice(0, 12)} className={i === 0 ? 'lead' : undefined}>{p}</p>)}
       <nav aria-label="網站資訊">
         {HOME.links.map(l => <a key={l.href} href={l.href}>{l.text}</a>)}
       </nav>

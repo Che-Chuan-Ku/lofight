@@ -4,6 +4,13 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.2.3',
+    date: '2026-11-06',
+    items: [
+      '說明頁換上遊戲的顏色和像素框。攻略終於長得像這個遊戲。'
+    ]
+  },
+  {
     version: '19.2.2',
     date: '2026-11-06',
     items: [
