@@ -1,10 +1,11 @@
 // 首頁 (specs/ui/首頁.md; prototype home()). Nickname, tier cards, coin chip, shop / leaderboard entries, login state.
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { CoinChip, useTitleFocus, ConfirmDialog, SeasonNotice } from '../components/ui/Common.jsx';
 import { TierBadge, BuffMark, LinktreeMark } from '../components/ui/Icons.jsx';
 import { updateMyNickname } from '../lib/api/index.js';
 import { lockLine, nicknameError, NETWORK_MSG } from '../lib/labels.js';
 import { APP_VERSION, LINKTREE_URL } from '../config.js';
+import { HOME } from '../content/home.js';
 
 function NicknameField({ progress, onSaved, notice, onNoticeShown }) {
   const [value, setValue] = useState(progress ? progress.nickname : '');
@@ -74,7 +75,7 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
         </div>
       </div>
       {seasonNotice && seasonNotice.length > 0 && <SeasonNotice key={seasonNotice.map(l => l.key).join(',')} lines={seasonNotice} onShown={onSeasonNoticeShown} onClose={onSeasonNoticeClose} />}
-      <main className="content" style={{ overflow: 'hidden', paddingBottom: 'var(--space-12)', gap: 'var(--space-4)' }}>
+      <main className="content home-menu">
         <div className="hero"><h1 tabIndex={-1} ref={h1}>DayWar</h1><p>左右移動砲台，守住陣地。</p></div>
         <NicknameField progress={progress} onSaved={onNickname} notice={nickNotice} onNoticeShown={onNickNoticeShown} />
         {loadError && <p className="msg err center" role="alert">{NETWORK_MSG}<button type="button" className="btn-ghost sm" onClick={onRetry}>重試</button></p>}
@@ -113,6 +114,10 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
           {/* D41: crawlable static pages (scripts/build-pages.mjs), opened in a new tab so the game state stays */}
           <a className="linkbtn" href="/guide.html" target="_blank" rel="noopener noreferrer">遊戲指南</a>
           <span className="sep" aria-hidden="true">|</span>
+          <a className="linkbtn" href="/bosses.html" target="_blank" rel="noopener noreferrer">魔王攻略</a>
+          <span className="sep" aria-hidden="true">|</span>
+          <a className="linkbtn" href="/faq.html" target="_blank" rel="noopener noreferrer">常見問題</a>
+          <span className="sep" aria-hidden="true">|</span>
           <a className="linkbtn" href="/about.html" target="_blank" rel="noopener noreferrer">關於</a>
           <span className="sep" aria-hidden="true">|</span>
           <button type="button" className="linkbtn" onClick={() => onGo('changelog')}>開發者日誌</button>
@@ -126,5 +131,22 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
           onCancel={closeDialog} onConfirm={() => { setDialog(false); onLogout(); }} />
       )}
     </div>
+  );
+}
+
+// Publisher copy under the stage (not inside it). Same paragraphs as index.html #intro, which hides after mount.
+export function HomeIntro() {
+  useLayoutEffect(() => {
+    document.documentElement.classList.add('home-doc');
+    return () => document.documentElement.classList.remove('home-doc');
+  }, []);
+  return (
+    <section id="home-copy" className="home-copy" aria-label="遊戲說明">
+      <h2>這款遊戲在做什麼</h2>
+      {HOME.paragraphs.map(p => <p key={p.slice(0, 12)}>{p}</p>)}
+      <nav aria-label="網站資訊">
+        {HOME.links.map(l => <a key={l.href} href={l.href}>{l.text}</a>)}
+      </nav>
+    </section>
   );
 }

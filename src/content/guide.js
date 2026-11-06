@@ -96,6 +96,14 @@ export const GUIDE = {
         ] },
         ['我們會保存哪些資料，請看 ', { text: '隱私權政策', href: '/privacy.html' }, '。']
       ]
+    },
+    {
+      h: '還想看細的',
+      blocks: [
+        ['每一隻魔王的招式與躲法，見 ', { text: '魔王攻略', href: '/bosses.html' }, '。'],
+        ['存檔、登入、金幣、賽季與暱稱，見 ', { text: '常見問題', href: '/faq.html' }, '。'],
+        ['這個遊戲是誰做的，見 ', { text: '關於', href: '/about.html' }, '。版本紀錄在 ', { text: '開發者日誌', href: '/updates.html' }, '。']
+      ]
     }
   ]
 };

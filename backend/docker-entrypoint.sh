@@ -83,7 +83,7 @@ if [ -f /app/web/index.html ]; then
   fi
 fi
 
-# D41 static pages from the build (guide / about / updates / privacy .html, robots.txt, sitemap.xml): served as-is.
+# D41 static pages from the build (guide / bosses / faq / about / updates / privacy .html, robots.txt, sitemap.xml): served as-is.
 # index.html is excluded here; it is rendered above with the runtime ids.
 for f in /app/web/*.html /app/web/robots.txt /app/web/sitemap.xml; do
   [ -f "$f" ] || continue

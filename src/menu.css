@@ -444,11 +444,20 @@
 .v19 .adcard.idle > .ticon { filter: grayscale(1) brightness(0.75); }
 .v19 .adcard .buy .btn-primary { min-width: 76px; }
 .v19 .adcard .msgline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.v19 .sitefoot { position: absolute; left: 0; right: 0; bottom: 0; min-height: var(--touch-min); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 4px 0 2px; }
+/* In flow under the home menu so a wrapped link row cannot cover the shop buttons. */
+.v19 .sitefoot { position: relative; flex: none; min-height: var(--touch-min); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 4px max(2px, env(safe-area-inset-bottom, 0px)) 2px; }
+.v19 .home-menu { overflow: hidden; padding-bottom: var(--space-3); gap: var(--space-4); }
+/* Short phones: the six footer links wrap to two rows. Pull the cards in so the shop buttons stay fully visible. */
+@media (max-height: 740px) {
+  .v19 .home-menu { gap: 8px; }
+  .v19 .page.menu .hero h1 { margin-top: 8px; }
+  .v19 .page.menu .tier { min-height: 140px; }
+}
 /* D40: footer links centred as one row; version stays at the right edge */
 .v19 .sitefoot .footlinks { grid-column: 2; display: flex; align-items: center; justify-content: center; }
-/* D41: four links (guide / about / log / privacy); they may wrap onto a second line on narrow screens */
+/* D41: guide / bosses / faq / about / log / privacy; they may wrap on narrow screens */
 .v19 .sitefoot .footlinks { flex-wrap: wrap; }
+.v19 .sitefoot .linkbtn { padding: 0 6px; }
 .v19 a.linkbtn { display: inline-flex; align-items: center; }
 .v19 .sitefoot .sep { color: var(--color-text-secondary); font-size: var(--text-xs); opacity: 0.6; }
 .v19 .sitefoot .ver { position: static; grid-column: 3; justify-self: end; }

@@ -86,3 +86,16 @@
   #confirm .home:active { transform: none; box-shadow: 0 0 0 2px rgba(255,255,255,.25); opacity: .85; }
   /* v19: menus cover the stage; the HUD belongs to the game screen only */
   #stage[data-menu] #hud, #stage[data-menu] #hint { visibility: hidden; }
+  /* Home publisher copy sits under the stage so the document can scroll. The in-stage menu
+     uses pan-y so a vertical drag reaches this page instead of dying on the overlay. */
+  html.home-doc, html.home-doc body, html.home-doc #root { height: auto; min-height: 100%; }
+  html.home-doc body { overflow-x: hidden; overflow-y: auto; }
+  html.home-doc #app { height: 100vh; height: 100dvh; flex: none; }
+  html.home-doc .v19 { overflow: visible; touch-action: pan-y; }
+  .home-copy { max-width: 720px; margin: 0 auto; padding: 8px 16px 32px; color: #eef1f7; background: #14171f;
+    font: 16px/1.75 "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+    user-select: text; -webkit-user-select: text; }
+  .home-copy h2 { margin: 16px 0 8px; font-size: 20px; line-height: 1.4; font-weight: 700; }
+  .home-copy p { margin: 0 0 8px; }
+  .home-copy nav { display: flex; flex-wrap: wrap; gap: 0 16px; }
+  .home-copy a { display: inline-flex; align-items: center; min-height: 44px; color: #8fd3ff; font-weight: 700; text-underline-offset: 3px; }

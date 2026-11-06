@@ -4,6 +4,14 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.2.2',
+    date: '2026-11-06',
+    items: [
+      '首頁往下捲，多了一段遊戲說明。不用先輸一局才搞懂自己在玩什麼。',
+      '新增魔王攻略與常見問題。招式寫在那裡，藉口少一條。'
+    ]
+  },
+  {
     version: '19.2.1',
     date: '2026-11-04',
     items: [
