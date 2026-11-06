@@ -10,7 +10,8 @@
 <meta name="google-client-id" content="__GOOGLE_CLIENT_ID__">
 <!-- AdSense publisher id (ca-pub-...), filled at container start by backend/docker-entrypoint.sh; without it no ad script loads -->
 <meta name="adsense-publisher-id" content="__ADSENSE_PUBLISHER_ID__">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Noto+Sans+TC:wght@500;700&display=swap">
+<!-- Fonts load once. Static pages use the same URL from build-pages.mjs. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Noto+Sans+TC:wght@500;700;900&display=swap">
 <style>
 #intro { max-width: 720px; margin: 0 auto; padding: 16px; color: #eef1f7; background: #14171f; font: 16px/1.75 "Noto Sans TC", system-ui, sans-serif; }
 #intro h1 { margin: 8px 0; font-size: 28px; }
@@ -23,16 +24,23 @@
 <body>
 <div id="root"></div>
 <!-- D41: crawlable intro for visitors without JS and for crawlers; hidden once React has rendered into #root -->
+<!-- Keep these paragraphs identical to src/content/home.js (build-pages checks dist/index.html). -->
 <section id="intro">
 <h1>DayWar</h1>
-<p>DayWar 是一款打開瀏覽器就能玩的 HTML5 塔防遊戲。你守在山路底下，左右拖曳砲台射出藍軍士兵，讓他們穿過倍率門變多、打破道具門變強，一路攻向紅軍與魔王。</p>
-<p>先打通 NORMAL，再去 EXTRA 見識會出招的魔王。打倒魔王賺金幣，在商店換道具，然後到排行榜上看看自己排第幾。不用下載，手機與電腦都能玩。</p>
-<p>魔王不會等你準備好。</p>
+<p>DayWar 是一款打開瀏覽器就能玩的塔防遊戲。你守在山路底下，左右拖曳砲台，砲台自己會射出藍軍士兵。士兵沿著山路往上衝：穿過倍率門會變多，打破道具門會變強，問號門則要你當場挑一張卡。路的盡頭是迎面而來的紅軍，以及一個接一個的魔王。</p>
+<p>目標很單純，把魔王全部打倒。紅軍或魔王摸到砲台，這局就結束。射擊不用你按，你只負責站位。魔王出招的時候把砲台挪開；站著不動，不叫勇敢。</p>
+<p>遊戲有兩種階層。NORMAL 一進來就能玩，一路打到第 9 王。先打倒那一隻，EXTRA 才會開門：後面的魔王會出招，開局前可以從庫存裡挑一個道具帶進場，也可以空手。兩種階層各有自己的排行榜，成績分開算。</p>
+<p>打倒魔王會掉金幣，每局結束入帳，輸了也照算。商店用金幣換道具，道具要解鎖 EXTRA 之後才買得到。不登入也能玩，進度留在這台裝置的瀏覽器裡；用 Google 帳號登入之後，進度、金幣與道具跟著帳號走，換手機、換電腦都接得上。</p>
+<p>每一隻魔王怎麼出招、該往哪讓，寫在魔王攻略。操作、門、道具與賽季寫在遊戲指南。存檔、登入、金幣與暱稱，見常見問題。這個遊戲是誰做的、每次改了什麼、我們保存哪些資料，連結都在下面。</p>
 <nav aria-label="網站資訊">
 <a href="/guide.html">遊戲指南</a>
+<a href="/bosses.html">魔王攻略</a>
+<a href="/faq.html">常見問題</a>
 <a href="/about.html">關於</a>
 <a href="/updates.html">開發者日誌</a>
 <a href="/privacy.html">隱私權政策</a>
+<a href="/contact.html">聯絡我們</a>
+<a href="/terms.html">服務條款</a>
 </nav>
 </section>
 <script type="module" src="/src/main.jsx"></script>

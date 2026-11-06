@@ -4,7 +4,7 @@ import Hud from './components/Hud.jsx';
 import ChoiceBox from './components/ChoiceBox.jsx';
 import RestBox from './components/RestBox.jsx';
 import ConfirmBox from './components/ConfirmBox.jsx';
-import HomePage from './pages/HomePage.jsx';
+import HomePage, { HomeIntro } from './pages/HomePage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import LoadoutPage from './pages/LoadoutPage.jsx';
 import ResultPage from './pages/ResultPage.jsx';
@@ -193,6 +193,7 @@ export default function App() {
   else if (screen === 'changelog') page = <ChangelogPage onBack={() => go('home')} />;
 
   return (
+    <>
     <div id="app" ref={appRef}>
       <div id="stage" ref={stageRef} data-menu={screen !== 'game' ? '' : undefined}>
         <canvas id="c" ref={canvasRef} aria-label="戰場" role="img" />
@@ -208,5 +209,7 @@ export default function App() {
         {page && <div className="v19">{page}</div>}
       </div>
     </div>
+    {screen === 'home' && <HomeIntro />}
+    </>
   );
 }

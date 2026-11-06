@@ -6,103 +6,8 @@
    Tokens: prototype/_design-strategy.md :root block, plus the [HUMAN-FB] tokens
    that make the new screens read as panels of the existing game (see _decisions-log.md).
    ========================================================================== */
-:root {
-  /* Legacy aliases (identical to src/styles.css) */
-  --bg: #1b1d22; --fg: #f3ead6; --sand: #d9b97c; --gold: #f2c233; --blue: #2f66e0; --red: #d6242c;
+@import './styles/tokens.css';
 
-  --color-bg: #1b1d22;
-  --color-surface: #262931;
-  --color-surface-raised: #3a3f4a;
-  --color-scrim: rgba(10, 11, 14, 0.72);
-  --color-scrim-light: rgba(10, 11, 14, 0.6);
-  --color-border: rgba(255, 255, 255, 0.35);
-  --color-divider: rgba(255, 255, 255, 0.08);
-
-  --color-text: #f3ead6;
-  --color-text-secondary: #9ca2ae;
-  --color-text-on-action: #ffffff;
-  --color-text-on-tier: #1b1d22;
-
-  --color-accent: #f2c233;
-  --color-accent-deep: #6b4e00;
-  --color-action: #d6242c;
-  --color-action-deep: #7a1016;
-  --color-neutral-deep: #1a1c22;
-  --color-ally: #2f66e0;
-  --color-ally-light: #8fb3ff;
-  --color-ally-deep: #1d3f8f;
-  --color-ally-shadow: #0d1f4a;
-
-  --color-bronze: #d08a4e;
-  --color-bronze-deep: #6e4120;
-  --color-silver: #c9d1dc;
-  --color-silver-deep: #5d6673;
-
-  --color-success: #7dffa7;
-  --color-success-bg: #1f6b3a;
-  --color-error: #ff8a8a;
-  --color-error-border: #d6242c;
-  --color-warning: #f2c233;
-  --color-locked: #9ca2ae;
-  --color-focus: #f2c233;
-
-  /* [HUMAN-FB] existing-game panel vocabulary (values copied from src/styles.css) */
-  --color-panel: rgba(0, 0, 0, 0.45);          /* .board background */
-  --color-panel-menu: rgba(12, 13, 17, 0.88);  /* out-of-game panel: near-opaque so the battlefield never shows through text (UXR-01) */
-  --color-card-edge: #ffffff;                   /* #choice .card border */
-  --color-ghost-edge: rgba(255, 255, 255, 0.5); /* button.ghost border */
-  --color-iconbtn-ring: rgba(255, 255, 255, 0.25);
-  --color-lose-title: #cfd4de;                  /* #overlay h1.lose */
-  --color-lose-title-deep: #3a3f4a;
-  --color-hud-red: #ff8a8a; --color-hud-boss: #ffb0b0;
-  --color-rank-1: #f2c233; --color-rank-2: #c9d1dc; --color-rank-3: #d08a4e;
-  --color-bronze-shadow: #3a200e;               /* [NEW] tier card hard shadow */
-  --color-silver-shadow: #2c3038;               /* [NEW] */
-  /* CHANGE 2026-11-02 (D26-D28, D36; prototype _ui-spec.md §5.1): tier display colors + Linktree mark */
-  --color-tier-normal: #d08a4e; --color-tier-normal-deep: #6e4120; --color-tier-normal-shadow: #3a200e; --color-tier-normal-hi: #f3c58f;
-  --color-tier-extra: #b98cff; --color-tier-extra-deep: #4a2a80; --color-tier-extra-shadow: #231340; --color-tier-extra-hi: #efe2ff;
-  --color-tier-extra-spark: #ffe45c;
-  --color-linktree: #43e55e; --color-linktree-deep: #1f9e3a;
-  --color-black: #000000;
-  --color-stage-edge: #0a0b0d;
-  /* Google brand exception */
-  --brand-google-bg: #ffffff; --brand-google-edge: #747775; --brand-google-text: #1f1f1f; --brand-google-spin: #c7c7c7;
-
-  --font-display: "Luckiest Guy", "Arial Black", "PingFang TC", sans-serif;
-  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
-
-  --text-xs: 12px; --text-sm: 13px; --text-base: 14px; --text-md: 16px; --text-lg: 18px;
-  --text-xl: 22px; --text-2xl: 28px; --text-3xl: 34px; --text-4xl: 44px;
-  --weight-regular: 500; --weight-bold: 700;
-  --leading-tight: 1.05; --leading-normal: 1.4; --leading-relaxed: 1.6;
-  --tracking-display: 1px; --tracking-label: 2px;
-
-  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 20px; --space-6: 24px; --space-8: 32px; --space-12: 48px;
-
-  --stage-w: 390px; --stage-h: 780px; --header-h: 56px; --banner-h: 64px; --actionbar-pad: 16px; --touch-min: 44px;
-
-  --radius-sm: 6px; --radius-md: 10px; --radius-lg: 12px; --radius-xl: 14px; --radius-full: 9999px;
-
-  --shadow-stamp-action: 0 4px 0 var(--color-action-deep);
-  --shadow-stamp-neutral: 0 4px 0 var(--color-neutral-deep);
-  --shadow-stamp-card: 0 5px 0 var(--color-neutral-deep);
-  --shadow-stamp-ally: 0 5px 0 var(--color-ally-shadow);
-  --shadow-stage: 0 0 0 3px var(--color-stage-edge), 0 20px 60px rgba(0, 0, 0, 0.6);
-  --shadow-iconbtn: 0 2px 0 var(--color-black), 0 0 0 2px var(--color-iconbtn-ring);
-  --text-shadow-title: 0 3px 0 var(--color-accent-deep), 0 6px 18px rgba(0, 0, 0, 0.8);
-  --text-shadow-hud: 0 2px 0 var(--color-black), 0 0 8px rgba(0, 0, 0, 0.6);
-  --text-shadow-card: 0 2px 0 var(--color-black);
-  --text-shadow-soft: 0 1px 2px var(--color-black);
-
-  --dur-press: 100ms; --dur-fast: 150ms; --dur-base: 200ms; --dur-slow: 300ms; --dur-count-step: 250ms;
-  /* [FE] loader loops, absent from the motion table in _design-strategy.md: button dots + Google spinner */
-  --dur-loader-dots: 900ms; --dur-loader-spin: 800ms;
-  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-in: cubic-bezier(0.4, 0, 1, 1);
-  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  color-scheme: dark;
-}
 
 .v19, .v19 * { box-sizing: border-box; }
 /* not ported: html, body */
@@ -444,16 +349,26 @@
 .v19 .adcard.idle > .ticon { filter: grayscale(1) brightness(0.75); }
 .v19 .adcard .buy .btn-primary { min-width: 76px; }
 .v19 .adcard .msgline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.v19 .sitefoot { position: absolute; left: 0; right: 0; bottom: 0; min-height: var(--touch-min); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 4px 0 2px; }
+/* In flow under the home menu so a wrapped link row cannot cover the shop buttons. */
+.v19 .sitefoot { position: relative; flex: none; min-height: var(--touch-min); display: flex; justify-content: center; align-items: center; padding: 0 4px max(2px, env(safe-area-inset-bottom, 0px)) 2px; }
+.v19 .home-menu { overflow: hidden; padding-bottom: var(--space-3); gap: var(--space-4); }
+/* Short phones: the six footer links wrap to two rows. Pull the cards in so the shop buttons stay fully visible. */
+@media (max-height: 740px) {
+  .v19 .home-menu { gap: 8px; }
+  .v19 .page.menu .hero h1 { margin-top: 8px; }
+  .v19 .page.menu .tier { min-height: 140px; }
+}
 /* D40: footer links centred as one row; version stays at the right edge */
-.v19 .sitefoot .footlinks { grid-column: 2; display: flex; align-items: center; justify-content: center; }
-/* D41: four links (guide / about / log / privacy); they may wrap onto a second line on narrow screens */
-.v19 .sitefoot .footlinks { flex-wrap: wrap; }
+.v19 .sitefoot .footlinks { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px 0; }
+.v19 .sitefoot .linkbtn { padding: 0 8px; }
+.v19 .sitefoot .linkbtn + .linkbtn { border-left: 1px solid var(--sand); }
 .v19 a.linkbtn { display: inline-flex; align-items: center; }
-.v19 .sitefoot .sep { color: var(--color-text-secondary); font-size: var(--text-xs); opacity: 0.6; }
-.v19 .sitefoot .ver { position: static; grid-column: 3; justify-self: end; }
 .v19 .linkbtn { min-height: var(--touch-min); padding: 0 10px; border: 0; background: none; color: var(--color-text-secondary); font: var(--weight-bold) var(--text-xs) var(--font-body);
   text-decoration: underline; text-underline-offset: 3px; cursor: pointer; text-shadow: var(--text-shadow-soft); }
+.v19 .sitefoot .linkbtn { font-size: 13px; color: var(--fg); }
+.v19 .morecue { flex: none; margin: 0; padding: 0 8px 6px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; font-size: 13px; font-weight: 700; letter-spacing: 1px; color: var(--sand); text-shadow: var(--text-shadow-soft); }
+.v19 .morecue > span:first-child { grid-column: 2; }
+.v19 .morecue .ver { grid-column: 3; justify-self: end; position: static; font-size: 13px; opacity: 1; color: var(--sand); letter-spacing: 1px; }
 .v19 .policy { display: flex; flex-direction: column; gap: 6px; padding: 8px 16px 16px; }
 .v19 .policy h2 { text-align: left; margin: 12px 0 0; font-size: var(--text-md); }
 .v19 .policy p, .v19 .policy li { margin: 0; font-size: var(--text-base); font-weight: var(--weight-regular); line-height: var(--leading-relaxed); }

@@ -83,13 +83,18 @@ if [ -f /app/web/index.html ]; then
   fi
 fi
 
-# D41 static pages from the build (guide / about / updates / privacy .html, robots.txt, sitemap.xml): served as-is.
+# D41 static pages from the build (guide / bosses / faq / about / updates / privacy .html, robots.txt, sitemap.xml): served as-is.
 # index.html is excluded here; it is rendered above with the runtime ids.
 for f in /app/web/*.html /app/web/robots.txt /app/web/sitemap.xml; do
   [ -f "$f" ] || continue
   [ "$(basename "$f")" = "index.html" ] && continue
   cp "$f" /app/static/
 done
+# Tile sheet and cropped ground/wall tiles written by scripts/build-pages.mjs (static pages + home letterbox).
+if [ -d /app/web/assets ]; then
+  mkdir -p /app/static/assets
+  cp -a /app/web/assets/. /app/static/assets/
+fi
 
 # ads.txt at the site root (infrastructure.yml site_ads.ads_txt): only when a publisher id is set, otherwise /ads.txt is 404.
 # AdSense writes the seller id without the ca- prefix; f08c47fec0942fa0 is Google's certification authority id.

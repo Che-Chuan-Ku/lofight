@@ -9,7 +9,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY index.html vite.config.js ./
 COPY src/ src/
-# scripts/build-pages.mjs writes the D41 static pages (guide / about / updates / privacy, robots.txt, sitemap.xml) into dist/
+# scripts/build-pages.mjs writes the D41 static pages (guide / bosses / faq / about / updates / privacy, robots.txt, sitemap.xml) into dist/
 COPY scripts/ scripts/
 RUN npm run build
 
