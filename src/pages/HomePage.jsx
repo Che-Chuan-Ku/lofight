@@ -123,6 +123,10 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
           <button type="button" className="linkbtn" onClick={() => onGo('changelog')}>開發者日誌</button>
           <span className="sep" aria-hidden="true">|</span>
           <button type="button" className="linkbtn" onClick={() => onGo('privacy')}>隱私權政策</button>
+          <span className="sep" aria-hidden="true">|</span>
+          <a className="linkbtn" href="/contact.html" target="_blank" rel="noopener noreferrer">聯絡我們</a>
+          <span className="sep" aria-hidden="true">|</span>
+          <a className="linkbtn" href="/terms.html" target="_blank" rel="noopener noreferrer">服務條款</a>
         </nav>
         <span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span>
       </footer>

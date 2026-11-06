@@ -16,6 +16,8 @@ export const HOME = {
     { href: '/faq.html', text: '常見問題' },
     { href: '/about.html', text: '關於' },
     { href: '/updates.html', text: '開發者日誌' },
-    { href: '/privacy.html', text: '隱私權政策' }
+    { href: '/privacy.html', text: '隱私權政策' },
+    { href: '/contact.html', text: '聯絡我們' },
+    { href: '/terms.html', text: '服務條款' }
   ]
 };

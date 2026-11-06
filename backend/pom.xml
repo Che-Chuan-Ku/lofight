@@ -13,7 +13,7 @@
 
     <groupId>com.crowdsiege</groupId>
     <artifactId>api</artifactId>
-    <version>19.2.3</version>
+    <version>19.2.4</version>
     <name>daywar-api</name>
     <description>DayWar v19 backend (Spring Boot 3.2 + JPA + Cucumber E2E)</description>
 

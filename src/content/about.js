@@ -27,7 +27,8 @@ export const ABOUT = {
       h: '聯絡方式',
       blocks: [
         ['有問題、發現錯誤，或只是有些想法，都歡迎透過 ', { text: 'Linktree', href: LINKTREE_URL }, ' 聯絡我。'],
-        '訊息會看，也會回覆。至於速度，就看當時有沒有在修 Bug。'
+        '訊息會看，也會回覆。至於速度，就看當時有沒有在修 Bug。',
+        ['想先看可以問什麼，見 ', { text: '聯絡頁', href: '/contact.html' }, '。']
       ]
     }
   ]

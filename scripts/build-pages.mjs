@@ -24,6 +24,8 @@ const { ABOUT } = await import('../src/content/about.js');
 const { PRIVACY } = await import('../src/content/privacy.js');
 const { CHANGELOG } = await import('../src/content/changelog.js');
 const { HOME } = await import('../src/content/home.js');
+const { CONTACT } = await import('../src/content/contact.js');
+const { TERMS } = await import('../src/content/terms.js');
 
 const SITE_URL = (process.env.SITE_URL || 'https://daywar.net').replace(/\/+$/, '');
 const SITE = 'DayWar';
@@ -39,7 +41,9 @@ const PAGES = [
   { file: 'faq.html', label: '常見問題' },
   { file: 'about.html', label: '關於' },
   { file: 'updates.html', label: '開發者日誌' },
-  { file: 'privacy.html', label: '隱私權政策' }
+  { file: 'privacy.html', label: '隱私權政策' },
+  { file: 'contact.html', label: '聯絡我們' },
+  { file: 'terms.html', label: '服務條款' }
 ];
 
 function inline(v) {
@@ -262,6 +266,11 @@ const out = {
     file: 'privacy.html', title: PRIVACY.title, description: PRIVACY.description,
     body: sections(PRIVACY.sections) + '\n<p class="updated">最後更新：<time datetime="' + esc(PRIVACY.updated) + '">' + esc(PRIVACY.updated) + '</time></p>'
   }),
+  'contact.html': page({ file: 'contact.html', title: CONTACT.title, description: CONTACT.description, lead: CONTACT.lead, body: sections(CONTACT.sections) }),
+  'terms.html': page({
+    file: 'terms.html', title: TERMS.title, description: TERMS.description, lead: TERMS.lead,
+    body: sections(TERMS.sections) + '\n<p class="updated">最後更新：<time datetime="' + esc(TERMS.updated) + '">' + esc(TERMS.updated) + '</time></p>'
+  }),
   'robots.txt': 'User-agent: *\nAllow: /\n\nSitemap: ' + SITE_URL + '/sitemap.xml\n',
   'sitemap.xml': '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     + ['', ...PAGES.map(p => p.file)].map(f => '  <url><loc>' + esc(SITE_URL + '/' + f) + '</loc></url>').join('\n')
@@ -273,12 +282,8 @@ for (const [name, text] of Object.entries(out)) writeFileSync(dist + name, text)
 writeTileAssets(dist + '/assets', Buffer.from(TILE_B64, 'base64'));
 
 // Every player-facing sentence must still be in the built pages (design changes structure, not copy).
-const built = {
-  'guide.html': readFileSync(dist + 'guide.html', 'utf8'),
-  'bosses.html': readFileSync(dist + 'bosses.html', 'utf8'),
-  'faq.html': readFileSync(dist + 'faq.html', 'utf8'),
-  'about.html': readFileSync(dist + 'about.html', 'utf8')
-};
+const built = Object.fromEntries(['guide.html', 'bosses.html', 'faq.html', 'about.html', 'contact.html', 'terms.html', 'privacy.html', 'updates.html']
+  .map(name => [name, readFileSync(dist + name, 'utf8')]));
 function expectIn(file, texts) {
   for (const t of texts) if (t && !built[file].includes(t)) throw new Error(file + ' is missing copy: ' + t.slice(0, 40));
 }
@@ -286,10 +291,14 @@ expectIn('guide.html', stringsOf(GUIDE.sections));
 expectIn('about.html', stringsOf(ABOUT.sections));
 expectIn('bosses.html', stringsOf(BOSSES.sections).filter(t => !/^第 \d+ 王$/.test(t)));
 expectIn('faq.html', FAQ.sections.flatMap(s => s.qa ? s.qa.flatMap(q => [q.q, ...stringsOf(q.a)]) : stringsOf(s.blocks || [])));
+expectIn('contact.html', stringsOf(CONTACT.sections));
+expectIn('terms.html', stringsOf(TERMS.sections));
 if ((built['bosses.html'].match(/<article class="card"/g) || []).length !== 16) throw new Error('bosses.html should have 16 boss cards');
 if (built['faq.html'].includes('<details')) throw new Error('faq.html must not collapse answers');
 if ((built['faq.html'].match(/<script/g) || []).length !== 1) throw new Error('faq.html should have only the FAQPage script');
-if (/adsbygoogle|pagead|adBreak/.test(built['guide.html'] + built['bosses.html'] + built['faq.html'] + built['about.html'])) throw new Error('static pages must not load ads');
+const staticHtml = Object.values(built).join('\n');
+if (/adsbygoogle|pagead|adBreak/.test(staticHtml)) throw new Error('static pages must not load ads');
+if (/<details/.test(staticHtml)) throw new Error('static pages must not collapse copy');
 
 const indexHtml = readFileSync(dist + 'index.html', 'utf8');
 for (const p of HOME.paragraphs) {
