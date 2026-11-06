@@ -94,8 +94,10 @@
   #confirm .home:active { transform: none; box-shadow: 0 0 0 2px rgba(255,255,255,.25); opacity: .85; }
   /* v19: menus cover the stage; the HUD belongs to the game screen only */
   #stage[data-menu] #hud, #stage[data-menu] #hint { visibility: hidden; }
-  /* Mobile home: the top 32px is the scroll-escape strip, above the turret lane. */
+  /* Home page stays flat #17191e; the stage shadow must not tint the page. */
+  body.home canvas { box-shadow: none; }
+  /* Mobile home: transparent 32px scroll strip. The menu covers the frame so no color band shows. */
   @media (max-width: 767px) {
-    body.home #stage .v19 { top: 32px; }
     body.home #stage .v19 .topbar { position: relative; z-index: 6; touch-action: manipulation; }
+    body.home #stage .v19 .topbar > * { pointer-events: auto; }
   }
