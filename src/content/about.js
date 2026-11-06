@@ -1,4 +1,4 @@
-// 關於 data (specs/ui/內容頁.md, D41). Rendered to dist/about.html by scripts/build-pages.mjs.
+// 關於 data (specs/ui/內容頁.md, D41). Rendered inside dist/intro.html. dist/about.html redirects there.
 // No personal data beyond the public Linktree; block format as in guide.js.
 import { LINKTREE_URL } from '../config.js';
 
