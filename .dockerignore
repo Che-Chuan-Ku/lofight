@@ -8,6 +8,12 @@
 !src/
 !scripts/
 !backend/
+# build-pages.mjs copies these into dist/assets. The allow-list must name each parent
+# directory or Docker will not re-include files under an excluded directory.
+!public/
+!public/assets/
+!public/assets/logo-sprite.png
+!public/assets/game-thumb-daywar.png
 **/.env*
 **/node_modules
 **/.DS_Store

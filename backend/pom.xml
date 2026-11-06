@@ -26,6 +26,21 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <!-- gherkin 26.2.0, html-formatter 20.4.0 and junit-xml-formatter 0.2.0 depend on
+         io.cucumber:messages with ranges [19.1.4,23.0.0), [18.0.0,23.0.0) and [21.0.1,23.0.0).
+         dependency:go-offline stores messages-22.0.0.jar but not maven-metadata.xml, so the
+         image's `mvn -o package` fails with "No versions available" for those ranges.
+         22.0.0 is the version Cucumber 7.15.0 already resolves, and it satisfies every range. -->
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.cucumber</groupId>
+                <artifactId>messages</artifactId>
+                <version>22.0.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
