@@ -97,10 +97,15 @@ function heading(tag, text) {
   const latin = /^v[\d.]/.test(text) ? ' class="latin"' : '';
   return '<' + tag + latin + '>' + esc(text) + '</' + tag + '>';
 }
-function panel(title, inner) {
-  return '<section class="panel">\n' + heading('h2', title) + '\n<div class="wall" role="presentation"></div>\n' + inner + '\n</section>';
+function panel(title, inner, id) {
+  const idAttr = id ? ' id="' + esc(id) + '"' : '';
+  return '<section class="panel"' + idAttr + '>\n' + heading('h2', title) + '\n<div class="wall" role="presentation"></div>\n' + inner + '\n</section>';
 }
-const sections = list => list.map(s => panel(s.h, s.blocks.map(block).join('\n'))).join('\n');
+const sections = list => list.map(s => panel(s.h, s.blocks.map(block).join('\n'), s.id)).join('\n');
+function termsBody(list) {
+  const index = '<nav class="sec-index" aria-label="條款目錄">' + list.map(s => '<a href="#' + esc(s.id) + '">' + esc(s.h) + '</a>').join('') + '</nav>';
+  return index + '\n' + sections(list);
+}
 
 function bossHeading(tier, text) {
   const m = /^第 (\d+) 王$/.exec(text);
@@ -158,8 +163,9 @@ html { -webkit-text-size-adjust: 100%; }
 body { margin: 0; color: var(--color-text);
   font: 16px/1.75 var(--font-body);
   background-color: var(--color-bg);
-  background-image: linear-gradient(color-mix(in srgb, var(--color-bg) 80%, transparent), color-mix(in srgb, var(--color-bg) 80%, transparent)), url(/assets/ground.png);
-  background-size: auto, 32px 32px;
+  background-image: url(/assets/ground.png);
+  background-repeat: repeat;
+  background-size: 48px 48px;
   image-rendering: pixelated; }
 img, .spr { image-rendering: pixelated; }
 a { color: var(--color-ally-light); font-weight: 700; text-underline-offset: 3px; }
@@ -198,25 +204,46 @@ li + li { margin-top: 4px; }
 .spr.tint-dark { background-color: rgba(120, 0, 40, 0.55); background-blend-mode: multiply; }
 .spr.tint-purple { background-color: rgba(150, 40, 255, 0.5); background-blend-mode: multiply; }
 .boss-index { display: flex; flex-wrap: wrap; gap: 16px 28px; justify-content: center; }
+.sec-index { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.sec-index a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 12px;
+  background: var(--color-surface); color: var(--fg); text-decoration: none; font-weight: 700;
+  border: 3px solid var(--color-stage-edge); border-radius: var(--radius-md); box-shadow: var(--shadow-stamp-neutral); }
 .idx-label { margin: 0 0 6px; text-align: center; font-family: var(--font-display); font-size: 16px; letter-spacing: 1px; color: var(--color-accent); text-shadow: var(--text-shadow-title); }
 .idx-row { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .idx-row a { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; }
 .date { color: var(--sand); font-size: 14px; margin: 0 0 4px; }
 .updated { color: var(--sand); font-size: 14px; margin-top: 16px; }
 footer { margin-top: 24px; text-align: center; color: var(--sand); font-size: 14px; }
-footer nav { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-footer nav a, footer nav span { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 12px;
+footer nav { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.foot-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.foot-row a, .foot-row span { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 12px;
   background: var(--color-surface-raised); color: var(--fg); text-decoration: none; font-weight: 700;
   border: 3px solid var(--color-stage-edge); border-radius: var(--radius-md); box-shadow: var(--shadow-stamp-neutral); }
-footer nav span { background: var(--color-accent); color: var(--color-text-on-tier); }
+.foot-row span { background: var(--color-accent); color: var(--color-text-on-tier); }
 footer p { margin: 12px 0 0; }
 `.trim();
 
-function page({ file, title, description, lead, body, jsonLd }) {
-  const nav = [{ file: '', label: '回到遊戲', href: '/' }, ...PAGES].map(p => {
+const FOOT_GAME = [
+  { file: '', label: '回到遊戲', href: '/' },
+  { file: 'guide.html', label: '遊戲指南' },
+  { file: 'bosses.html', label: '魔王攻略' },
+  { file: 'faq.html', label: '常見問題' }
+];
+const FOOT_SITE = [
+  { file: 'about.html', label: '關於' },
+  { file: 'updates.html', label: '開發者日誌' },
+  { file: 'contact.html', label: '聯絡我們' },
+  { file: 'privacy.html', label: '隱私權政策' },
+  { file: 'terms.html', label: '服務條款' }
+];
+function footRow(items, file) {
+  return '<div class="foot-row">' + items.map(p => {
     if (p.file === file) return '<span aria-current="page">' + esc(p.label) + '</span>';
     return '<a href="' + (p.href || '/' + p.file) + '">' + esc(p.label) + '</a>';
-  }).join('\n');
+  }).join('') + '</div>';
+}
+function page({ file, title, description, lead, body, jsonLd }) {
+  const nav = footRow(FOOT_GAME, file) + '\n' + footRow(FOOT_SITE, file);
   return `<!doctype html>
 <html lang="zh-Hant">
 <head>
@@ -269,7 +296,7 @@ const out = {
   'contact.html': page({ file: 'contact.html', title: CONTACT.title, description: CONTACT.description, lead: CONTACT.lead, body: sections(CONTACT.sections) }),
   'terms.html': page({
     file: 'terms.html', title: TERMS.title, description: TERMS.description, lead: TERMS.lead,
-    body: sections(TERMS.sections) + '\n<p class="updated">最後更新：<time datetime="' + esc(TERMS.updated) + '">' + esc(TERMS.updated) + '</time></p>'
+    body: termsBody(TERMS.sections) + '\n<p class="updated">最後更新：<time datetime="' + esc(TERMS.updated) + '">' + esc(TERMS.updated) + '</time></p>'
   }),
   'robots.txt': 'User-agent: *\nAllow: /\n\nSitemap: ' + SITE_URL + '/sitemap.xml\n',
   'sitemap.xml': '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'

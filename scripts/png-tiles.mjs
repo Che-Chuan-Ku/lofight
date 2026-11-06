@@ -100,8 +100,49 @@ function crop(sheet, index) {
   return encodePng(TILE, TILE, out);
 }
 
-// Tile 0 is a flat dirt cell (repeats cleanly). Tile 36 is a stone course used as the h2 rule.
-export const GROUND_TILE = 0;
+function blendOverBg(pngBytes) {
+  // Re-decode the tiny RGBA crop and mix each opaque pixel onto the page background.
+  let o = 8, w = 0, h = 0;
+  const idats = [];
+  while (o < pngBytes.length) {
+    const len = pngBytes.readUInt32BE(o); o += 4;
+    const type = pngBytes.toString('ascii', o, o + 4); o += 4;
+    const chunk = pngBytes.subarray(o, o + len); o += len + 4;
+    if (type === 'IHDR') { w = chunk.readUInt32BE(0); h = chunk.readUInt32BE(4); }
+    else if (type === 'IDAT') idats.push(chunk);
+    else if (type === 'IEND') break;
+  }
+  const raw = inflateSync(Buffer.concat(idats));
+  const rgba = Buffer.alloc(w * h * 4);
+  let p = 0;
+  for (let y = 0; y < h; y++) {
+    const filter = raw[p++];
+    const row = rgba.subarray(y * w * 4, (y + 1) * w * 4);
+    const prev = y ? rgba.subarray((y - 1) * w * 4, y * w * 4) : null;
+    for (let x = 0; x < w * 4; x++) {
+      const v = raw[p++];
+      const a = x >= 4 ? row[x - 4] : 0, b = prev ? prev[x] : 0, c = prev && x >= 4 ? prev[x - 4] : 0;
+      let out = v;
+      if (filter === 1) out = (v + a) & 255;
+      else if (filter === 2) out = (v + b) & 255;
+      else if (filter === 3) out = (v + ((a + b) >> 1)) & 255;
+      else if (filter === 4) out = (v + paeth(a, b, c)) & 255;
+      row[x] = out;
+    }
+  }
+  for (let i = 0; i < w * h; i++) {
+    const a = rgba[i * 4 + 3] / 255 * GROUND_MIX;
+    for (let c = 0; c < 3; c++) rgba[i * 4 + c] = Math.round(GROUND_BG[c] * (1 - a) + rgba[i * 4 + c] * a);
+    rgba[i * 4 + 3] = 255;
+  }
+  return encodePng(w, h, rgba);
+}
+
+// Tile 37 is a stone course with mortar lines. Baked over the page background so the repeat
+// stays visible; a flat tile under a translucent wash just looked like a solid color.
+export const GROUND_TILE = 37;
+const GROUND_BG = [0x1b, 0x1d, 0x22];
+const GROUND_MIX = 0.62;
 export const WALL_TILE = 36;
 // Blue soldier, decorative mark beside the DayWar wordmark.
 export const LOGO_TILE = 96;
@@ -110,6 +151,6 @@ export function writeTileAssets(dir, sheetBytes) {
   mkdirSync(dir, { recursive: true });
   writeFileSync(dir + '/tiles.png', sheetBytes);
   const sheet = decodeIndexed(sheetBytes);
-  writeFileSync(dir + '/ground.png', crop(sheet, GROUND_TILE));
+  writeFileSync(dir + '/ground.png', blendOverBg(crop(sheet, GROUND_TILE)));
   writeFileSync(dir + '/wall.png', crop(sheet, WALL_TILE));
 }

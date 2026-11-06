@@ -7,8 +7,9 @@
     overflow: hidden; user-select: none; -webkit-user-select: none;
     padding: 0; box-sizing: border-box;
     background-color: var(--bg);
-    background-image: linear-gradient(color-mix(in srgb, var(--bg) 80%, transparent), color-mix(in srgb, var(--bg) 80%, transparent)), url(/assets/ground.png);
-    background-size: auto, 32px 32px;
+    background-image: url(/assets/ground.png);
+    background-repeat: repeat;
+    background-size: 48px 48px;
     image-rendering: pixelated;
   }
   /* Full-bleed: the stage fills the viewport on phones, so drop the card chrome there. */

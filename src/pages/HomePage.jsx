@@ -113,24 +113,16 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
         <nav className="footlinks" aria-label="網站資訊">
           {/* D41: crawlable static pages (scripts/build-pages.mjs), opened in a new tab so the game state stays */}
           <a className="linkbtn" href="/guide.html" target="_blank" rel="noopener noreferrer">遊戲指南</a>
-          <span className="sep" aria-hidden="true">|</span>
           <a className="linkbtn" href="/bosses.html" target="_blank" rel="noopener noreferrer">魔王攻略</a>
-          <span className="sep" aria-hidden="true">|</span>
           <a className="linkbtn" href="/faq.html" target="_blank" rel="noopener noreferrer">常見問題</a>
-          <span className="sep" aria-hidden="true">|</span>
           <a className="linkbtn" href="/about.html" target="_blank" rel="noopener noreferrer">關於</a>
-          <span className="sep" aria-hidden="true">|</span>
           <button type="button" className="linkbtn" onClick={() => onGo('changelog')}>開發者日誌</button>
-          <span className="sep" aria-hidden="true">|</span>
           <button type="button" className="linkbtn" onClick={() => onGo('privacy')}>隱私權政策</button>
-          <span className="sep" aria-hidden="true">|</span>
           <a className="linkbtn" href="/contact.html" target="_blank" rel="noopener noreferrer">聯絡我們</a>
-          <span className="sep" aria-hidden="true">|</span>
           <a className="linkbtn" href="/terms.html" target="_blank" rel="noopener noreferrer">服務條款</a>
         </nav>
-        <span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span>
       </footer>
-      <p className="morecue">往下看說明 ↓</p>
+      <p className="morecue"><span>往下看說明 ↓</span><span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span></p>
       {dialog && (
         <ConfirmDialog title="登出？" desc="這台裝置會從新的訪客開始。你的帳號進度不會消失，再登入就回來。" action="登出"
           onCancel={closeDialog} onConfirm={() => { setDialog(false); onLogout(); }} />

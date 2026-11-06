@@ -5,11 +5,12 @@ import { ADS_SETTINGS_URL, GOOGLE_ADS_POLICY_URL } from './privacy.js';
 
 export const TERMS = {
   title: '服務條款',
-  description: 'DayWar 服務條款：免費遊玩、Google 登入、金幣與道具沒有現金價值、暱稱、廣告，以及聯絡方式。',
+  description: 'DayWar 服務條款：免費遊玩、Google 登入、金幣與道具沒有現金價值、暱稱、廣告、服務中斷與免責，以及聯絡方式。',
   lead: '下面這些，都是遊戲現在已經在做的事。',
   updated: '2026-11-06',
   sections: [
     {
+      id: 'free',
       h: '免費遊玩',
       blocks: [
         'DayWar 打開瀏覽器就能玩，不用下載，也不用付錢。',
@@ -17,6 +18,7 @@ export const TERMS = {
       ]
     },
     {
+      id: 'login',
       h: '登入',
       blocks: [
         '不登入也能玩。進度、金幣與道具留在這台裝置的瀏覽器裡。清除瀏覽器資料或換裝置，這些進度找不回來。',
@@ -27,6 +29,7 @@ export const TERMS = {
       ]
     },
     {
+      id: 'coins',
       h: '金幣與道具',
       blocks: [
         '金幣從魔王身上掉。每局結束時，你打倒的魔王會換成金幣入帳，輸了也照算。',
@@ -36,6 +39,7 @@ export const TERMS = {
       ]
     },
     {
+      id: 'nick',
       h: '暱稱',
       blocks: [
         '暱稱在首頁修改。排行榜顯示的是這個暱稱。',
@@ -43,6 +47,7 @@ export const TERMS = {
       ]
     },
     {
+      id: 'board',
       h: '成績與排行榜',
       blocks: [
         'NORMAL 與 EXTRA 各有一個排行榜。通關的比誰快，沒通關的比誰撐得久。',
@@ -51,6 +56,7 @@ export const TERMS = {
       ]
     },
     {
+      id: 'ads',
       h: '廣告',
       blocks: [
         '本遊戲使用 Google 的廣告服務。',
@@ -60,6 +66,7 @@ export const TERMS = {
       ]
     },
     {
+      id: 'changes',
       h: '服務調整',
       blocks: [
         ['遊戲會更新。改了什麼記在 ', { text: '開發者日誌', href: '/updates.html' }, '。'],
@@ -67,6 +74,18 @@ export const TERMS = {
       ]
     },
     {
+      id: 'stop',
+      h: '免責與中斷',
+      blocks: [
+        '本服務依現況提供。不保證不中斷，也不保證隨時可以開啟。',
+        '我們可能因維護或其他原因暫停、調整或停止服務。',
+        '服務停止時，金幣、道具和其他虛擬物品不另作補償。',
+        ['想關閉帳號，只能透過 ', { text: '聯絡頁', href: '/contact.html' }, ' 提出。遊戲裡沒有自行刪除帳號的功能。'],
+        '在法律允許的範圍內，對於因使用本服務而生的損害，我們不負賠償責任。'
+      ]
+    },
+    {
+      id: 'reach',
       h: '聯絡',
       blocks: [
         ['對本條款有疑問，請看 ', { text: '聯絡頁', href: '/contact.html' }, '，或透過 ', { text: 'Linktree', href: LINKTREE_URL }, ' 與我們聯絡。']
