@@ -32,7 +32,7 @@
   #stage[data-full] #restart { bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
   #stage[data-full] #choice, #stage[data-full] #rest { border-radius: 0; }
   #app { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; }
-  #stage { position: relative; }
+  #stage { position: relative; line-height: normal; } /* do not inherit .game-frame line-height:0 (PR #2) */
   canvas { display: block; touch-action: none; image-rendering: auto; border-radius: 12px; box-shadow: 0 0 0 3px var(--color-stage-edge), 0 20px 60px rgba(0,0,0,.6); }
   #hud {
     position: absolute; left: 0; right: 0; top: 0; display: flex; justify-content: space-between;
