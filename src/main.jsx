@@ -1,8 +1,11 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
+import { initSiteChrome } from './site-chrome.js';
 import './styles.css';
 import './menu.css';
+
+initSiteChrome();
 
 async function boot() {
   // Dev only: MSW answers /api/csg/v1 from src/mocks. The condition is written inline (not imported) so the

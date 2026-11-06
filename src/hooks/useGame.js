@@ -40,14 +40,62 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
     function resize() {
       const app = appRef.current, stage = stageRef.current;
       if (!app || !stage) return;
+      const frame = document.getElementById('game-frame');
+      const onHome = document.body.classList.contains('home');
+      const mobile = window.matchMedia('(max-width: 767px)').matches;
+      if (frame) {
+        if (onHome && mobile) {
+          const region = document.querySelector('.stage-region');
+          if (region) {
+            const cs = getComputedStyle(region);
+            const padT = parseFloat(cs.paddingTop) || 0;
+            const padB = parseFloat(cs.paddingBottom) || 0;
+            // playH = 100svh minus safe-area padding (region is border-box at 100svh).
+            const playH = Math.max(1, Math.round(region.clientHeight - padT - padB));
+            frame.style.width = '100%';
+            frame.style.height = playH + 'px';
+          }
+        } else if (onHome) {
+          const header = document.getElementById('site-header');
+          const headerH = header ? header.offsetHeight : 56;
+          const availW = document.documentElement.clientWidth;
+          const availH = window.innerHeight - headerH;
+          let n = Math.floor(Math.min(availW / W, availH / H));
+          if (n < 1) n = 1;
+          frame.style.width = (W * n) + 'px';
+          frame.style.height = (H * n) + 'px';
+        } else {
+          frame.style.width = '';
+          frame.style.height = '';
+        }
+      }
       const cw = app.clientWidth, ch = app.clientHeight;
       if (!cw || !ch) return;
-      const need = Math.round(W * ch / cw);   // logical height that fills the viewport at full width
       let oy = 0;
-      if (need >= H) oy = Math.min(MAX_EXTRA_H, need - H);
-      else if (ch > cw) oy = -Math.min(MAX_CROP_H, H - need);
-      view.h = H + oy; view.oy = oy;
-      scale = Math.min(cw / W, ch / view.h);
+      if (onHome && !mobile) {
+        view.h = H; view.oy = 0;
+        scale = Math.max(1, Math.round(Math.min(cw / W, ch / H)));
+      } else if (onHome && mobile) {
+        const playH = ch;
+        const specScale = playH / H;   // layout.md: scale = playH / 780
+        if (W * specScale <= cw + 0.5) {
+          view.h = H; view.oy = 0;
+          scale = specScale;
+        } else {
+          // spec scale would crop the sides (mode cards). Extend the field instead.
+          const need = Math.round(W * playH / cw);
+          if (need >= H) oy = Math.min(MAX_EXTRA_H, need - H);
+          else oy = -Math.min(MAX_CROP_H, H - need);
+          view.h = H + oy; view.oy = oy;
+          scale = Math.min(cw / W, playH / view.h);
+        }
+      } else {
+        const need = Math.round(W * ch / cw);   // logical height that fills the viewport at full width
+        if (need >= H) oy = Math.min(MAX_EXTRA_H, need - H);
+        else if (ch > cw) oy = -Math.min(MAX_CROP_H, H - need);
+        view.h = H + oy; view.oy = oy;
+        scale = Math.min(cw / W, ch / view.h);
+      }
       const dpr = Math.min(window.devicePixelRatio || 1, lite ? 1 : 2);
       cv.style.width = (W * scale) + 'px'; cv.style.height = (view.h * scale) + 'px';
       cv.width = Math.round(W * scale * dpr); cv.height = Math.round(view.h * scale * dpr);
@@ -60,7 +108,11 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
     window.addEventListener('resize', resize); resize();
     // WebKit can mount React before the viewport has its final size; observe the container, not just the window.
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => resize()) : null;
-    if (ro) ro.observe(appRef.current);
+    if (ro) {
+      ro.observe(appRef.current);
+      const region = document.querySelector('.stage-region');
+      if (region) ro.observe(region);
+    }
 
     // ---- loop ----
     let last = performance.now(), hudT = 0, renderErr = false, raf = 0;

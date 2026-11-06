@@ -4,6 +4,14 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.2.6',
+    date: '2026-11-06',
+    items: [
+      '首頁只留遊戲。說明搬到遊戲介紹，外框換成乾淨底色。',
+      '多了一頁更多遊戲。目前還是只有這一款，下一款還在後面。'
+    ]
+  },
+  {
     version: '19.2.5',
     date: '2026-11-06',
     items: [

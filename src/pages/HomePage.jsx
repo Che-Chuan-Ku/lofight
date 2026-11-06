@@ -1,11 +1,10 @@
 // 首頁 (specs/ui/首頁.md; prototype home()). Nickname, tier cards, coin chip, shop / leaderboard entries, login state.
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { CoinChip, useTitleFocus, ConfirmDialog, SeasonNotice } from '../components/ui/Common.jsx';
 import { TierBadge, BuffMark, LinktreeMark } from '../components/ui/Icons.jsx';
 import { updateMyNickname } from '../lib/api/index.js';
 import { lockLine, nicknameError, NETWORK_MSG } from '../lib/labels.js';
 import { APP_VERSION, LINKTREE_URL } from '../config.js';
-import { HOME } from '../content/home.js';
 
 function NicknameField({ progress, onSaved, notice, onNoticeShown }) {
   const [value, setValue] = useState(progress ? progress.nickname : '');
@@ -109,41 +108,11 @@ export default function HomePage({ session, progress, coins, loadError, onRetry,
           </div>
         </nav>
       </main>
-      <footer className="sitefoot">
-        <nav className="footlinks" aria-label="網站資訊">
-          {/* D41: crawlable static pages (scripts/build-pages.mjs), opened in a new tab so the game state stays */}
-          <a className="linkbtn" href="/guide.html" target="_blank" rel="noopener noreferrer">遊戲指南</a>
-          <a className="linkbtn" href="/bosses.html" target="_blank" rel="noopener noreferrer">魔王攻略</a>
-          <a className="linkbtn" href="/faq.html" target="_blank" rel="noopener noreferrer">常見問題</a>
-          <a className="linkbtn" href="/about.html" target="_blank" rel="noopener noreferrer">關於</a>
-          <button type="button" className="linkbtn" onClick={() => onGo('changelog')}>開發者日誌</button>
-          <button type="button" className="linkbtn" onClick={() => onGo('privacy')}>隱私權政策</button>
-          <a className="linkbtn" href="/contact.html" target="_blank" rel="noopener noreferrer">聯絡我們</a>
-          <a className="linkbtn" href="/terms.html" target="_blank" rel="noopener noreferrer">服務條款</a>
-        </nav>
-      </footer>
-      <p className="morecue"><span>往下看說明 ↓</span><span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span></p>
+      <p className="morecue"><span className="ver" aria-label={'版本 ' + APP_VERSION}>v{APP_VERSION}</span></p>
       {dialog && (
         <ConfirmDialog title="登出？" desc="這台裝置會從新的訪客開始。你的帳號進度不會消失，再登入就回來。" action="登出"
           onCancel={closeDialog} onConfirm={() => { setDialog(false); onLogout(); }} />
       )}
     </div>
-  );
-}
-
-// Publisher copy under the stage (not inside it). Same paragraphs as index.html #intro, which hides after mount.
-export function HomeIntro() {
-  useLayoutEffect(() => {
-    document.documentElement.classList.add('home-doc');
-    return () => document.documentElement.classList.remove('home-doc');
-  }, []);
-  return (
-    <section id="home-copy" className="home-copy" aria-label="遊戲說明">
-      <h2>這款遊戲在做什麼</h2>
-      {HOME.paragraphs.map((p, i) => <p key={p.slice(0, 12)} className={i === 0 ? 'lead' : undefined}>{p}</p>)}
-      <nav aria-label="網站資訊">
-        {HOME.links.map(l => <a key={l.href} href={l.href}>{l.text}</a>)}
-      </nav>
-    </section>
   );
 }

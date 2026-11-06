@@ -95,4 +95,26 @@
   --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   color-scheme: dark;
+
+  /* Site chrome only. Game token names and values above are unchanged. */
+  --site-bg: #17191e;
+  --site-header: #14161a;
+  --site-surface: #22252c;
+  --site-surface-raised: #2a2e36;
+  --site-text: #f3ead6;
+  --site-muted: #9ca2ae;
+  --site-border: rgba(255, 255, 255, 0.10);
+  --site-accent: #8fb3ff;
+  --site-cta: #d6242c;
+  --site-cta-text: #ffffff;
+  --site-focus: #f2c233;
+  --site-font: var(--font-body);
+  --site-max: 720px;
+  --site-header-max: 1120px;
+  --site-shadow: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --site-radius: var(--radius-md);
+  --bp-sm: 480px;
+  --bp-md: 768px;
+  --bp-lg: 1024px;
+  --bp-xl: 1440px;
 }
