@@ -4,6 +4,13 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.2.7',
+    date: '2026-11-07',
+    items: [
+      '手機首頁回到滿版，往上滑也叫得出選單和頁尾了。之前是它不讓你滑，不是你手太短。'
+    ]
+  },
+  {
     version: '19.2.6',
     date: '2026-11-06',
     items: [

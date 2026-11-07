@@ -76,19 +76,13 @@ export function useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef }
         view.h = H; view.oy = 0;
         scale = Math.max(1, Math.round(Math.min(cw / W, ch / H)));
       } else if (onHome && mobile) {
-        const playH = ch;
-        const specScale = playH / H;   // layout.md: scale = playH / 780
-        if (W * specScale <= cw + 0.5) {
-          view.h = H; view.oy = 0;
-          scale = specScale;
-        } else {
-          // spec scale would crop the sides (mode cards). Extend the field instead.
-          const need = Math.round(W * playH / cw);
-          if (need >= H) oy = Math.min(MAX_EXTRA_H, need - H);
-          else oy = -Math.min(MAX_CROP_H, H - need);
-          view.h = H + oy; view.oy = oy;
-          scale = Math.min(cw / W, playH / view.h);
-        }
+        // Full bleed like in a run (user 2026-11-07): fill the width and extend / crop the field to the frame height.
+        // Scaling by height alone (playH / 780) left side bars on phones whose visible area is shorter than 2:1.
+        const need = Math.round(W * ch / cw);
+        if (need >= H) oy = Math.min(MAX_EXTRA_H, need - H);
+        else oy = -Math.min(MAX_CROP_H, H - need);
+        view.h = H + oy; view.oy = oy;
+        scale = Math.min(cw / W, ch / view.h);
       } else {
         const need = Math.round(W * ch / cw);   // logical height that fills the viewport at full width
         if (need >= H) oy = Math.min(MAX_EXTRA_H, need - H);

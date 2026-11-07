@@ -228,6 +228,10 @@ body.home {
   touch-action: none;
   line-height: 0;
 }
+/* Home menu: let a swipe scroll the page (to reveal the header and footer). touch-action is intersected down the
+   ancestor chain, so `none` on the frame blocked every swipe on the menu. In a run body.home is gone and the game
+   keeps touch-action: none for dragging the turret. */
+body.home .game-frame { touch-action: pan-y; }
 .scroll-escape {
   position: absolute; left: 0; right: 0; top: 0; height: 32px; z-index: 5;
   touch-action: pan-y; pointer-events: none;
