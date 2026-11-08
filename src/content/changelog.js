@@ -4,6 +4,13 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.2.8',
+    date: '2026-11-08',
+    items: [
+      '首頁遊戲下面多了一段遊戲介紹。手機往下滑就看得到，不想看的人照樣直接開打。'
+    ]
+  },
+  {
     version: '19.2.7',
     date: '2026-11-07',
     items: [

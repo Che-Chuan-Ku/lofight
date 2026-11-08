@@ -428,7 +428,27 @@ if (/adsbygoogle|pagead|adBreak/.test(staticHtml)) throw new Error('static pages
 if (/<details/.test(staticHtml)) throw new Error('static pages must not collapse copy');
 if (/ground\.png|wall\.png/.test(staticHtml)) throw new Error('static pages must not use the brick texture');
 
-const indexHtml = readFileSync(dist + 'index.html', 'utf8');
+// Home intro under the game (user 2026-11-08): crawlable copy before the footer. On phones the stage fills the
+// first screen, so it only shows after scrolling down. Ad review reads this; the game itself is a canvas.
+function homeIntro() {
+  const p = HOME.paragraphs;
+  const latest = CHANGELOG[0];
+  const sections = [
+    ['這是什麼遊戲', p.slice(0, 2)],
+    ['NORMAL 與 EXTRA', [p[2]]],
+    ['金幣、商店與存檔', [p[3]]]
+  ].map(([h, ps]) => panel(h, ps.map(t => '<p>' + esc(t) + '</p>').join('\n')));
+  const more = '<p>魔王怎麼出招看<a href="/bosses.html">魔王攻略</a>，操作與道具看<a href="/guide.html">遊戲指南</a>，存檔與登入看<a href="/faq.html">常見問題</a>。</p>';
+  const news = panel('最新更新', '<p class="date">v' + esc(latest.version) + '・' + esc(latest.date) + '</p>\n<ul>'
+    + latest.items.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>\n<p><a href="/updates.html">看全部開發者日誌</a></p>');
+  return '<section class="home-intro reading" aria-labelledby="home-intro-h">\n<h2 id="home-intro-h" class="home-intro__title">遊戲介紹</h2>\n'
+    + sections.join('\n') + '\n' + more + '\n' + news + '\n</section>';
+}
+const INTRO_MARK = /<!-- HOME_INTRO:[^>]*-->/;
+let indexHtml = readFileSync(dist + 'index.html', 'utf8');
+if (!INTRO_MARK.test(indexHtml)) throw new Error('dist/index.html missing the HOME_INTRO marker');
+indexHtml = indexHtml.replace(INTRO_MARK, () => homeIntro());
+writeFileSync(dist + 'index.html', indexHtml);
 if (indexHtml.includes(HOME.paragraphs[4])) throw new Error('home must not render the removed nav paragraph');
 for (const href of ['/intro.html', '/guide.html', '/bosses.html', '/faq.html', '/games.html', '/updates.html', '/contact.html', '/terms.html', '/privacy.html']) {
   if (!indexHtml.includes('href="' + href + '"')) throw new Error('dist/index.html missing ' + href);

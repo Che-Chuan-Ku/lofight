@@ -15,6 +15,7 @@
   body.in-run .site-header,
   body.in-run .nav-drawer,
   body.in-run .site-footer,
+  body.in-run .home-intro,
   body.in-run .skip,
   body.in-run .header-sentinel,
   body.in-run .scroll-escape { display: none !important; }

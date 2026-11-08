@@ -1,4 +1,4 @@
-// Publisher copy for 遊戲介紹 (dist/intro.html). The home screen is game-only.
+// Publisher copy for 遊戲介紹 (dist/intro.html) and the intro section under the home game (dist/index.html).
 // Render paragraphs[0..3] only. paragraphs[4] is the removed nav sentence (round 3); do not render it.
 // No numbers (HP, seconds, coins, cooldowns, odds), no system mechanics, no forbidden tier words.
 export const HOME = {
