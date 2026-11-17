@@ -2,11 +2,13 @@ package com.crowdsiege.api.service;
 
 import com.crowdsiege.api.common.time.ResponseTimes;
 import com.crowdsiege.api.config.GameProperties;
+import com.crowdsiege.api.config.TopupProperties;
 import com.crowdsiege.api.dto.response.LeaderboardDetailResponse;
 import com.crowdsiege.api.dto.response.LeaderboardEntryListResponse;
 import com.crowdsiege.api.model.LeaderboardEntry;
 import com.crowdsiege.api.model.Player;
 import com.crowdsiege.api.model.Run;
+import com.crowdsiege.api.model.SponsorTier;
 import com.crowdsiege.api.model.Tier;
 import com.crowdsiege.api.repository.LeaderboardEntryRepository;
 import com.crowdsiege.api.repository.PlayerRepository;
@@ -31,15 +33,18 @@ public class LeaderboardService {
     private final RunRepository runRepository;
     private final GameProperties gameProperties;
     private final ResponseTimes responseTimes;
+    private final TopupProperties topupProperties;
 
     public LeaderboardService(LeaderboardEntryRepository leaderboardEntryRepository,
                               PlayerRepository playerRepository, RunRepository runRepository,
-                              GameProperties gameProperties, ResponseTimes responseTimes) {
+                              GameProperties gameProperties, ResponseTimes responseTimes,
+                              TopupProperties topupProperties) {
         this.leaderboardEntryRepository = leaderboardEntryRepository;
         this.playerRepository = playerRepository;
         this.runRepository = runRepository;
         this.gameProperties = gameProperties;
         this.responseTimes = responseTimes;
+        this.topupProperties = topupProperties;
     }
 
     @Transactional(readOnly = true)
@@ -86,10 +91,14 @@ public class LeaderboardService {
                 .mapToObj(index -> {
                     LeaderboardEntry entry = ranked.get(index);
                     Run run = runs.get(entry.getRunId());
+                    Player player = players.get(entry.getPlayerId());
+                    // Only the derived level is exposed, never the cumulative amount (privacy).
+                    int sponsorTier = SponsorTier.of(player.getSponsoredTotalTwd(),
+                            topupProperties.getSponsorTier2MinTwd()).level();
                     return new LeaderboardEntryListResponse(index + 1, String.valueOf(entry.getPlayerId()),
-                            players.get(entry.getPlayerId()).getNickname(), entry.isVictory(),
+                            player.getNickname(), entry.isVictory(),
                             entry.getGameSeconds(), run == null ? null : run.getEquippedBuff(),
-                            responseTimes.toResponse(entry.getSettledAt()));
+                            responseTimes.toResponse(entry.getSettledAt()), sponsorTier);
                 })
                 .toList();
     }

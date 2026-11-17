@@ -29,6 +29,12 @@ public class TestStubConfiguration {
     }
 
     @Bean
+    @Primary
+    public StubEcpayGateway stubEcpayGateway(com.crowdsiege.api.config.EcpayProperties ecpayProperties) {
+        return new StubEcpayGateway(ecpayProperties);
+    }
+
+    @Bean
     public StubAppleIdentityTokenVerifier stubAppleIdentityTokenVerifier() {
         return new StubAppleIdentityTokenVerifier();
     }

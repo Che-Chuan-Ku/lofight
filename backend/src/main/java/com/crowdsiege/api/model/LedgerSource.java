@@ -5,7 +5,8 @@ public enum LedgerSource implements CodedEnum {
     MERGE_IN((short) 1),
     BUFF_PURCHASE((short) 2),
     AD_REWARD((short) 3),
-    SEASON_REWARD((short) 4);
+    SEASON_REWARD((short) 4),
+    TOPUP((short) 5);
 
     private final short code;
 

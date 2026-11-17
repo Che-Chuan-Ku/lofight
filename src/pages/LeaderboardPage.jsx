@@ -5,13 +5,19 @@ import { IcEmptyBoard, TierBadge } from '../components/ui/Icons.jsx';
 import { getLeaderboard } from '../lib/api/index.js';
 import { BUFFS, tierName } from '../lib/labels.js';
 
+// D51: stable 0..35 step offset per player so tier-2 rows never flash together (36 steps x 100ms = 3.6 s loop).
+const t2Offset = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h % 36; };
+
 // FE-46: on the EXTRA board a run without a buff (equippedBuff null) gets a neutral 不裝填 tag
 function Row({ e, me, i, extra }) {
   const isMe = me && e.rank === me.rank;
+  const tier = e.sponsorTier || 0;   // D48: > 0 sponsor frame; D51: 2 adds the glitch layer
+  const style = { animationDelay: (i || 0) * 30 + 'ms' };
+  if (tier === 2) style['--t2-delay'] = '-' + t2Offset(e.playerId) / 10 + 's';
   return (
-    <li className={'row lbrow' + (isMe ? ' me' : '')} aria-current={isMe ? 'true' : undefined} style={{ animationDelay: (i || 0) * 30 + 'ms' }}>
+    <li className={'row lbrow' + (isMe ? ' me' : '') + (tier > 0 ? ' sponsor' : '') + (tier === 2 ? ' t2' : '')} aria-current={isMe ? 'true' : undefined} style={style}>
       <span className={'rk r' + e.rank}>{e.rank}</span>
-      <span className="nm"><span>{e.nickname}</span>{e.equippedBuff ? <span className="tag buff">{BUFFS[e.equippedBuff].name}</span> : extra && <span className="tag nobuff">不裝填</span>}</span>
+      <span className="nm"><span>{e.nickname}{tier === 1 && <span className="sr-only">（贊助者）</span>}{tier === 2 && <span className="sr-only">（高級贊助者）</span>}</span>{e.equippedBuff ? <span className="tag buff">{BUFFS[e.equippedBuff].name}</span> : extra && <span className="tag nobuff">不裝填</span>}</span>
       <span className={'tag ' + (e.isVictory ? 'win' : 'lose')}>{e.isVictory ? '勝' : '敗'}</span>
       <span className="num" style={{ width: '3.6em' }}>{e.gameSeconds} 秒</span>
     </li>

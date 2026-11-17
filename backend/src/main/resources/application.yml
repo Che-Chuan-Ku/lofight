@@ -94,3 +94,46 @@ season-reward:
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
   token-info-url: https://oauth2.googleapis.com/tokeninfo
+
+ecpay:
+  # stage | prod. NO default: a missing ECPAY_ENV fails startup. Empty merchant id = top-up closed
+  # (listShopItems.topup.isEnabled=false, create -> eco004). Prod never accepts the public test merchant/keys.
+  env: ${ECPAY_ENV}
+  # The public test merchant 3002607 / test keys start only with ECPAY_ALLOW_TEST_MERCHANT=true (never on the production
+  # site); the same flag is the only way SimulatePaid=1 notifications are honoured.
+  allow-test-merchant: ${ECPAY_ALLOW_TEST_MERCHANT:false}
+  merchant-id: ${ECPAY_MERCHANT_ID:}
+  hash-key: ${ECPAY_HASH_KEY:}
+  hash-iv: ${ECPAY_HASH_IV:}
+  # Public origin used to build ReturnURL / OrderResultURL / ClientBackURL / PaymentInfoURL (no trailing slash).
+  public-base-url: ${APP_PUBLIC_BASE_URL:https://daywar.net}
+  base-urls:
+    stage: https://payment-stage.ecpay.com.tw
+    prod: https://payment.ecpay.com.tw
+  aio-path: /Cashier/AioCheckOut/V5
+  query-path: /Cashier/QueryTradeInfo/V5
+  ignore-payment: "CVS#BARCODE#BNPL#WeiXin"
+  atm-expire-days: 1
+  order-result-enabled: true
+  query-min-interval: 10m
+  query-timeout: 10s
+  # HTTP 403 from QueryTradeInfo = called too fast; ECPay asks to wait 30 minutes.
+  query-forbidden-backoff: 30m
+
+topup:
+  coins-per-twd: 100
+  # Presets only (AMB-E1); order = display order. id is the API value.
+  packages:
+    - { id: TWD_10, amount-twd: 10 }
+    - { id: TWD_30, amount-twd: 30 }
+    - { id: TWD_50, amount-twd: 50 }
+    - { id: TWD_100, amount-twd: 100 }
+    - { id: TWD_200, amount-twd: 200 }
+  # Rate limit: open (CREATED / AWAITING_PAYMENT) orders a player may create within the window.
+  max-open-orders: 3
+  open-order-window: 30m
+  # D51: cumulative paid TWD needed for the animated (tier 2) sponsor frame; >= comparison (user ruling 2026-11-17).
+  sponsor-tier2-min-twd: 200
+  # Lazy expiry thresholds.
+  created-expire-after: 2h
+  awaiting-grace: 1d

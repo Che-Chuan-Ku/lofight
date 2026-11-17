@@ -40,19 +40,22 @@ public class ShopService {
     private final BuffInventoryRepository buffInventoryRepository;
     private final PlayerEventRepository playerEventRepository;
     private final AdRewardService adRewardService;
+    private final TopupService topupService;
     private final GameProperties gameProperties;
     private final Clock clock;
 
     public ShopService(PlayerService playerService, WalletRepository walletRepository,
                        CoinLedgerEntryRepository coinLedgerEntryRepository,
                        BuffInventoryRepository buffInventoryRepository, PlayerEventRepository playerEventRepository,
-                       AdRewardService adRewardService, GameProperties gameProperties, Clock clock) {
+                       AdRewardService adRewardService, TopupService topupService,
+                       GameProperties gameProperties, Clock clock) {
         this.playerService = playerService;
         this.walletRepository = walletRepository;
         this.coinLedgerEntryRepository = coinLedgerEntryRepository;
         this.buffInventoryRepository = buffInventoryRepository;
         this.playerEventRepository = playerEventRepository;
         this.adRewardService = adRewardService;
+        this.topupService = topupService;
         this.gameProperties = gameProperties;
         this.clock = clock;
     }
@@ -68,7 +71,7 @@ public class ShopService {
                 .map(buffItem -> new ShopItemListResponse(buffItem.name(), buffItem,
                         gameProperties.priceOf(buffItem), player.isSilverUnlocked(), hint.silverUnlockBossSeq(),
                         hint.bronzeBestBossesKilled()))
-                .toList(), adRewardService.statusOf(playerId, now));
+                .toList(), adRewardService.statusOf(playerId, now), topupService.statusFor(player));
     }
 
     /**

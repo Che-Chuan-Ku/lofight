@@ -4,7 +4,8 @@ public enum EventKind implements CodedEnum {
     SHOP_VIEW((short) 0),
     BUFF_PURCHASE((short) 1),
     AD_REWARD((short) 2),
-    SEASON_REWARD((short) 3);
+    SEASON_REWARD((short) 3),
+    TOPUP((short) 4);
 
     private final short code;
 

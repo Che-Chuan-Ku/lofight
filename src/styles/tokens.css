@@ -33,6 +33,17 @@
 
   --color-success: #7dffa7;
   --color-success-bg: #1f6b3a;
+  /* D48 sponsor frame (v5). Main colour awaits the user's visual confirmation (distinct from EXTRA #b98cff). */
+  --sponsor-frame-main: #5a7ff6;      /* awaiting the user's visual confirmation */
+  --sponsor-frame-corner-hi: #e3ebff; /* awaiting the user's visual confirmation */
+  --sponsor-frame-glow: #8b8dff;      /* drawn at 28% / 66% */
+  --sponsor-frame-dark: #4a4c9e;
+  --sponsor-frame-bg: #2e386e;
+  --sponsor-frame-line-tl: #8f8cff;
+  --sponsor-frame-line-br: #8fd6ee;
+  --sponsor-frame-star: #fcefff;
+  --sponsor-frame-star-glow: #7d6cf0;
+  --sponsor-name-pad: 6px;
   --color-error: #ff8a8a;
   --color-error-border: #d6242c;
   --color-warning: #f2c233;

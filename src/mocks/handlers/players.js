@@ -1,6 +1,6 @@
 // Players tag handlers (progress, nickname, wallet, ledger, buff inventory).
 import { route, ok, fail, authenticate, blank } from './util.js';
-import { getDb, persist, addLedger, adRewardStatus, latestSeasonReward, now, BANNED_WORDS, LEDGER_PAGE_SIZE, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ, AD_REWARD } from '../db.js';
+import { getDb, persist, addLedger, adRewardStatus, latestSeasonReward, now, BANNED_WORDS, LEDGER_PAGE_SIZE, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ, AD_REWARD, TOPUP_PACKAGES, TOPUP_MAX_OPEN_ORDERS, nextId } from '../db.js';
 
 export const progressOf = p => ({
   playerId: p.playerId, nickname: p.nickname, playerKind: p.playerKind, isSilverUnlocked: p.isSilverUnlocked,
@@ -61,6 +61,40 @@ export const playerHandlers = [
     const after = adRewardStatus(auth.player.playerId);
     return ok({ adRewardId: entry.ledgerEntryId, coinsAwarded: AD_REWARD.coins, walletCoins: auth.player.coins,
       remainingCount: after.remainingCount, nextClaimableAt: after.nextClaimableAt }, 201);
+  }),
+
+  // 建立儲值單: package id (400001 / 400012) -> open (eco004) -> member only (eco005) -> open-order cap (eco006)
+  route('createTopupOrder', ({ request, body }) => {
+    const auth = authenticate(request);
+    if (auth.error) return auth.error;
+    const packageId = body && typeof body.packageId === 'string' ? body.packageId : null;
+    if (blank(packageId)) return fail('400001');
+    const pkg = TOPUP_PACKAGES.find(x => x.packageId === packageId);
+    if (!pkg) return fail('400012');
+    const db = getDb(), p = auth.player;
+    if (db.topupEnabled === false) return fail('eco004');
+    if (p.playerKind === 'GUEST') return fail('eco005');
+    const open = Object.values(db.topupOrders).filter(o => o.playerId === p.playerId && (o.status === 'CREATED' || o.status === 'AWAITING_PAYMENT'));
+    if (open.length >= TOPUP_MAX_OPEN_ORDERS) return fail('eco006');
+    const d = new Date(), z = n => String(n).padStart(2, '0');
+    const topupOrderId = 'DW' + String(d.getFullYear()).slice(2) + z(d.getMonth() + 1) + z(d.getDate()) + z(d.getHours()) + z(d.getMinutes()) + z(d.getSeconds())
+      + Number(nextId()).toString(36).toUpperCase().padStart(6, '0').slice(-6);
+    db.topupOrders[topupOrderId] = { topupOrderId, playerId: p.playerId, ...pkg, status: 'CREATED', paymentExpireAt: null, paidAt: null };
+    persist();
+    // The mock "ECPay page" is this origin: mocks/browser.js turns a submit to it into a settlement + redirect to /?topup=<id>.
+    return ok({ topupOrderId, packageId: pkg.packageId, amountTwd: pkg.amountTwd, coins: pkg.coins, status: 'CREATED',
+      checkout: { actionUrl: db.topupActionUrl || location.origin + '/mock-ecpay', method: 'POST', fields: {
+        MerchantTradeNo: topupOrderId, TotalAmount: String(pkg.amountTwd), ItemName: 'DayWar 金幣 ' + pkg.coins,
+        ClientBackURL: location.origin + '/?topup=' + topupOrderId, CheckMacValue: '0'.repeat(64) } } }, 201);
+  }),
+
+  route('getTopupOrder', ({ request, params }) => {
+    const auth = authenticate(request);
+    if (auth.error) return auth.error;
+    const o = getDb().topupOrders[params.topupOrderId];
+    if (!o || o.playerId !== auth.player.playerId) return fail('404001');
+    return ok({ topupOrderId: o.topupOrderId, packageId: o.packageId, amountTwd: o.amountTwd, coins: o.coins, status: o.status,
+      paymentExpireAt: o.paymentExpireAt, paidAt: o.paidAt, walletCoins: auth.player.coins });
   }),
 
   route('listMyBuffInventories', ({ request }) => {

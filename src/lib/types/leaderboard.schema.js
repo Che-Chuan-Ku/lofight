@@ -9,7 +9,9 @@ export const LeaderboardEntryListResponseSchema = z.object({
   isVictory: z.boolean(),
   gameSeconds: z.number().int(),
   equippedBuff: BuffItemSchema.nullable().optional(),
-  settledAt: DateTimeSchema
+  settledAt: DateTimeSchema,
+  // D48 / D51: 0 not a sponsor, 1 static frame, 2 animated glitch frame
+  sponsorTier: z.union([z.literal(0), z.literal(1), z.literal(2)])
 });
 
 export const LeaderboardDetailResponseSchema = z.object({

@@ -32,6 +32,13 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       # Rewarded-ad switch (empty = off); see backend/DEPLOY.md
       ADSENSE_PUBLISHER_ID: ${ADSENSE_PUBLISHER_ID:-}
+      # ECPay top-up (D43-D52); defaults = ECPay public stage test merchant (https://developers.ecpay.com.tw/2856/)
+      ECPAY_ENV: ${ECPAY_ENV:-stage}
+      ECPAY_ALLOW_TEST_MERCHANT: ${ECPAY_ALLOW_TEST_MERCHANT:-true}
+      ECPAY_MERCHANT_ID: ${ECPAY_MERCHANT_ID:-3002607}
+      ECPAY_HASH_KEY: ${ECPAY_HASH_KEY:-pwFHCqoQZGmho4w6}
+      ECPAY_HASH_IV: ${ECPAY_HASH_IV:-EkRm7iFT261dpevs}
+      APP_PUBLIC_BASE_URL: ${APP_PUBLIC_BASE_URL:-http://localhost:8080}
     ports:
       - "8080:8080"
 

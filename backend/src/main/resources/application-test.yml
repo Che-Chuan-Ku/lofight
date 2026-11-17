@@ -22,3 +22,12 @@ logging:
   level:
     root: WARN
     com.crowdsiege: INFO
+
+# ECPay public stage test merchant (https://developers.ecpay.com.tw/2856/); public values, safe to commit.
+ecpay:
+  env: stage
+  allow-test-merchant: true
+  merchant-id: "3002607"
+  hash-key: pwFHCqoQZGmho4w6
+  hash-iv: EkRm7iFT261dpevs
+  public-base-url: https://daywar.net

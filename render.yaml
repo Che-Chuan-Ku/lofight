@@ -40,6 +40,23 @@ services:
       # Blueprint sync and wiped the dashboard value (ads.txt went 404 after the 19.1.2 render.yaml change).
       - key: ADSENSE_PUBLISHER_ID
         sync: false
+      # ECPay AIO top-up (D43-D52). Merchant id / HashKey / HashIV live only in the dashboard (sync:false);
+      # an empty merchant id closes top-up. ECPAY_ENV picks payment-stage vs payment (stage | prod).
+      - key: ECPAY_MERCHANT_ID
+        sync: false
+      - key: ECPAY_HASH_KEY
+        sync: false
+      - key: ECPAY_HASH_IV
+        sync: false
+      # No default in the app: ECPAY_ENV must be set (stage | prod) or the service refuses to start.
+      - key: ECPAY_ENV
+        sync: false
+      # Must stay false on the production site: true would let the public test merchant / SimulatePaid be accepted.
+      - key: ECPAY_ALLOW_TEST_MERCHANT
+        value: "false"
+      # Origin used in ReturnURL / OrderResultURL / ClientBackURL (default https://daywar.net).
+      - key: APP_PUBLIC_BASE_URL
+        sync: false
 
 databases:
   - name: lofight-db

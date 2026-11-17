@@ -15,6 +15,8 @@ export const OPERATIONS = {
   listMyCoinLedgerEntries: { method: 'GET', path: '/players/me/coin-ledger-entries', auth: 'required', query: ['page'], response: T.CoinLedgerPageDataSchema, errorCodes: ['400007', '400009'] },
   claimAdReward: { method: 'POST', path: '/players/me/ad-rewards', auth: 'required', request: T.AdRewardCreateRequestSchema, response: T.AdRewardDetailResponseSchema, successStatus: 201, errorCodes: ['400001', 'eco001', 'eco002', 'eco003'] },
   listMyBuffInventories: { method: 'GET', path: '/players/me/buff-inventories', auth: 'required', response: T.BuffInventoryItemsDataSchema, errorCodes: [] },
+  createTopupOrder: { method: 'POST', path: '/players/me/topup-orders', auth: 'required', request: T.TopupOrderCreateRequestSchema, response: T.TopupOrderDetailResponseSchema, successStatus: 201, errorCodes: ['400001', '400012', 'eco004', 'eco005', 'eco006'] },
+  getTopupOrder: { method: 'GET', path: '/players/me/topup-orders/{topupOrderId}', auth: 'required', pathParams: ['topupOrderId'], response: T.TopupOrderStatusResponseSchema, errorCodes: ['404001'] },
   listShopItems: { method: 'GET', path: '/shop-items', auth: 'required', response: T.ShopItemsDataSchema, errorCodes: [] },
   purchaseShopItem: { method: 'POST', path: '/shop-items/{shopItemId}/actions/purchase', auth: 'required', pathParams: ['shopItemId'], response: T.BuffPurchaseDetailResponseSchema, errorCodes: ['404001', 'shp001', 'shp002'] },
   createRun: { method: 'POST', path: '/runs', auth: 'required', request: T.RunCreateRequestSchema, response: T.RunDetailResponseSchema, successStatus: 201, errorCodes: ['400001', '400007', '400012', '400013', 'gam001', 'gam002'] },

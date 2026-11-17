@@ -10,5 +10,6 @@ public record LeaderboardEntryListResponse(
         boolean isVictory,
         int gameSeconds,
         BuffItem equippedBuff,
-        OffsetDateTime settledAt) {
+        OffsetDateTime settledAt,
+        int sponsorTier) {
 }

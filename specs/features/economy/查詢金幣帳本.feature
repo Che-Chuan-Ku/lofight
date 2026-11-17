@@ -116,6 +116,22 @@ Feature: 查詢金幣帳本
         | AD_REWARD    | 200       | 201        | 2026-11-02T03:00:00Z |
         | BOSS_REWARD  | 1         | 1          | 2026-11-02T02:00:00Z |
 
+    Example: 儲值入帳以 TOPUP 來源列出（CHANGE 2026-11-17，D46）
+      Given 系統中有以下玩家：
+        | 玩家 | playerKind | nickname | deviceId | isSilverUnlocked | isVoided |
+        | 阿贊 | MEMBER     | 阿贊     |          | false            | false    |
+      And 玩家 "阿贊" 有以下金幣帳本：
+        | ledgerSource | bossSeq | buffItem | coinDelta | coinsAfter | occurredAt           |
+        | TOPUP        |         |          | 5000      | 5000       | 2026-11-17T04:00:00Z |
+      And 目前以玩家 "阿贊" 的有效存取權杖操作
+      When 查詢金幣帳本：
+        | page |
+        | 1    |
+      Then 操作成功
+      And 回應中的 "items" 應為：
+        | ledgerSource | coinDelta | coinsAfter | occurredAt           |
+        | TOPUP        | 5000      | 5000       | 2026-11-17T04:00:00Z |
+
     Example: 賽季獎勵入帳以賽季獎勵來源列出並帶賽季、榜別與名次
       Given 玩家 "小明" 有以下金幣帳本：
         | ledgerSource  | coinDelta | coinsAfter | seasonBoardVersion | seasonTier | seasonRank | occurredAt           |

@@ -45,7 +45,11 @@ public class JwtTokenFilter extends OncePerRequestFilter {
         this.apiPrefix = apiPrefix;
         this.publicPaths = Set.of(
                 apiPrefix + "/sessions/actions/issue-guest",
-                apiPrefix + "/sessions/actions/refresh");
+                apiPrefix + "/sessions/actions/refresh",
+                // ECPay callbacks are authenticated by CheckMacValue, not by a player token.
+                apiPrefix + "/payments/ecpay/return",
+                apiPrefix + "/payments/ecpay/payment-info",
+                apiPrefix + "/payments/ecpay/order-result");
         this.optionalAuthPaths = Set.of(
                 apiPrefix + "/sessions/actions/login-google",
                 apiPrefix + "/sessions/actions/login-apple");

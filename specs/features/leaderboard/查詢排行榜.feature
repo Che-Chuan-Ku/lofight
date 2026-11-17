@@ -180,3 +180,25 @@ Feature: 查詢排行榜
       Then 操作成功
       And 回應中的 "myRank" 應為空
       And 回應中的 "neighbors" 應為空
+
+  Rule: 後置（回應）- 每列應帶贊助等級 sponsorTier（0 非贊助者、1 有成功付款、2 累計達門檻），不回傳累計金額
+    # CHANGE 2026-11-17（D48、D51，documents/ecpaydemands/spec.md §6.3.5、§6.7）：等級由 players.sponsored_total_twd 推導；門檻 ≥ 200 來自設定檔；entries、myRank、neighbors 每列皆有；累計金額屬隱私不回傳
+    # 入帳與累加的情境見 接收綠界付款通知.feature；此處以 Given 直接設定累計額驗證讀取
+
+    Example: 每列依累計贊助額回傳等級，entries、myRank、neighbors 一致
+      Given 玩家 "甲" 的累計贊助額為 10
+      And 玩家 "丙" 的累計贊助額為 200
+      And 玩家 "戊" 的累計贊助額為 190
+      And 目前以玩家 "丁" 的有效存取權杖操作
+      When 查詢排行榜：
+        | tier   | boardVersion |
+        | BRONZE |              |
+      Then 操作成功
+      And 排行榜每一列都應有 sponsorTier
+      And 排行榜 "entries" 中玩家 "甲" 的 sponsorTier 應為 1
+      And 排行榜 "entries" 中玩家 "乙" 的 sponsorTier 應為 0
+      And 排行榜 "entries" 中玩家 "丙" 的 sponsorTier 應為 2
+      And 排行榜 "entries" 中玩家 "戊" 的 sponsorTier 應為 1
+      And 排行榜 "myRank" 中玩家 "丁" 的 sponsorTier 應為 0
+      And 排行榜 "neighbors" 中玩家 "戊" 的 sponsorTier 應為 1
+      And 回應原文不應包含 "sponsoredTotalTwd"

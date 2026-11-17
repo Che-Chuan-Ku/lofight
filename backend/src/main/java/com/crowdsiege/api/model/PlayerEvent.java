@@ -66,6 +66,13 @@ public class PlayerEvent extends AppendOnlyEntity {
         return new PlayerEvent(EventKind.SEASON_REWARD, playerId, silverUnlocked, null, null, now);
     }
 
+    /**
+     * TOPUP event, one per credited order; paid_coins stays null (coins are not spent).
+     */
+    public static PlayerEvent topup(Long playerId, boolean silverUnlocked, Instant now) {
+        return new PlayerEvent(EventKind.TOPUP, playerId, silverUnlocked, null, null, now);
+    }
+
     public Long getId() {
         return id;
     }

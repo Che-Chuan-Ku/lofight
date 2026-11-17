@@ -4,6 +4,15 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.3.0',
+    date: '2026-11-17',
+    items: [
+      '商店多了「贊助回饋」：登入後可以用綠界付款換金幣。錢不會讓你變強，只會讓你有錢買道具。',
+      '贊助過的人，排行榜上的名字會多一圈框；贊助得夠多，框會自己閃。低調是一種選擇，你也可以不選。',
+      '新賽季開始。上一季的帳已經結清，該拿的拿了。'
+    ]
+  },
+  {
     version: '19.2.8',
     date: '2026-11-08',
     items: [

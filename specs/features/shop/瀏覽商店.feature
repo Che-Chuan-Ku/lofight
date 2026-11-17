@@ -106,6 +106,38 @@ Feature: 瀏覽商店
         | isEnabled | remainingCount | nextClaimableAt |
         | false     |                |                 |
 
+  Rule: 後置（回應）- 應回傳贊助回饋（儲值）方案與是否需先登入
+    # CHANGE 2026-11-17（D43、D44，documents/ecpaydemands/spec.md §6.3.1）：listShopItems 多回 topup；方案由伺服器設定檔決定（NT$10／30／50／100／200，NT$1 = 100 金幣，最低 NT$10）
+    # isEnabled＝已設定綠界特店編號；未開放時 packages 為空；requiresLogin＝呼叫者是 guest（DEC-1：只有會員可儲值）
+
+    Example: 會員看到五個預設方案且不需登入
+      Given 系統中有以下玩家：
+        | 玩家 | playerKind | nickname | deviceId | isSilverUnlocked | isVoided |
+        | 阿會 | MEMBER     | 阿會     |          | true             | false    |
+      And 目前以玩家 "阿會" 的有效存取權杖操作
+      When 瀏覽商店
+      Then 操作成功
+      And 回應中的 "topup" 物件應為：
+        | isEnabled | requiresLogin | minAmountTwd | coinsPerTwd | packages                                                                                                                                                                                                                                                       |
+        | true      | false         | 10           | 100         | [{"packageId":"TWD_10","amountTwd":10,"coins":1000},{"packageId":"TWD_30","amountTwd":30,"coins":3000},{"packageId":"TWD_50","amountTwd":50,"coins":5000},{"packageId":"TWD_100","amountTwd":100,"coins":10000},{"packageId":"TWD_200","amountTwd":200,"coins":20000}] |
+
+    Example: guest 標示需先登入
+      Given 目前以玩家 "小明" 的有效存取權杖操作
+      When 瀏覽商店
+      Then 操作成功
+      And 回應中的 "topup" 物件應為：
+        | isEnabled | requiresLogin |
+        | true      | true          |
+
+    Example: 未設定綠界特店編號時標示未開放且方案為空
+      Given 綠界特店編號未設定
+      And 目前以玩家 "小明" 的有效存取權杖操作
+      When 瀏覽商店
+      Then 操作成功
+      And 回應中的 "topup" 物件應為：
+        | isEnabled | packages |
+        | false     | []       |
+
   Rule: 後置（狀態）- 應記錄一筆商店瀏覽事件
     # 原文 D21「另記錄商店瀏覽、購買事件；事件可查」；澄清 ASM-09（2026-10-29）採 B：瀏覽時寫一筆事件（玩家、發生時間、silver 是否已解鎖），供 查詢事件統計.feature 彙總
     # 本 feature 仍為 @query：事件寫入為附帶紀錄，不改變任何玩家可見狀態

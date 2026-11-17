@@ -21,6 +21,14 @@ export const DEFAULT_MEMBER_NICKNAME = '老兵512';          // Google登入.fea
 // Rewarded ad (AMB-A1=a, backend config): 200 coins, 5 per UTC day, 60 s apart
 export const AD_REWARD = { coins: 200, dailyLimit: 5, cooldownSec: 60 };
 // 發放賽季獎勵.feature (INF-S1): coins by rank 1..5; rank 6+ gets nothing
+// Top-up packages (spec 6.3.1): NT$1 = 100 coins, the server decides amount and coins from the package id
+export const TOPUP_PACKAGES = [10, 30, 50, 100, 200].map(n => ({ packageId: 'TWD_' + n, amountTwd: n, coins: n * 100 }));
+export const TOPUP_MAX_OPEN_ORDERS = 3;
+export const SPONSOR_TIER2_MIN_TWD = 200;
+export const sponsorTierOf = p => {
+  const t = (p && p.sponsoredTotalTwd) || 0;
+  return t >= SPONSOR_TIER2_MIN_TWD ? 2 : t > 0 ? 1 : 0;
+};
 export const SEASON_REWARD_COINS = [1200, 800, 400, 200, 100];
 // Google id_token -> verification result (查詢合併預覽.feature Background)
 export const GOOGLE_TOKENS = { 'g-ok-1': 'g-sub-1', 'g-ok-2': 'g-sub-2' };
@@ -29,7 +37,7 @@ const iso = ms => new Date(ms).toISOString().replace('Z', '+00:00');
 
 function player(id, nickname, kind, extra) {
   return { playerId: id, nickname, playerKind: kind, deviceId: null, isSilverUnlocked: false, isVoided: false,
-    coins: 0, inv: { ATTACK_SPEED: 0, ATTACK: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: null, ...extra };
+    coins: 0, inv: { ATTACK_SPEED: 0, ATTACK: 0, CANNON: 0, LASER: 0 }, bronzeBest: 0, googleSub: null, sponsoredTotalTwd: 0, ...extra };
 }
 
 export function seed() {
@@ -49,7 +57,7 @@ export function seed() {
     { boardVersion: '19.0', tier: 'SILVER', playerId: '1001', isVictory: true, gameSeconds: 100, settledAt: '2026-11-01T11:05:00+00:00', equippedBuff: 'LASER' },
     { boardVersion: '19.0', tier: 'SILVER', playerId: '1002', isVictory: false, gameSeconds: 70, settledAt: '2026-11-01T11:05:00+00:00', equippedBuff: null }
   ];
-  return { seq: 2000, players, tokens: {}, refresh: {}, ledger: [], runs: {}, board, fail: {}, adEnabled: true, adEvents: [] };
+  return { seq: 2000, players, tokens: {}, refresh: {}, ledger: [], runs: {}, board, fail: {}, adEnabled: true, adEvents: [], topupEnabled: true, topupOutcome: 'PAID', topupOrders: {} };
 }
 
 let db = readJson(KEY, null) || seed();
@@ -126,8 +134,24 @@ export function rankBoard(boardVersion, tier) {
   }
   return [...best.values()].sort(better).map((e, i) => ({
     rank: i + 1, playerId: e.playerId, nickname: db.players[e.playerId] ? db.players[e.playerId].nickname : '',
-    isVictory: e.isVictory, gameSeconds: e.gameSeconds, equippedBuff: tier === 'SILVER' ? e.equippedBuff : null, settledAt: e.settledAt
+    isVictory: e.isVictory, gameSeconds: e.gameSeconds, equippedBuff: tier === 'SILVER' ? e.equippedBuff : null, settledAt: e.settledAt,
+    sponsorTier: db.players[e.playerId] && db.players[e.playerId].playerKind === 'MEMBER' ? sponsorTierOf(db.players[e.playerId]) : 0
   }));
+}
+
+/** Mock of the ECPay side: settles one order the way ReturnURL / PaymentInfoURL would (db.topupOutcome picks the result). */
+export function simulateEcpay(orderId, outcome = db.topupOutcome) {
+  const o = db.topupOrders[orderId];
+  if (!o || o.status === 'PAID') return;
+  if (outcome === 'PAID') {
+    const p = db.players[o.playerId];
+    addLedger(o.playerId, { ledgerSource: 'TOPUP', coinDelta: o.coins });
+    p.sponsoredTotalTwd = (p.sponsoredTotalTwd || 0) + o.amountTwd;
+    o.status = 'PAID'; o.paidAt = now();
+  } else if (outcome === 'AWAITING_PAYMENT') {
+    o.status = 'AWAITING_PAYMENT'; o.paymentExpireAt = iso(Date.now() + 864e5);
+  } else if (outcome === 'FAILED' || outcome === 'EXPIRED') o.status = outcome;
+  persist();
 }
 
 // Test controls (dev mock only): window.__mockDb, see mocks/browser.js.
@@ -147,6 +171,25 @@ export const controls = {
     persist();
   },
   clearBoard() { db.board = []; persist(); },
+  /** Backend top-up switch (ecpay.merchant-id set or not). */
+  setTopupEnabled(on) { db.topupEnabled = !!on; persist(); },
+  /** What the mocked ECPay page does when the player "pays": PAID | AWAITING_PAYMENT | FAILED | EXPIRED | CREATED (nothing yet). */
+  setTopupOutcome(how) { db.topupOutcome = how; persist(); },
+  /** Overrides checkout.actionUrl of the next orders (tests for the ECPay-only form target); null restores the mock page. */
+  setTopupActionUrl(url) { db.topupActionUrl = url; persist(); },
+  simulateEcpay(orderId, how) { simulateEcpay(orderId, how); },
+  /** Sets the accumulated sponsor total (NT$) of a player: 0 / >0 / >=200 give sponsorTier 0 / 1 / 2 on the board. */
+  setSponsorTotal(playerId, twd) { db.players[playerId].sponsoredTotalTwd = twd; persist(); },
+  /** Replaces one board with n members; tierOf(i) gives the sponsorTier (0 | 1 | 2) of row i. */
+  seedSponsorBoard(boardVersion, tier, n, tierOf) {
+    db.board = db.board.filter(e => !(e.boardVersion === boardVersion && e.tier === tier));
+    for (let i = 0; i < n; i++) {
+      const id = String(7000 + i), t = tierOf(i);
+      db.players[id] = player(id, '贊助勇者' + (i + 1), 'MEMBER', { sponsoredTotalTwd: t === 2 ? 200 : t === 1 ? 10 : 0 });
+      db.board.push({ boardVersion, tier, playerId: id, isVictory: true, gameSeconds: 100 + i, settledAt: '2026-11-01T10:00:00+00:00', equippedBuff: null });
+    }
+    persist();
+  },
   /** Backend rewarded-ad switch (ADSENSE_PUBLISHER_ID set or not). */
   setAdEnabled(on) { db.adEnabled = !!on; persist(); },
   /** Backend season payout (發放賽季獎勵.feature, @batch at startup): one SEASON_REWARD row for (season, tier); idempotent per key. */

@@ -1,6 +1,6 @@
 // Shop tag handlers (browse, purchase).
 import { route, ok, fail, authenticate } from './util.js';
-import { persist, addLedger, adRewardStatus, SHOP_PRICES, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
+import { persist, addLedger, adRewardStatus, TOPUP_PACKAGES, getDb, SHOP_PRICES, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
 
 export const shopHandlers = [
   route('listShopItems', ({ request }) => {
@@ -11,7 +11,10 @@ export const shopHandlers = [
       shopItemId: b, buffItem: b, price: SHOP_PRICES[b], isPurchasable: p.isSilverUnlocked,
       silverUnlockBossSeq: p.isSilverUnlocked ? null : SILVER_UNLOCK_BOSS_SEQ,
       bronzeBestBossesKilled: p.isSilverUnlocked ? null : p.bronzeBest
-    })), adReward: adRewardStatus(p.playerId) });
+    })), adReward: adRewardStatus(p.playerId),
+      topup: getDb().topupEnabled === false
+        ? { isEnabled: false, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: [] }
+        : { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: TOPUP_PACKAGES } });
   }),
 
   route('purchaseShopItem', ({ request, params }) => {

@@ -1,19 +1,26 @@
 // 商店頁 (specs/ui/商店頁.md; prototype shop()). Items + prices from listShopItems, owned counts from
 // listMyBuffInventories, chip from getMyWallet. SPEC-01: api.yml returns no "約 N 次通關" value, so it is not shown.
 // The rewarded-ad card (D33-D35) sits on top and takes listShopItems.adReward; no other call is made for it.
+// D43: AD_REWARD_CARD_ENABLED=false (src/config.js) swaps it for the 贊助回饋 card (listShopItems.topup).
 import { useEffect, useState } from 'react';
 import { PageHeader, CoinChip, RetryBox, Skeletons, PrimaryButton, LoginBanner } from '../components/ui/Common.jsx';
 import { PixelCoin, BuffIcon } from '../components/ui/Icons.jsx';
 import AdRewardCard from '../components/ui/AdRewardCard.jsx';
+import SponsorCard from '../components/ui/SponsorCard.jsx';
+import TopupResult from '../components/ui/TopupResult.jsx';
 import { listShopItems, listMyBuffInventories, getMyWallet, purchaseShopItem } from '../lib/api/index.js';
 import { BUFFS, lockLine, NETWORK_MSG, EXTRA_LOCKED_MSG } from '../lib/labels.js';
+import { AD_REWARD_CARD_ENABLED } from '../config.js';
+import { LOGIN_AVAILABLE, adRewardCardOn } from '../lib/env.js';
+import { getPendingTopup } from '../lib/topup.js';
 
-export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercept, onBannerDone, onBannerLogin, onBannerClose, onBannerShown }) {
-  const [st, setSt] = useState({ status: 'loading', items: [], inv: {}, adReward: null });
+export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercept, onSponsorLogin, returnTopupId, onBannerDone, onBannerLogin, onBannerClose, onBannerShown }) {
+  const [st, setSt] = useState({ status: 'loading', items: [], inv: {}, adReward: null, topup: null });
   const [n, setN] = useState(0);
   const [msg, setMsg] = useState({});        // buffItem -> ok | short | locked | net
   const [busy, setBusy] = useState(null);
   const [pop, setPop] = useState(null);
+  const [topupOrder] = useState(() => returnTopupId || getPendingTopup());   // D49: confirm the order the player just came back from (kept after the pending marker is cleared)
   const [pending, setPending] = useState(null);   // item whose 購買 the login banner intercepted (D-03)
 
   useEffect(() => {
@@ -22,7 +29,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
     Promise.all([listShopItems(), listMyBuffInventories(), getMyWallet()]).then(([shop, inv, w]) => {
       if (!live) return;
       onCoins(w.coins);
-      setSt({ status: 'ok', items: shop.items, adReward: shop.adReward, inv: Object.fromEntries(inv.items.map(i => [i.buffItem, i.quantity])) });
+      setSt({ status: 'ok', items: shop.items, adReward: shop.adReward, topup: shop.topup, inv: Object.fromEntries(inv.items.map(i => [i.buffItem, i.quantity])) });
     }, () => { if (live) setSt(s => ({ ...s, status: 'error' })); });
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -102,7 +109,11 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
           loginLabel={pending ? '登入' : undefined} secondaryLabel="再等等" onSecondary={pending ? buyDirect : undefined} />
       )}</div>
       <main className="content scroll" style={{ paddingTop: 'var(--space-3)' }} aria-busy={st.status === 'loading' ? 'true' : undefined}>
-        {st.status === 'ok' && st.adReward && <AdRewardCard status={st.adReward} onCoins={onCoins} />}
+        {st.status === 'ok' && (adRewardCardOn() && st.adReward
+          ? <AdRewardCard status={st.adReward} onCoins={onCoins} />
+          : !AD_REWARD_CARD_ENABLED && st.topup && st.topup.isEnabled && (!st.topup.requiresLogin || LOGIN_AVAILABLE)
+            ? <SponsorCard topup={st.topup} guest={st.topup.requiresLogin} onLoginRequired={onSponsorLogin} /> : null)}
+        {topupOrder && <TopupResult orderId={topupOrder} onCoins={onCoins} />}
         {st.status === 'ok' && locked && (
           <p id="lockline" className="msg warn"><span className="lock" aria-hidden="true" style={{ margin: '6px 6px 0 0' }} />{lockLine(locked.silverUnlockBossSeq, locked.bronzeBestBossesKilled)}</p>
         )}

@@ -17,6 +17,15 @@ export const GOOGLE_CLIENT_ID = runtimeMeta('google-client-id') || import.meta.e
 // Login entries are shown only when a Google sign-in can actually happen.
 export const LOGIN_AVAILABLE = MOCK_API || !!GOOGLE_CLIENT_ID;
 
+// D43: the rewarded-ad card is switched off in src/config.js. Under the dev mock only, sessionStorage 'dev.adRewardCard'='1'
+// brings it back so the ad flow stays testable; MOCK_API is a literal false in production, so this is dead code there.
+import { AD_REWARD_CARD_ENABLED } from '../config.js';
+export function adRewardCardOn() {
+  if (AD_REWARD_CARD_ENABLED) return true;
+  if (!MOCK_API) return false;
+  try { return sessionStorage.getItem('dev.adRewardCard') === '1'; } catch (_) { return false; }
+}
+
 // AdSense publisher id (ca-pub-<digits>, D35). Read on every call so the shop sees the page's current value.
 // The VITE_ADSENSE_PUBLISHER_ID fallback (.env.local) is dev-server only: a production bundle never carries a baked-in
 // id, so a page without the runtime value loads no ad script and shows no ad card (FE-34).

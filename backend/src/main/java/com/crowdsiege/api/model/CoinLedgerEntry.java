@@ -55,6 +55,9 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
     @Column(name = "season_rank")
     private Integer seasonRank;
 
+    @Column(name = "payment_order_id")
+    private Long paymentOrderId;
+
     protected CoinLedgerEntry() {
     }
 
@@ -108,6 +111,15 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
         return entry;
     }
 
+    /**
+     * TOPUP credit for one paid ECPay order; payment_order_id is unique so an order can be credited at most once.
+     */
+    public static CoinLedgerEntry topup(Long playerId, Long paymentOrderId, int coins, int coinsAfter, Instant now) {
+        CoinLedgerEntry entry = new CoinLedgerEntry(playerId, LedgerSource.TOPUP, coins, coinsAfter, now);
+        entry.paymentOrderId = paymentOrderId;
+        return entry;
+    }
+
     public Long getId() {
         return id;
     }
@@ -158,5 +170,9 @@ public class CoinLedgerEntry extends AppendOnlyEntity {
 
     public Integer getSeasonRank() {
         return seasonRank;
+    }
+
+    public Long getPaymentOrderId() {
+        return paymentOrderId;
     }
 }

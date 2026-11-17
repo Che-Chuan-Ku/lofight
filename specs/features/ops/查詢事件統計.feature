@@ -46,6 +46,7 @@ Feature: 查詢事件統計
         | 2026-11-02T00:00:00Z | 2026-11-01T00:00:00Z | 400007 |
 
   Rule: 後置（回應）- 應回傳查詢期間內各事件類型（商店瀏覽、購買buff、廣告獎勵、賽季獎勵）的次數與不重複玩家數
+    # CHANGE 2026-11-17（D46）：新增儲值事件 TOPUP（接收綠界付款通知.feature，每筆成功入帳一筆），列表末尾多一列 TOPUP；本檔既有事件資料不含儲值，故為 0
     # CHANGE 2026-11-03（D38）澄清 AMB-S12＝b：新增賽季獎勵事件 SEASON_REWARD（發放賽季獎勵.feature，每位受獎玩家每榜一筆），一併統計；列表固定依 SHOP_VIEW、BUFF_PURCHASE、AD_REWARD、SEASON_REWARD 排列（lock exception：change 報告 Δ-Data-3 已預告）
     # CHANGE 2026-11-02（D33/D34）推論 INF-A4：新增廣告獎勵事件 AD_REWARD（領取廣告獎勵.feature），一併統計次數與不重複玩家數；列表固定依 SHOP_VIEW、BUFF_PURCHASE、AD_REWARD 排列
     # 依設計指引 G21（事件用於計算解鎖到首次購買、各 buff 購買率等指標）
@@ -63,6 +64,7 @@ Feature: 查詢事件統計
         | BUFF_PURCHASE | 3     | 2             |
         | AD_REWARD     | 2     | 1             |
         | SEASON_REWARD | 2     | 1             |
+        | TOPUP         | 0     | 0             |
 
     Example: 期間內無事件時各類型回 0
       When 營運者查詢事件統計：
@@ -75,6 +77,7 @@ Feature: 查詢事件統計
         | BUFF_PURCHASE | 0     | 0             |
         | AD_REWARD     | 0     | 0             |
         | SEASON_REWARD | 0     | 0             |
+        | TOPUP         | 0     | 0             |
 
   Rule: 後置（回應）- 購買事件應依 buff 品項分組回傳次數與金幣總額
     # 澄清 AMB-04＝A：品項分組屬期間總計的一部分。推論：金幣總額以購買事件記錄的購買當下價格加總（GAP-02 推論）；期間無購買時回空列表。

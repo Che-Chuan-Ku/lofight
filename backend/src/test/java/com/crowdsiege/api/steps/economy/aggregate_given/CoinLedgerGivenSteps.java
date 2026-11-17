@@ -58,6 +58,7 @@ public class CoinLedgerGivenSteps {
             case SEASON_REWARD -> CoinLedgerEntry.seasonReward(playerId, row.get("seasonBoardVersion"),
                     Tier.valueOf(row.get("seasonTier")), Integer.parseInt(row.get("seasonRank")), coinDelta,
                     coinsAfter, occurredAt);
+            case TOPUP -> CoinLedgerEntry.topup(playerId, null, coinDelta, coinsAfter, occurredAt);
         };
     }
 }

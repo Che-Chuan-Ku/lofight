@@ -42,6 +42,16 @@ public class Player extends AuditedEntity {
     @Column(name = "merged_into_player_id")
     private Long mergedIntoPlayerId;
 
+    /**
+     * Read-only for the ORM (updatable = false): a Player entity saved by rename / guest merge must never write a stale
+     * total back. The only writer is PlayerRepository.addSponsorship (atomic UPDATE).
+     */
+    @Column(name = "sponsored_total_twd", nullable = false, updatable = false)
+    private int sponsoredTotalTwd;
+
+    @Column(name = "first_sponsored_at", updatable = false)
+    private Instant firstSponsoredAt;
+
     protected Player() {
     }
 
@@ -109,5 +119,13 @@ public class Player extends AuditedEntity {
 
     public Long getMergedIntoPlayerId() {
         return mergedIntoPlayerId;
+    }
+
+    public int getSponsoredTotalTwd() {
+        return sponsoredTotalTwd;
+    }
+
+    public Instant getFirstSponsoredAt() {
+        return firstSponsoredAt;
     }
 }

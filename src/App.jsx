@@ -20,10 +20,27 @@ import { pendingSeasonNotice, markSeasonNoticeShown } from './lib/seasonNotice.j
 import { bannerAllowed, dismissBanner, markBannerShown, markRunSettled, shopBannerDue } from './lib/banner.js';
 import { nextGoal, nicknameError } from './lib/labels.js';
 import { LOGIN_AVAILABLE } from './lib/env.js';
+import { TOPUP } from './lib/labels.js';
+import { TOPUP_ID_RE, getPendingTopup } from './lib/topup.js';
 import { TILES_DATA_URI } from './game/tiles.js';
 
 // settleRun error codes that mean the run is finished without a result (BDY-02 check failed, BDY-06 abandoned)
 const SETTLE_INVALID_CODES = new Set(['gam003', 'gam004']);
+
+// D49: back from ECPay the URL carries ?topup=<order id>. It is read once at load (module scope, so StrictMode's double
+// render cannot see an already-cleaned URL) and the parameter is removed; a pending id from sessionStorage covers the back button.
+function readTopupReturn() {
+  if (typeof window === 'undefined') return null;
+  const parts = window.location.search.replace(/^\?/, '').split('&').filter(Boolean);
+  const hit = parts.find(p => p.startsWith('topup='));
+  if (hit === undefined) return getPendingTopup();
+  // drop only the topup parameter and keep every other one exactly as it was (e.g. ?debug)
+  const rest = parts.filter(p => p !== hit).join('&');
+  window.history.replaceState(null, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
+  const id = decodeURIComponent(hit.slice(6));
+  return TOPUP_ID_RE.test(id) ? id : getPendingTopup();
+}
+const TOPUP_RETURN = readTopupReturn();
 
 // Screens: home | login | ready (silver loadout) | game | result | wallet | shop | board | privacy | changelog.
 export default function App() {
@@ -32,7 +49,8 @@ export default function App() {
   const { ui, hint, start, restart, pause, pickChoice, pickRest, leave, summary } = useGame({ canvasRef, appRef, stageRef, startKeyRef, sceneryRef });
 
   const session = useSyncExternalStore(subscribe, getSession);
-  const [screen, setScreen] = useState('home');
+  const [screen, setScreen] = useState(TOPUP_RETURN ? 'shop' : 'home');
+  const [topupId, setTopupId] = useState(TOPUP_RETURN);   // order to confirm on the shop, only for the first visit
   const [loginFrom, setLoginFrom] = useState('home');
   const [progress, setProgress] = useState(null);
   const [coins, setCoins] = useState(null);
@@ -42,7 +60,7 @@ export default function App() {
   const [run, setRun] = useState(null);              // { runId|null, tier, buff, status, body, result, settlement, seen }
   const [lastBuff, setLastBuff] = useState(null);
   const [seasonNotice, setSeasonNotice] = useState(null);   // D38: [{ key, text }] lines still owed on 首頁
-  const [banner, setBanner] = useState(null);        // { text, on: 'result' | 'shop', kind: 'coins' | 'silver' | 'shop' }
+  const [banner, setBanner] = useState(null);        // { text, on: 'result' | 'shop', kind: 'coins' | 'silver' | 'shop' | 'sponsor' }
 
   useEffect(() => { document.documentElement.style.setProperty('--tiles', `url("${TILES_DATA_URI}")`); }, []);
   useEffect(() => {
@@ -68,6 +86,7 @@ export default function App() {
   const go = to => {
     if (screen === 'result' && run) setRun(r => ({ ...r, seen: true }));
     if (to !== 'result' && to !== 'shop') setBanner(null);
+    if (to !== 'shop') setTopupId(null);
     setScreen(to);
   };
   const openLogin = from => { setLoginFrom(from); go('login'); };
@@ -165,9 +184,11 @@ export default function App() {
   const playing = screen === 'game' && ui.phase !== 'intro' && ui.phase !== 'end';
   sceneryRef.current = screen !== 'game';
   const bannerFor = on => (banner && banner.on === on ? banner.text : null);
-  const closeBanner = () => { dismissBanner(); setBanner(null); };
+  // the sponsor banner (kind 'sponsor') is player-requested, so it neither counts as a dismissal nor uses the once-per-load slot
+  const closeBanner = () => { if (!banner || banner.kind !== 'sponsor') dismissBanner(); setBanner(null); };
   // banner flags are written only once a banner is really on screen (D-03; same rule for the result banners)
-  const bannerShown = () => { if (banner) markBannerShown(banner.kind); };
+  const bannerShown = () => { if (banner && banner.kind !== 'sponsor') markBannerShown(banner.kind); };
+  const sponsorLogin = () => setBanner({ text: TOPUP.loginFirst, on: 'shop', kind: 'sponsor' });
   // D-03 (human ruling A): the first 購買 tap as a guest shows the banner instead of buying; returns true when it did
   const interceptBuy = () => {
     const guest = getSession() && getSession().playerKind === 'GUEST';
@@ -192,7 +213,7 @@ export default function App() {
   } else if (screen === 'wallet') page = <WalletPage onBack={() => go('home')} onShop={() => go('shop')} onCoins={setCoins} />;
   else if (screen === 'shop') {
     page = <ShopPage onBack={() => go('home')} coins={coins} onCoins={setCoins} banner={bannerFor('shop')}
-      onBuyIntercept={interceptBuy} onBannerDone={() => setBanner(null)}
+      onBuyIntercept={interceptBuy} onSponsorLogin={sponsorLogin} returnTopupId={topupId} onBannerDone={() => setBanner(null)}
       onBannerLogin={() => openLogin('shop')} onBannerClose={closeBanner} onBannerShown={bannerShown} />;
   } else if (screen === 'board') page = <LeaderboardPage onBack={() => go('home')} onPlay={() => go('home')} />;
   else if (screen === 'privacy') page = <PrivacyPage onBack={() => go('home')} />;
