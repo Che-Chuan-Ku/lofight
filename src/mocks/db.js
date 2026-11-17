@@ -24,6 +24,7 @@ export const AD_REWARD = { coins: 200, dailyLimit: 5, cooldownSec: 60 };
 // Top-up packages (spec 6.3.1): NT$1 = 100 coins, the server decides amount and coins from the package id
 export const TOPUP_PACKAGES = [10, 30, 50, 100, 200].map(n => ({ packageId: 'TWD_' + n, amountTwd: n, coins: n * 100 }));
 export const TOPUP_MAX_OPEN_ORDERS = 3;
+export const DONATE_URL = 'https://p.ecpay.com.tw/43C219A';   // streamer payment link of DONATE mode (public, not a secret)
 export const SPONSOR_TIER2_MIN_TWD = 200;
 export const sponsorTierOf = p => {
   const t = (p && p.sponsoredTotalTwd) || 0;
@@ -174,6 +175,8 @@ export const controls = {
   /** Backend top-up switch (ecpay.merchant-id set or not). */
   setTopupEnabled(on) { db.topupEnabled = !!on; persist(); },
   /** What the mocked ECPay page does when the player "pays": PAID | AWAITING_PAYMENT | FAILED | EXPIRED | CREATED (nothing yet). */
+  /** Shop topup mode: 'AIO' (default) or 'DONATE' (streamer link); url overrides the mock donateUrl (tests for the host allow-list). */
+  setTopupMode(mode, url) { db.topupMode = mode === 'DONATE' ? 'DONATE' : 'AIO'; db.donateUrl = url || null; persist(); },
   setTopupOutcome(how) { db.topupOutcome = how; persist(); },
   /** Overrides checkout.actionUrl of the next orders (tests for the ECPay-only form target); null restores the mock page. */
   setTopupActionUrl(url) { db.topupActionUrl = url; persist(); },

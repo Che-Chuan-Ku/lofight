@@ -49,7 +49,9 @@ public class JwtTokenFilter extends OncePerRequestFilter {
                 // ECPay callbacks are authenticated by CheckMacValue, not by a player token.
                 apiPrefix + "/payments/ecpay/return",
                 apiPrefix + "/payments/ecpay/payment-info",
-                apiPrefix + "/payments/ecpay/order-result");
+                apiPrefix + "/payments/ecpay/order-result",
+                // ECPay streamer-donation notification: authenticated by decryption + CheckMacValue.
+                apiPrefix + "/ecpay/donate-notify");
         this.optionalAuthPaths = Set.of(
                 apiPrefix + "/sessions/actions/login-google",
                 apiPrefix + "/sessions/actions/login-apple");

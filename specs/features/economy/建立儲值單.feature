@@ -53,6 +53,15 @@ Feature: 建立儲值單
       Then 操作失敗，錯誤代碼為 "eco004"
       And 儲值單總數應為 0
 
+    @error:eco004
+    Example: 實況主收款連結模式下 AIO 建單關閉且不建單
+      Given 綠界實況主收款連結為 "https://p.ecpay.com.tw/43C219A"
+      When 建立儲值單：
+        | packageId |
+        | TWD_50    |
+      Then 操作失敗，錯誤代碼為 "eco004"
+      And 儲值單總數應為 0
+
   Rule: 前置（狀態）- 只有會員可儲值
 
     @error:eco005
@@ -125,7 +134,7 @@ Feature: 建立儲值單
       And 回應的結帳欄位 "PaymentType" 應為 "aio"
       And 回應的結帳欄位 "ItemName" 應為 "DayWar 金幣 5000"
       And 回應的結帳欄位 "ChoosePayment" 應為 "ALL"
-      And 回應的結帳欄位 "IgnorePayment" 應為 "CVS#BARCODE#BNPL#WeiXin"
+      And 回應的結帳欄位 "IgnorePayment" 應為 "Credit#ApplePay#CVS#BARCODE#BNPL#WeiXin"
       And 回應的結帳欄位 "EncryptType" 應為 "1"
       And 回應的結帳欄位 "CustomField2" 應為 "TWD_50"
       And 回應的結帳欄位 "ReturnURL" 應為 "https://daywar.net/api/csg/v1/payments/ecpay/return"

@@ -12,6 +12,16 @@ export function checkoutUrlAllowed(url) {
   return MOCK_API && url === location.origin + '/mock-ecpay';
 }
 
+const DONATE_HOSTS = ['p.ecpay.com.tw', 'payment.ecpay.com.tw'];
+
+/** The streamer payment link may only be opened when it is https on an ECPay payment host (nothing else, no credentials). */
+export function donateUrlAllowed(url) {
+  if (typeof url !== 'string') return false;
+  let u;
+  try { u = new URL(url); } catch (_) { return false; }
+  return u.protocol === 'https:' && DONATE_HOSTS.includes(u.hostname) && !u.username && !u.password && !u.port;
+}
+
 export const getPendingTopup = () => { try { return sessionStorage.getItem(PENDING_KEY); } catch (_) { return null; } };
 export const setPendingTopup = id => { try { sessionStorage.setItem(PENDING_KEY, id); } catch (_) { /* storage blocked: the ?topup= param still carries the id */ } };
 export const clearPendingTopup = () => { try { sessionStorage.removeItem(PENDING_KEY); } catch (_) { /* nothing to clear */ } };

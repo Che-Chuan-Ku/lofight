@@ -36,7 +36,12 @@ public class EcpayProperties implements InitializingBean {
     private Map<String, String> baseUrls = new HashMap<>();
     private String aioPath = "/Cashier/AioCheckOut/V5";
     private String queryPath = "/Cashier/QueryTradeInfo/V5";
-    private String ignorePayment = "CVS#BARCODE#BNPL#WeiXin";
+    private String ignorePayment = "Credit#ApplePay#CVS#BARCODE#BNPL#WeiXin";
+    /**
+     * ECPay streamer payment link (ECPAY_DONATE_URL). Non-empty = donation mode: the shop opens this link and AIO order
+     * creation is closed. Notifications still need merchant id and keys (decryption / CheckMacValue).
+     */
+    private String donateUrl = "";
     private int atmExpireDays = 1;
     private boolean orderResultEnabled = true;
     private Duration queryMinInterval = Duration.ofMinutes(10);
@@ -61,6 +66,10 @@ public class EcpayProperties implements InitializingBean {
      */
     public boolean acceptsSimulatedPayments() {
         return allowTestMerchant && !isProd();
+    }
+
+    public boolean isDonateMode() {
+        return donateUrl != null && !donateUrl.isBlank();
     }
 
     public boolean isProd() {
@@ -99,6 +108,24 @@ public class EcpayProperties implements InitializingBean {
                 throw new IllegalStateException("ecpay.base-urls." + env + " is required");
             }
         }
+        if (isDonateMode()) {
+            if (!isEnabled()) {
+                throw new IllegalStateException("ecpay.donate-url (ECPAY_DONATE_URL) requires ecpay.merchant-id, "
+                        + "hash-key and hash-iv (needed to verify and decrypt notifications)");
+            }
+            java.net.URI uri;
+            try {
+                uri = java.net.URI.create(donateUrl.trim());
+            } catch (IllegalArgumentException ex) {
+                throw new IllegalStateException("ecpay.donate-url is not a valid URL");
+            }
+            if (!"https".equals(uri.getScheme()) || uri.getHost() == null
+                    || !(uri.getHost().equals("p.ecpay.com.tw") || uri.getHost().equals("payment.ecpay.com.tw"))) {
+                throw new IllegalStateException("ecpay.donate-url must be an https URL on p.ecpay.com.tw or "
+                        + "payment.ecpay.com.tw");
+            }
+            donateUrl = donateUrl.trim();
+        }
         if (publicBaseUrl == null || !(publicBaseUrl.startsWith("https://")
                 || (!isProd() && publicBaseUrl.startsWith("http://")))) {
             throw new IllegalStateException("ecpay.public-base-url must start with https:// (http:// only for stage)");
@@ -108,6 +135,12 @@ public class EcpayProperties implements InitializingBean {
         }
         if (atmExpireDays < 1 || atmExpireDays > 60) {
             throw new IllegalStateException("ecpay.atm-expire-days must be within 1..60");
+        }
+        // ECPay forbids selling game virtual items through convenience-store code / barcode (spec 4.7, DEC-5), so an
+        // override of the ignore list (ECPAY_IGNORE_PAYMENT) must keep both out.
+        java.util.Set<String> ignored = java.util.Set.of(ignorePayment == null ? new String[0] : ignorePayment.split("#"));
+        if (!ignored.contains("CVS") || !ignored.contains("BARCODE")) {
+            throw new IllegalStateException("ecpay.ignore-payment (ECPAY_IGNORE_PAYMENT) must always include CVS and BARCODE");
         }
     }
 
@@ -199,6 +232,14 @@ public class EcpayProperties implements InitializingBean {
 
     public void setQueryPath(String queryPath) {
         this.queryPath = queryPath;
+    }
+
+    public String getDonateUrl() {
+        return donateUrl;
+    }
+
+    public void setDonateUrl(String donateUrl) {
+        this.donateUrl = donateUrl == null ? "" : donateUrl;
     }
 
     public String getIgnorePayment() {

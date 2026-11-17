@@ -8,9 +8,12 @@ import com.crowdsiege.api.dto.response.PlayerDetailResponse;
 import com.crowdsiege.api.model.Player;
 import com.crowdsiege.api.model.RunState;
 import com.crowdsiege.api.model.Tier;
+import com.crowdsiege.api.repository.NicknameRow;
 import com.crowdsiege.api.repository.PlayerRepository;
 import com.crowdsiege.api.repository.RunRepository;
+import jakarta.persistence.EntityManager;
 import java.time.Clock;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,14 +24,17 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlayerService {
 
     private static final int NICKNAME_MAX_LENGTH = 12;
+    private static final long NICKNAME_LOCK_KEY = 7_305_001L;
 
     private final PlayerRepository playerRepository;
     private final RunRepository runRepository;
     private final GameProperties gameProperties;
     private final Clock clock;
+    private final EntityManager entityManager;
 
     public PlayerService(PlayerRepository playerRepository, RunRepository runRepository,
-                         GameProperties gameProperties, Clock clock) {
+                         GameProperties gameProperties, Clock clock, EntityManager entityManager) {
+        this.entityManager = entityManager;
         this.playerRepository = playerRepository;
         this.runRepository = runRepository;
         this.gameProperties = gameProperties;
@@ -42,10 +48,37 @@ public class PlayerService {
 
     @Transactional
     public PlayerDetailResponse updateNickname(Long playerId, String nickname) {
-        validateNickname(nickname);
+        String trimmed = nickname == null ? null : nickname.strip();
+        validateNickname(trimmed);
+        // One global advisory lock (released at commit) serializes renames, so two players cannot claim the same
+        // name concurrently. A DB unique index is impossible: existing data already contains duplicates.
+        entityManager.createNativeQuery("SELECT CAST(pg_advisory_xact_lock(?1) AS text)")
+                .setParameter(1, NICKNAME_LOCK_KEY).getSingleResult();
         Player player = getPlayer(playerId);
-        player.rename(nickname, clock.instant());
+        if (isTakenByOther(playerId, trimmed)) {
+            throw new BusinessException(AccountErrorCode.NICKNAME_TAKEN);
+        }
+        player.rename(trimmed, clock.instant());
         return toResponse(player);
+    }
+
+    /**
+     * True when another non-voided player (member or guest) already uses the name under NicknameRules.normalize.
+     * Only user-initiated renames are checked.
+     */
+    boolean isTakenByOther(Long playerId, String nickname) {
+        return !activePlayersNamed(playerId, nickname).isEmpty();
+    }
+
+    /**
+     * Non-voided players (other than excludeId; 0 excludes nobody) whose nickname equals the name under
+     * NicknameRules.normalize.
+     */
+    public List<NicknameRow> activePlayersNamed(Long excludeId, String nickname) {
+        String wanted = NicknameRules.normalize(nickname);
+        return playerRepository.findActiveNicknames().stream()
+                .filter(p -> !p.id().equals(excludeId) && NicknameRules.normalize(p.nickname()).equals(wanted))
+                .toList();
     }
 
     public Player getPlayer(Long playerId) {
@@ -81,6 +114,10 @@ public class PlayerService {
         }
         if (nickname.codePointCount(0, nickname.length()) > NICKNAME_MAX_LENGTH) {
             throw new BusinessException(CommonErrorCode.INVALID_LENGTH, "參數長度不符 nickname");
+        }
+        if (NicknameRules.hasIllegalCharacter(nickname)) {
+            // control / format / look-alike space characters: same answer as a banned word (acc002)
+            throw new BusinessException(AccountErrorCode.NICKNAME_CONTAINS_BANNED_WORD);
         }
         if (gameProperties.getBannedWords().stream().anyMatch(nickname::contains)) {
             throw new BusinessException(AccountErrorCode.NICKNAME_CONTAINS_BANNED_WORD);

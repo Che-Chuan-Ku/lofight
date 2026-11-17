@@ -17,10 +17,17 @@ export const playerHandlers = [
   route('updateMyNickname', ({ request, body }) => {
     const auth = authenticate(request);
     if (auth.error) return auth.error;
-    const nick = body && typeof body.nickname === 'string' ? body.nickname : null;
-    if (blank(nick)) return fail('400001');
+    const raw = body && typeof body.nickname === 'string' ? body.nickname : null;
+    if (blank(raw)) return fail('400001');
+    // like Java String.strip(): U+00A0 and U+FEFF are NOT stripped (they are rejected below)
+    const nick = raw.replace(/^[\t-\r\x1c-\x1f \u1680\u2000-\u2006\u2008-\u200a\u2028\u2029\u205f\u3000]+|[\t-\r\x1c-\x1f \u1680\u2000-\u2006\u2008-\u200a\u2028\u2029\u205f\u3000]+$/g, '');
+    // mirrors backend NicknameRules: no control / format / line-paragraph separator / special space characters
+    if (/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Co}]|[^\S ]|(?! )\p{Zs}/u.test(nick)) return fail('acc002');
     if ([...nick].length > 12) return fail('400008');
     if (BANNED_WORDS.some(w => nick.includes(w))) return fail('acc002');
+    // acc005: another non-voided player (member or guest) already uses it; ASCII letters compare case-insensitively
+    const fold = s => s.normalize('NFKC').replace(/^[\t-\r\x1c-\x1f \u1680\u2000-\u2006\u2008-\u200a\u2028\u2029\u205f\u3000]+|[\t-\r\x1c-\x1f \u1680\u2000-\u2006\u2008-\u200a\u2028\u2029\u205f\u3000]+$/g, '').toLowerCase();
+    if (Object.values(getDb().players).some(o => o.playerId !== auth.player.playerId && !o.isVoided && fold(o.nickname) === fold(nick))) return fail('acc005');
     auth.player.nickname = nick; persist();
     return ok(progressOf(auth.player));
   }),
@@ -72,7 +79,7 @@ export const playerHandlers = [
     const pkg = TOPUP_PACKAGES.find(x => x.packageId === packageId);
     if (!pkg) return fail('400012');
     const db = getDb(), p = auth.player;
-    if (db.topupEnabled === false) return fail('eco004');
+    if (db.topupEnabled === false || db.topupMode === 'DONATE') return fail('eco004');
     if (p.playerKind === 'GUEST') return fail('eco005');
     const open = Object.values(db.topupOrders).filter(o => o.playerId === p.playerId && (o.status === 'CREATED' || o.status === 'AWAITING_PAYMENT'));
     if (open.length >= TOPUP_MAX_OPEN_ORDERS) return fail('eco006');

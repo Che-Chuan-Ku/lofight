@@ -16,7 +16,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
  */
 public class DatabaseCleanupHook {
 
-    private static final String TRUNCATE_ALL = "TRUNCATE TABLE season_settlements, player_events, payment_orders, "
+    private static final String TRUNCATE_ALL = "TRUNCATE TABLE donations, season_settlements, player_events, payment_orders, "
             + "leaderboard_entries, run_boss_kills, "
             + "coin_ledger_entries, buff_inventories, runs, wallets, refresh_tokens, player_identities, players "
             + "RESTART IDENTITY CASCADE";
@@ -29,6 +29,7 @@ public class DatabaseCleanupHook {
     private static String defaultMerchantId;
     private static String defaultEcpayEnv;
     private static boolean defaultAllowTest;
+    private static String defaultDonateUrl;
     private static int defaultTier2MinTwd;
     private static int defaultMaxOpenOrders;
     private static boolean topupDefaultsCaptured;
@@ -82,6 +83,7 @@ public class DatabaseCleanupHook {
             defaultMerchantId = ecpayProperties.getMerchantId();
             defaultEcpayEnv = ecpayProperties.getEnv();
             defaultAllowTest = ecpayProperties.isAllowTestMerchant();
+            defaultDonateUrl = ecpayProperties.getDonateUrl();
             defaultTier2MinTwd = topupProperties.getSponsorTier2MinTwd();
             defaultMaxOpenOrders = topupProperties.getMaxOpenOrders();
             topupDefaultsCaptured = true;
@@ -89,6 +91,7 @@ public class DatabaseCleanupHook {
         ecpayProperties.setMerchantId(defaultMerchantId);
         ecpayProperties.setEnv(defaultEcpayEnv);
         ecpayProperties.setAllowTestMerchant(defaultAllowTest);
+        ecpayProperties.setDonateUrl(defaultDonateUrl);
         topupProperties.setSponsorTier2MinTwd(defaultTier2MinTwd);
         topupProperties.setMaxOpenOrders(defaultMaxOpenOrders);
     }

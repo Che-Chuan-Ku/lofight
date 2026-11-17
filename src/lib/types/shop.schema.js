@@ -31,7 +31,10 @@ export const TopupStatusResponseSchema = z.object({
   requiresLogin: z.boolean(),
   minAmountTwd: z.number().int(),
   coinsPerTwd: z.number().int(),
-  packages: z.array(TopupPackageSchema)
+  packages: z.array(TopupPackageSchema),
+  // AIO = preset packages through ECPay AIO; DONATE = streamer payment link (any amount, packages is []).
+  mode: z.enum(['AIO', 'DONATE']),
+  donateUrl: z.string().nullable().optional()
 });
 
 // listShopItems data = { items, adReward, topup }.

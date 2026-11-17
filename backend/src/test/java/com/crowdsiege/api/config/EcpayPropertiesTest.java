@@ -38,6 +38,19 @@ class EcpayPropertiesTest {
     }
 
     @Test
+    void ignoreListWithoutConvenienceStoreMethodsFailsStartup() {
+        for (String list : new String[] { "Credit#BARCODE", "CVS#WeiXin", "", "Credit#ApplePay" }) {
+            EcpayProperties p = valid();
+            p.setIgnorePayment(list);
+            assertThatThrownBy(p::afterPropertiesSet).as(list).isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("CVS and BARCODE");
+        }
+        EcpayProperties ok = valid();
+        ok.setIgnorePayment("Credit#ApplePay#CVS#BARCODE#BNPL#WeiXin");
+        assertThatCode(ok::afterPropertiesSet).doesNotThrowAnyException();
+    }
+
+    @Test
     void missingEnvFailsStartup() {
         EcpayProperties p = valid();
         p.setEnv(null);
@@ -141,5 +154,41 @@ class EcpayPropertiesTest {
     @Test
     void maskedMerchantIdShowsOnlyLastThreeCharacters() {
         assertThat(valid().maskedMerchantId()).isEqualTo("***607");
+    }
+
+    @Test
+    void donateUrlOnAllowedHostIsAccepted() {
+        EcpayProperties p = valid();
+        p.setDonateUrl(" https://p.ecpay.com.tw/43C219A ");
+        assertThatCode(p::afterPropertiesSet).doesNotThrowAnyException();
+        assertThat(p.isDonateMode()).isTrue();
+        assertThat(p.getDonateUrl()).isEqualTo("https://p.ecpay.com.tw/43C219A");
+    }
+
+    @Test
+    void emptyDonateUrlMeansAioMode() {
+        EcpayProperties p = valid();
+        p.setDonateUrl("");
+        assertThatCode(p::afterPropertiesSet).doesNotThrowAnyException();
+        assertThat(p.isDonateMode()).isFalse();
+    }
+
+    @Test
+    void donateUrlWithoutCredentialsFailsStartup() {
+        EcpayProperties p = valid();
+        p.setMerchantId("");
+        p.setDonateUrl("https://p.ecpay.com.tw/43C219A");
+        assertThatThrownBy(p::afterPropertiesSet).isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("donate-url");
+    }
+
+    @Test
+    void donateUrlMustBeHttpsOnAnEcpayHost() {
+        for (String bad : new String[]{"http://p.ecpay.com.tw/x", "https://evil.example/x",
+                "https://p.ecpay.com.tw.evil.example/x", "not a url"}) {
+            EcpayProperties p = valid();
+            p.setDonateUrl(bad);
+            assertThatThrownBy(p::afterPropertiesSet).as(bad).isInstanceOf(IllegalStateException.class);
+        }
     }
 }

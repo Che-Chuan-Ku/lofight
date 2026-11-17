@@ -10,7 +10,7 @@ export const OPERATIONS = {
   logoutSession: { method: 'POST', path: '/sessions/actions/logout', auth: 'required', request: T.SessionLogoutRequestSchema, response: T.LogoutDataSchema, errorCodes: ['400001'] },
   getMergePreview: { method: 'GET', path: '/merge-previews', auth: 'required', query: ['loginProvider'], headers: ['X-Provider-Token'], response: T.MergePreviewDetailResponseSchema, errorCodes: ['400001', '400012', 'acc001', 'acc004', '403001'] },
   getMyProgress: { method: 'GET', path: '/players/me', auth: 'required', response: T.PlayerDetailResponseSchema, errorCodes: [] },
-  updateMyNickname: { method: 'PATCH', path: '/players/me', auth: 'required', request: T.PlayerUpdateRequestSchema, response: T.PlayerDetailResponseSchema, errorCodes: ['400001', '400008', 'acc002'] },
+  updateMyNickname: { method: 'PATCH', path: '/players/me', auth: 'required', request: T.PlayerUpdateRequestSchema, response: T.PlayerDetailResponseSchema, errorCodes: ['400001', '400008', 'acc002', 'acc005'] },
   getMyWallet: { method: 'GET', path: '/players/me/wallet', auth: 'required', response: T.WalletDetailResponseSchema, errorCodes: [] },
   listMyCoinLedgerEntries: { method: 'GET', path: '/players/me/coin-ledger-entries', auth: 'required', query: ['page'], response: T.CoinLedgerPageDataSchema, errorCodes: ['400007', '400009'] },
   claimAdReward: { method: 'POST', path: '/players/me/ad-rewards', auth: 'required', request: T.AdRewardCreateRequestSchema, response: T.AdRewardDetailResponseSchema, successStatus: 201, errorCodes: ['400001', 'eco001', 'eco002', 'eco003'] },

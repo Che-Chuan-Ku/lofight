@@ -14,7 +14,7 @@ import { AD_REWARD_CARD_ENABLED } from '../config.js';
 import { LOGIN_AVAILABLE, adRewardCardOn } from '../lib/env.js';
 import { getPendingTopup } from '../lib/topup.js';
 
-export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercept, onSponsorLogin, returnTopupId, onBannerDone, onBannerLogin, onBannerClose, onBannerShown }) {
+export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercept, onSponsorLogin, nickname, returnTopupId, onBannerDone, onBannerLogin, onBannerClose, onBannerShown }) {
   const [st, setSt] = useState({ status: 'loading', items: [], inv: {}, adReward: null, topup: null });
   const [n, setN] = useState(0);
   const [msg, setMsg] = useState({});        // buffItem -> ok | short | locked | net
@@ -34,6 +34,18 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
     return () => { live = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [n]);
+
+  // DONATE mode: the payment happens in another tab, so refresh the wallet coins whenever the player comes back.
+  const donateMode = st.status === 'ok' && !!st.topup && st.topup.isEnabled && st.topup.mode === 'DONATE';
+  useEffect(() => {
+    if (!donateMode) return undefined;
+    let live = true;
+    const refresh = () => { if (document.visibilityState === 'hidden') return; getMyWallet().then(w => { if (live) onCoins(w.coins); }, () => {}); };
+    document.addEventListener('visibilitychange', refresh);
+    window.addEventListener('focus', refresh);
+    return () => { live = false; document.removeEventListener('visibilitychange', refresh); window.removeEventListener('focus', refresh); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [donateMode]);
 
   useEffect(() => {
     const k = Object.keys(msg).find(b => msg[b] === 'ok');
@@ -112,7 +124,7 @@ export default function ShopPage({ onBack, coins, onCoins, banner, onBuyIntercep
         {st.status === 'ok' && (adRewardCardOn() && st.adReward
           ? <AdRewardCard status={st.adReward} onCoins={onCoins} />
           : !AD_REWARD_CARD_ENABLED && st.topup && st.topup.isEnabled && (!st.topup.requiresLogin || LOGIN_AVAILABLE)
-            ? <SponsorCard topup={st.topup} guest={st.topup.requiresLogin} onLoginRequired={onSponsorLogin} /> : null)}
+            ? <SponsorCard topup={st.topup} guest={st.topup.requiresLogin} nickname={nickname} onLoginRequired={onSponsorLogin} /> : null)}
         {topupOrder && <TopupResult orderId={topupOrder} onCoins={onCoins} />}
         {st.status === 'ok' && locked && (
           <p id="lockline" className="msg warn"><span className="lock" aria-hidden="true" style={{ margin: '6px 6px 0 0' }} />{lockLine(locked.silverUnlockBossSeq, locked.bronzeBestBossesKilled)}</p>

@@ -50,6 +50,10 @@ public class TopupService {
     private static final DateTimeFormatter TRADE_DATE = DateTimeFormatter.ofPattern("yyyy/MM/dd HH:mm:ss")
             .withZone(TAIPEI);
     private static final int MAX_TRADE_NO_ATTEMPTS = 3;
+    /**
+     * Minimum amount on the ECPay streamer payment page.
+     */
+    private static final int DONATE_MIN_AMOUNT_TWD = 10;
     private static final Duration FIRST_QUERY_DELAY = Duration.ofMinutes(10);
     private static final String TRADE_STATUS_PAID = "1";
     private static final String TRADE_STATUS_UNPAID = "0";
@@ -99,8 +103,10 @@ public class TopupService {
                 .map(p -> new TopupPackageResponse(p.getId(), p.getAmountTwd(), topupProperties.coinsOf(p)))
                 .toList()
                 : List.of();
-        return new TopupStatusResponse(enabled, player.isGuest(), topupProperties.minAmountTwd(),
-                topupProperties.getCoinsPerTwd(), packages);
+        boolean donate = enabled && ecpayProperties.isDonateMode();
+        return new TopupStatusResponse(enabled, player.isGuest(),
+                donate ? DONATE_MIN_AMOUNT_TWD : topupProperties.minAmountTwd(), topupProperties.getCoinsPerTwd(),
+                donate ? List.of() : packages, donate ? "DONATE" : "AIO", donate ? ecpayProperties.getDonateUrl() : null);
     }
 
     /**
@@ -114,7 +120,7 @@ public class TopupService {
         }
         TopupPackage topupPackage = topupProperties.findPackage(packageId)
                 .orElseThrow(() -> new BusinessException(CommonErrorCode.INVALID_ENUM, "參數值不在允許清單 packageId"));
-        if (!ecpayProperties.isEnabled()) {
+        if (!ecpayProperties.isEnabled() || ecpayProperties.isDonateMode()) {
             throw new BusinessException(EconomyErrorCode.TOPUP_NOT_ENABLED);
         }
         Player player = playerService.getPlayer(playerId);

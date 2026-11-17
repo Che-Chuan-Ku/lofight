@@ -1,6 +1,6 @@
 // Shop tag handlers (browse, purchase).
 import { route, ok, fail, authenticate } from './util.js';
-import { persist, addLedger, adRewardStatus, TOPUP_PACKAGES, getDb, SHOP_PRICES, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
+import { persist, addLedger, adRewardStatus, TOPUP_PACKAGES, DONATE_URL, getDb, SHOP_PRICES, BUFF_ORDER, SILVER_UNLOCK_BOSS_SEQ } from '../db.js';
 
 export const shopHandlers = [
   route('listShopItems', ({ request }) => {
@@ -13,8 +13,10 @@ export const shopHandlers = [
       bronzeBestBossesKilled: p.isSilverUnlocked ? null : p.bronzeBest
     })), adReward: adRewardStatus(p.playerId),
       topup: getDb().topupEnabled === false
-        ? { isEnabled: false, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: [] }
-        : { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: TOPUP_PACKAGES } });
+        ? { isEnabled: false, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: [], mode: 'AIO', donateUrl: null }
+        : getDb().topupMode === 'DONATE'
+          ? { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: [], mode: 'DONATE', donateUrl: getDb().donateUrl || DONATE_URL }
+          : { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: TOPUP_PACKAGES, mode: 'AIO', donateUrl: null } });
   }),
 
   route('purchaseShopItem', ({ request, params }) => {

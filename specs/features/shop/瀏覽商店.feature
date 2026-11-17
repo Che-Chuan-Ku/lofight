@@ -138,6 +138,32 @@ Feature: 瀏覽商店
         | isEnabled | packages |
         | false     | []       |
 
+  Rule: 後置（回應）- 設定實況主收款連結時 topup 為 DONATE 模式（回傳連結、不列方案）
+    # CHANGE 2026-11-17：ECPAY_DONATE_URL 有值＝mode DONATE、donateUrl 為該連結、packages 為空；未設定時 mode 為 AIO、donateUrl 為空
+
+    Example: DONATE 模式回傳連結且不列方案，最低金額 10
+      Given 系統中有以下玩家：
+        | 玩家 | playerKind | nickname | deviceId | isSilverUnlocked | isVoided |
+        | 阿會 | MEMBER     | 阿會     |          | true             | false    |
+      And 綠界實況主收款連結為 "https://p.ecpay.com.tw/43C219A"
+      And 目前以玩家 "阿會" 的有效存取權杖操作
+      When 瀏覽商店
+      Then 操作成功
+      And 回應中的 "topup" 物件應為：
+        | isEnabled | requiresLogin | minAmountTwd | coinsPerTwd | mode   | donateUrl                        | packages |
+        | true      | false         | 10           | 100         | DONATE | https://p.ecpay.com.tw/43C219A   | []       |
+
+    Example: 未設定連結時 mode 為 AIO 且不帶連結
+      Given 系統中有以下玩家：
+        | 玩家 | playerKind | nickname | deviceId | isSilverUnlocked | isVoided |
+        | 阿會 | MEMBER     | 阿會     |          | true             | false    |
+      And 目前以玩家 "阿會" 的有效存取權杖操作
+      When 瀏覽商店
+      Then 操作成功
+      And 回應中的 "topup" 物件應為：
+        | mode | donateUrl |
+        | AIO  |           |
+
   Rule: 後置（狀態）- 應記錄一筆商店瀏覽事件
     # 原文 D21「另記錄商店瀏覽、購買事件；事件可查」；澄清 ASM-09（2026-10-29）採 B：瀏覽時寫一筆事件（玩家、發生時間、silver 是否已解鎖），供 查詢事件統計.feature 彙總
     # 本 feature 仍為 @query：事件寫入為附帶紀錄，不改變任何玩家可見狀態

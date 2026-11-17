@@ -213,7 +213,7 @@ export default function App() {
   } else if (screen === 'wallet') page = <WalletPage onBack={() => go('home')} onShop={() => go('shop')} onCoins={setCoins} />;
   else if (screen === 'shop') {
     page = <ShopPage onBack={() => go('home')} coins={coins} onCoins={setCoins} banner={bannerFor('shop')}
-      onBuyIntercept={interceptBuy} onSponsorLogin={sponsorLogin} returnTopupId={topupId} onBannerDone={() => setBanner(null)}
+      onBuyIntercept={interceptBuy} onSponsorLogin={sponsorLogin} nickname={progress ? progress.nickname : null} returnTopupId={topupId} onBannerDone={() => setBanner(null)}
       onBannerLogin={() => openLogin('shop')} onBannerClose={closeBanner} onBannerShown={bannerShown} />;
   } else if (screen === 'board') page = <LeaderboardPage onBack={() => go('home')} onPlay={() => go('home')} />;
   else if (screen === 'privacy') page = <PrivacyPage onBack={() => go('home')} />;

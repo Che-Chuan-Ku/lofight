@@ -112,7 +112,13 @@ ecpay:
     prod: https://payment.ecpay.com.tw
   aio-path: /Cashier/AioCheckOut/V5
   query-path: /Cashier/QueryTradeInfo/V5
-  ignore-payment: "CVS#BARCODE#BNPL#WeiXin"
+  # Methods hidden on the ECPay page (ChoosePayment=ALL). User 2026-11-17: transfers (ATM, WebATM) and payment tools
+  # (TWQR, DigitalPayment) only, so credit card and Apple Pay are hidden too. CVS and BARCODE must always stay hidden
+  # (startup check). Override with ECPAY_IGNORE_PAYMENT, '#'-separated.
+  ignore-payment: ${ECPAY_IGNORE_PAYMENT:Credit#ApplePay#CVS#BARCODE#BNPL#WeiXin}
+  # Streamer payment link (https://p.ecpay.com.tw/...). Non-empty = donation mode: the shop card opens this link and AIO
+  # order creation answers eco004. Needs ECPAY_MERCHANT_ID / HASH_KEY / HASH_IV (startup fails otherwise).
+  donate-url: ${ECPAY_DONATE_URL:}
   atm-expire-days: 1
   order-result-enabled: true
   query-min-interval: 10m

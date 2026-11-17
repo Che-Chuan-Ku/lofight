@@ -6,7 +6,8 @@ public enum AccountErrorCode implements ErrorCode {
     LOGIN_VERIFICATION_FAILED("acc001", HttpStatus.UNAUTHORIZED, "登入驗證失敗"),
     NICKNAME_CONTAINS_BANNED_WORD("acc002", HttpStatus.BAD_REQUEST, "暱稱含禁用字"),
     GUEST_VOIDED("acc003", HttpStatus.CONFLICT, "guest 身分已作廢，請重新產生裝置識別"),
-    LOGIN_PROVIDER_NOT_SUPPORTED("acc004", HttpStatus.BAD_REQUEST, "尚未支援的登入方式");
+    LOGIN_PROVIDER_NOT_SUPPORTED("acc004", HttpStatus.BAD_REQUEST, "尚未支援的登入方式"),
+    NICKNAME_TAKEN("acc005", HttpStatus.CONFLICT, "暱稱已被使用");
 
     private final String code;
     private final HttpStatus httpStatus;

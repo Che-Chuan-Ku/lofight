@@ -26,6 +26,7 @@ export function nicknameError(code) {
   if (code === '400001') return '暱稱不能空白';
   if (code === '400008') return '暱稱最多 12 個字';
   if (code === 'acc002') return '暱稱含有不能使用的字';
+  if (code === 'acc005') return '這個暱稱已經有人用了，換一個吧';
   return NETWORK_MSG;
 }
 
@@ -57,7 +58,16 @@ export const TOPUP = {
   failed: '這次付款沒有完成，沒有扣款也沒有金幣',
   expired: '這筆付款已逾期，沒有金幣',
   notFound: '找不到這筆付款，請用付款時的帳號登入',
-  ledger: '贊助儲值'
+  ledger: '贊助儲值',
+  // 實況主收款連結模式（DONATE）：卡片說明與提醒視窗。視窗只提醒兩件事，不多說。
+  donateCardDesc: 'NT$10 起，金額自訂，回饋金幣',
+  donateTitle: '贊助前提醒',
+  donateNameLine: nick => '請把暱稱「' + nick + '」填在「贊助者名稱」',
+  donateNameLineNoNick: '請把您的暱稱填在「贊助者名稱」',
+  donateEffectLine: '排行榜為您製作專屬特效',
+  donateChangeName: '請先到設定改一個自己的暱稱',
+  donateGo: '前往贊助',
+  donateBlocked: '贊助頁面暫時打不開，請稍後再試'
 };
 /** createTopupOrder error code -> panel message. */
 export function topupError(code) {

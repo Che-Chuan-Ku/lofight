@@ -4,6 +4,14 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.3.1',
+    date: '2026-11-17',
+    items: [
+      '贊助回饋改走實況主贊助頁，金額自己填。把遊戲暱稱打在「贊助者名稱」，金幣和名框就會找上門。',
+      '暱稱不能再跟別人撞名了。名字是你的，就只能是你的。'
+    ]
+  },
+  {
     version: '19.3.0',
     date: '2026-11-17',
     items: [

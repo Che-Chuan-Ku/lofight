@@ -54,6 +54,9 @@ services:
       # Must stay false on the production site: true would let the public test merchant / SimulatePaid be accepted.
       - key: ECPAY_ALLOW_TEST_MERCHANT
         value: "false"
+      # Streamer donate link (https://p.ecpay.com.tw/...). Set = shop uses the link and the donate webhook; AIO checkout off.
+      - key: ECPAY_DONATE_URL
+        sync: false
       # Origin used in ReturnURL / OrderResultURL / ClientBackURL (default https://daywar.net).
       - key: APP_PUBLIC_BASE_URL
         sync: false

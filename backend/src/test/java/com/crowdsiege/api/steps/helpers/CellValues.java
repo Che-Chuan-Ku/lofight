@@ -26,9 +26,21 @@ public final class CellValues {
      */
     public static String literal(String cell) {
         if (cell != null && cell.length() >= 2 && cell.startsWith("\"") && cell.endsWith("\"")) {
-            return cell.substring(1, cell.length() - 1);
+            cell = cell.substring(1, cell.length() - 1);
         }
-        return cell;
+        return invisible(cell);
+    }
+
+    /**
+     * Placeholders for characters that cannot be typed in a feature file: {ZWSP} U+200B, {ZWNJ} U+200C, {ZWJ} U+200D,
+     * {BOM} U+FEFF, {NBSP} U+00A0, {IDEOGRAPHIC_SPACE} U+3000.
+     */
+    public static String invisible(String cell) {
+        if (cell == null || cell.indexOf('{') < 0) {
+            return cell;
+        }
+        return cell.replace("{ZWSP}", "\u200b").replace("{ZWNJ}", "\u200c").replace("{ZWJ}", "\u200d")
+                .replace("{BOM}", "\ufeff").replace("{NBSP}", "\u00a0").replace("{IDEOGRAPHIC_SPACE}", "\u3000");
     }
 
     public static List<String> csv(String cell) {
