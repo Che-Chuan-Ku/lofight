@@ -1,4 +1,4 @@
-// 贊助回饋 helpers (D44, D49): checkout hand-off to ECPay and the pending-order marker kept across the redirect.
+// 贊助 helpers (D44, D49): checkout hand-off to ECPay and the pending-order marker kept across the redirect.
 import { MOCK_API } from './env.js';
 
 const PENDING_KEY = 'dw.topup.pending';

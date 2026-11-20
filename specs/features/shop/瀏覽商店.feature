@@ -106,11 +106,11 @@ Feature: 瀏覽商店
         | isEnabled | remainingCount | nextClaimableAt |
         | false     |                |                 |
 
-  Rule: 後置（回應）- 應回傳贊助回饋（儲值）方案與是否需先登入
-    # CHANGE 2026-11-17（D43、D44，documents/ecpaydemands/spec.md §6.3.1）：listShopItems 多回 topup；方案由伺服器設定檔決定（NT$10／30／50／100／200，NT$1 = 100 金幣，最低 NT$10）
+  Rule: 後置（回應）- 應回傳贊助支持（贊助）方案與是否需先登入
+    # CHANGE 2026-11-17（D43、D44，documents/ecpaydemands/spec.md §6.3.1）：listShopItems 多回 topup；方案由伺服器設定檔決定（NT$10／50／120／200，贊助不給金幣：coinsPerTwd 0、各方案 coins 0，最低 NT$10；CHANGE 2026-11-20 綠界審查）
     # isEnabled＝已設定綠界特店編號；未開放時 packages 為空；requiresLogin＝呼叫者是 guest（DEC-1：只有會員可儲值）
 
-    Example: 會員看到五個預設方案且不需登入
+    Example: 會員看到四個預設方案且不需登入
       Given 系統中有以下玩家：
         | 玩家 | playerKind | nickname | deviceId | isSilverUnlocked | isVoided |
         | 阿會 | MEMBER     | 阿會     |          | true             | false    |
@@ -119,7 +119,7 @@ Feature: 瀏覽商店
       Then 操作成功
       And 回應中的 "topup" 物件應為：
         | isEnabled | requiresLogin | minAmountTwd | coinsPerTwd | packages                                                                                                                                                                                                                                                       |
-        | true      | false         | 10           | 100         | [{"packageId":"TWD_10","amountTwd":10,"coins":1000},{"packageId":"TWD_30","amountTwd":30,"coins":3000},{"packageId":"TWD_50","amountTwd":50,"coins":5000},{"packageId":"TWD_100","amountTwd":100,"coins":10000},{"packageId":"TWD_200","amountTwd":200,"coins":20000}] |
+        | true      | false         | 10           | 0           | [{"packageId":"TWD_10","amountTwd":10,"coins":0},{"packageId":"TWD_50","amountTwd":50,"coins":0},{"packageId":"TWD_120","amountTwd":120,"coins":0},{"packageId":"TWD_200","amountTwd":200,"coins":0}] |
 
     Example: guest 標示需先登入
       Given 目前以玩家 "小明" 的有效存取權杖操作
@@ -151,7 +151,7 @@ Feature: 瀏覽商店
       Then 操作成功
       And 回應中的 "topup" 物件應為：
         | isEnabled | requiresLogin | minAmountTwd | coinsPerTwd | mode   | donateUrl                        | packages |
-        | true      | false         | 10           | 100         | DONATE | https://p.ecpay.com.tw/43C219A   | []       |
+        | true      | false         | 10           | 0           | DONATE | https://p.ecpay.com.tw/43C219A   | []       |
 
     Example: 未設定連結時 mode 為 AIO 且不帶連結
       Given 系統中有以下玩家：

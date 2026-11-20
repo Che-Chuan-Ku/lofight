@@ -1,4 +1,4 @@
-// 贊助回饋 card (D43, spec 8.2): takes the rewarded-ad card's place on the shop. Looks like .card.adcard with the sponsor icon.
+// 贊助 card (D43, spec 8.2): takes the rewarded-ad card's place on the shop. Looks like .card.adcard with the sponsor icon.
 import { useRef, useState } from 'react';
 import TopupDialog from './TopupDialog.jsx';
 import DonateDialog from './DonateDialog.jsx';

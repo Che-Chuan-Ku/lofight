@@ -67,7 +67,7 @@ public class TopupGivenSteps {
             int amount = Integer.parseInt(row.get("amountTwd"));
             Instant createdAt = CellValues.instant(row.get("createdAt"));
             PaymentOrder order = paymentOrderRepository.save(new PaymentOrder(playerId, row.get("訂單"),
-                    "TWD_" + amount, amount, amount * 100, ecpayProperties.getEnv(),
+                    "TWD_" + amount, amount, topupProperties.getCoinsPerTwd() * amount, ecpayProperties.getEnv(),
                     row.get("merchantId") == null ? ecpayProperties.getMerchantId() : row.get("merchantId"),
                     createdAt));
             jdbcTemplate.update("UPDATE payment_orders SET payment_status = ?, failure_reason = ?, "

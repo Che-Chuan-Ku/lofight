@@ -1,14 +1,12 @@
-// 贊助回饋 amount panel (D44, spec 8.3): five fixed packages (the server owns amount and coins), then a form post to ECPay.
+// 贊助 package panel (D44, spec 8.3): fixed packages (the server owns the amount), each with its own line, then a form post to ECPay.
 // ConfirmDialog pattern: role=dialog, Tab trap, Esc cancels, scrim clicks do nothing. Focus starts on the first option.
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from './Common.jsx';
-import { IcClose, PixelCoin } from './Icons.jsx';
+import { IcClose } from './Icons.jsx';
 import { createTopupOrder } from '../../lib/api/index.js';
 import { TOPUP, topupError, NETWORK_MSG } from '../../lib/labels.js';
 import { checkoutUrlAllowed, setPendingTopup, submitCheckout } from '../../lib/topup.js';
-
-const fmt = n => Number(n).toLocaleString('en-US');
 
 /** packages: listShopItems.topup.packages; host: the .page element the scrim covers (inside .v19 so the menu styles apply). */
 export default function TopupDialog({ packages, onClose, host }) {
@@ -75,7 +73,7 @@ export default function TopupDialog({ packages, onClose, host }) {
                 tabIndex={on || (sel === null && i === 0) ? 0 : -1} disabled={busy} onClick={() => setSel(p.packageId)}>
                 <span className="dot" aria-hidden="true" />
                 <span className="amt">NT${p.amountTwd}</span>
-                <span className="cn"><PixelCoin /><b>{fmt(p.coins)}</b> 金幣</span>
+                {TOPUP.lines[p.packageId] && <span className="ln">{TOPUP.lines[p.packageId]}</span>}
               </button>
             );
           })}

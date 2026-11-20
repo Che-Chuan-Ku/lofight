@@ -170,8 +170,8 @@ public class TopupService {
         fields.put("MerchantTradeDate", TRADE_DATE.format(now));
         fields.put("PaymentType", "aio");
         fields.put("TotalAmount", String.valueOf(order.getAmountTwd()));
-        fields.put("TradeDesc", "DayWar coins");
-        fields.put("ItemName", "DayWar 金幣 " + order.getCoins());
+        fields.put("TradeDesc", "DayWar sponsorship");
+        fields.put("ItemName", "DayWar 贊助 NT$" + order.getAmountTwd());
         fields.put("ReturnURL", callbacks + "/return");
         fields.put("ChoosePayment", "ALL");
         fields.put("IgnorePayment", ecpayProperties.getIgnorePayment());

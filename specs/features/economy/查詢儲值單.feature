@@ -50,7 +50,7 @@ Feature: 查詢儲值單
       Then 操作成功
       And 回應資料應為：
         | topupOrderId         | packageId | amountTwd | coins | status | walletCoins | paidAt                    |
-        | DW261117035001AAAAA1 | TWD_50    | 50        | 5000  | PAID   | 5100        | 2026-11-17T12:00:00+08:00 |
+        | DW261117035001AAAAA1 | TWD_50    | 50        | 0     | PAID   | 100         | 2026-11-17T12:00:00+08:00 |
       And 回應原文不應包含 "failure"
 
     Example: 取號後的單回傳 AWAITING_PAYMENT 與繳費期限
@@ -104,8 +104,8 @@ Feature: 查詢儲值單
       When 查詢儲值單 "DW261117035001AAAAA1"
       Then 回應資料應為：
         | status | walletCoins |
-        | PAID   | 5100        |
-      And 玩家 "阿明" 應有 1 筆 TOPUP 帳本且皆綁定儲值單
+        | PAID   | 100         |
+      And 玩家 "阿明" 應有 0 筆 TOPUP 帳本且皆綁定儲值單
       And 玩家 "阿明" 應有 1 筆 TOPUP 事件
       And 玩家 "阿明" 的累計贊助額應為 50
       And 儲值單 "DW261117035001AAAAA1" 記錄的綠界交易編號為 "2611171200000001"、付款方式為 "Credit_CreditCard"，通知次數仍為 0
@@ -120,8 +120,8 @@ Feature: 查詢儲值單
         | 訂單                 |
         | DW261117035001AAAAA1 |
       Then 綠界收到的回應應為 "1|OK"
-      And 玩家 "阿明" 的金幣餘額應為 5100
-      And 玩家 "阿明" 應有 1 筆 TOPUP 帳本且皆綁定儲值單
+      And 玩家 "阿明" 的金幣餘額應為 100
+      And 玩家 "阿明" 應有 0 筆 TOPUP 帳本且皆綁定儲值單
       And 玩家 "阿明" 的累計贊助額應為 50
 
     Example: 查單回應金額不符時失敗為 AMOUNT_MISMATCH，不入帳
@@ -250,5 +250,5 @@ Feature: 查詢儲值單
       When 查詢儲值單 "DW261117035001AAAAA1"
       Then 回應資料應為：
         | status | walletCoins |
-        | PAID   | 5100        |
+        | PAID   | 100         |
       And 玩家 "阿明" 的累計贊助額應為 50

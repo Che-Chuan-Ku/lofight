@@ -1,7 +1,7 @@
 @command
 Feature: 建立儲值單
-  會員在商店「贊助回饋」選定預設金額方案後建立儲值單；後端依方案代碼決定金額與金幣，回傳送往綠界 AIO 的簽章欄位（D45）。
-  CHANGE 2026-11-17（D43-D52，documents/ecpaydemands/spec.md §6.3.2）。只有會員可儲值（DEC-1）；請求只收方案代碼，不收金額與金幣；被拒不寫任何資料。
+  會員在商店「贊助支持」選定預設金額方案後建立儲值單（贊助單，不給金幣）；後端依方案代碼決定金額，回傳送往綠界 AIO 的簽章欄位（D45）。
+  CHANGE 2026-11-17（D43-D52，documents/ecpaydemands/spec.md §6.3.2）。只有會員可儲值（DEC-1）；請求只收方案代碼，不收金額與金幣；CHANGE 2026-11-20（綠界審查）：贊助不給金幣，coins 恆為 0；被拒不寫任何資料。
   # 檢查順序：存取權杖（401003）→ 方案代碼（400001／400012）→ 已開放（eco004）→ 會員（eco005）→ 開單上限（eco006）→ 建單
 
   Background:
@@ -101,9 +101,9 @@ Feature: 建立儲值單
       Then 操作成功
       And 儲值單總數應為 4
 
-  Rule: 後置（回應）- 回傳伺服器依方案決定的金額與金幣，以及簽章正確的綠界結帳欄位
+  Rule: 後置（回應）- 回傳伺服器依方案決定的金額（金幣恆為 0），以及簽章正確的綠界結帳欄位
 
-    Scenario Outline: 五個預設方案的金額與金幣為 NT$1 = 100 金幣
+    Scenario Outline: 四個預設方案的金額固定、金幣皆為 0
       When 建立儲值單：
         | packageId   |
         | <packageId> |
@@ -115,11 +115,10 @@ Feature: 建立儲值單
 
       Examples:
         | packageId | amountTwd | coins |
-        | TWD_10    | 10        | 1000  |
-        | TWD_30    | 30        | 3000  |
-        | TWD_50    | 50        | 5000  |
-        | TWD_100   | 100       | 10000 |
-        | TWD_200   | 200       | 20000 |
+        | TWD_10    | 10        | 0     |
+        | TWD_50    | 50        | 0     |
+        | TWD_120   | 120       | 0     |
+        | TWD_200   | 200       | 0     |
 
     Example: 結帳欄位依規格組成並以官方演算法簽章
       When 建立儲值單：
@@ -132,7 +131,7 @@ Feature: 建立儲值單
       And 回應的結帳欄位 "MerchantTradeNo" 應以 "DW261117120000" 開頭
       And 回應的結帳欄位 "MerchantTradeDate" 應為 "2026/11/17 12:00:00"
       And 回應的結帳欄位 "PaymentType" 應為 "aio"
-      And 回應的結帳欄位 "ItemName" 應為 "DayWar 金幣 5000"
+      And 回應的結帳欄位 "ItemName" 應為 "DayWar 贊助 NT$50"
       And 回應的結帳欄位 "ChoosePayment" 應為 "ALL"
       And 回應的結帳欄位 "IgnorePayment" 應為 "Credit#ApplePay#CVS#BARCODE#BNPL#WeiXin"
       And 回應的結帳欄位 "EncryptType" 應為 "1"
@@ -174,5 +173,5 @@ Feature: 建立儲值單
       Then 操作成功
       And 回應資料應為：
         | packageId | amountTwd | coins | status  |
-        | TWD_50    | 50        | 5000  | CREATED |
+        | TWD_50    | 50        | 0     | CREATED |
       And 回應的結帳欄位 "TotalAmount" 應為 "50"

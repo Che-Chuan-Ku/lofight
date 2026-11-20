@@ -127,13 +127,13 @@ ecpay:
   query-forbidden-backoff: 30m
 
 topup:
-  coins-per-twd: 100
-  # Presets only (AMB-E1); order = display order. id is the API value.
+  # User ruling 2026-11-20 (ECPay review): sponsorship pays no coins, only the sponsor total and the leaderboard frame.
+  coins-per-twd: 0
+  # Presets only (AMB-E1); order = display order. id is the API value; the front end owns each package's line.
   packages:
     - { id: TWD_10, amount-twd: 10 }
-    - { id: TWD_30, amount-twd: 30 }
     - { id: TWD_50, amount-twd: 50 }
-    - { id: TWD_100, amount-twd: 100 }
+    - { id: TWD_120, amount-twd: 120 }
     - { id: TWD_200, amount-twd: 200 }
   # Rate limit: open (CREATED / AWAITING_PAYMENT) orders a player may create within the window.
   max-open-orders: 3

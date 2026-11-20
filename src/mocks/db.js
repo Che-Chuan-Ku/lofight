@@ -22,7 +22,8 @@ export const DEFAULT_MEMBER_NICKNAME = '老兵512';          // Google登入.fea
 export const AD_REWARD = { coins: 200, dailyLimit: 5, cooldownSec: 60 };
 // 發放賽季獎勵.feature (INF-S1): coins by rank 1..5; rank 6+ gets nothing
 // Top-up packages (spec 6.3.1): NT$1 = 100 coins, the server decides amount and coins from the package id
-export const TOPUP_PACKAGES = [10, 30, 50, 100, 200].map(n => ({ packageId: 'TWD_' + n, amountTwd: n, coins: n * 100 }));
+// User ruling 2026-11-20: sponsorship pays no coins (application.yml topup.coins-per-twd = 0).
+export const TOPUP_PACKAGES = [10, 50, 120, 200].map(n => ({ packageId: 'TWD_' + n, amountTwd: n, coins: 0 }));
 export const TOPUP_MAX_OPEN_ORDERS = 3;
 export const DONATE_URL = 'https://p.ecpay.com.tw/43C219A';   // streamer payment link of DONATE mode (public, not a secret)
 export const SPONSOR_TIER2_MIN_TWD = 200;
@@ -146,7 +147,7 @@ export function simulateEcpay(orderId, outcome = db.topupOutcome) {
   if (!o || o.status === 'PAID') return;
   if (outcome === 'PAID') {
     const p = db.players[o.playerId];
-    addLedger(o.playerId, { ledgerSource: 'TOPUP', coinDelta: o.coins });
+    if (o.coins > 0) addLedger(o.playerId, { ledgerSource: 'TOPUP', coinDelta: o.coins });
     p.sponsoredTotalTwd = (p.sponsoredTotalTwd || 0) + o.amountTwd;
     o.status = 'PAID'; o.paidAt = now();
   } else if (outcome === 'AWAITING_PAYMENT') {

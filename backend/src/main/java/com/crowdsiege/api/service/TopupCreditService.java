@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * The single place that credits a paid top-up order: wallet, ledger, event, cumulative sponsorship and the PAID state
- * change happen in the caller's transaction. Callers must hold the order row lock (lock order: payment_orders row, then
+ * change happen in the caller's transaction. An order of 0 coins (coins-per-twd 0) leaves the wallet and ledger alone. Callers must hold the order row lock (lock order: payment_orders row, then
  * wallets row) and must have verified the notification / query result and checked the order is not already PAID.
  */
 @Service
@@ -64,11 +64,15 @@ public class TopupCreditService {
         String paymentType = lockedOrder.getPaymentType();
         walletRepository.lockByPlayerId(playerId)
                 .orElseThrow(() -> new IllegalStateException("Wallet not found for player " + playerId));
-        // flush + clear: pending changes of the order are written, then every entity is re-read fresh below.
-        walletRepository.credit(playerId, coins, now, playerId);
+        if (coins > 0) {
+            // flush + clear: pending changes of the order are written, then every entity is re-read fresh below.
+            walletRepository.credit(playerId, coins, now, playerId);
+        }
         int coinsAfter = walletRepository.findCoinsByPlayerId(playerId).orElseThrow();
         Player player = playerService.getPlayer(playerId);
-        coinLedgerEntryRepository.save(CoinLedgerEntry.topup(playerId, orderId, coins, coinsAfter, now));
+        if (coins > 0) {
+            coinLedgerEntryRepository.save(CoinLedgerEntry.topup(playerId, orderId, coins, coinsAfter, now));
+        }
         playerEventRepository.save(PlayerEvent.topup(playerId, player.isSilverUnlocked(), now));
         // Atomic add (never a whole-row write of a possibly stale Player entity).
         playerRepository.addSponsorship(playerId, amountTwd, now);

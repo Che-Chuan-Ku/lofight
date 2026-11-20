@@ -1,4 +1,4 @@
-// 贊助回饋 reminder (DONATE mode): shown before the ECPay streamer link opens. Two reminders only: put the nickname in
+// 贊助 reminder (DONATE mode): shown before the ECPay streamer link opens. Two reminders only: put the nickname in
 // 「贊助者名稱」, and the board effect. ConfirmDialog pattern: role=dialog, Tab trap, Esc cancels, scrim clicks do nothing.
 // 前往贊助 opens the link in a new tab (noopener, noreferrer) only when it is an allowed ECPay https URL.
 import { useEffect, useRef, useState } from 'react';

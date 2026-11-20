@@ -25,10 +25,28 @@ class TopupPropertiesTest {
     }
 
     @Test
-    void coinsAreAmountTimesRate() {
+    void defaultRateIsZeroSoSponsorshipPaysNoCoins() {
         TopupProperties p = valid();
-        assertThat(p.coinsOf(pkg("TWD_50", 50))).isEqualTo(5000);
+        assertThat(p.getCoinsPerTwd()).isZero();
+        assertThat(p.coinsOf(pkg("TWD_50", 50))).isZero();
         assertThat(p.minAmountTwd()).isEqualTo(10);
+        assertThatCode(p::afterPropertiesSet).doesNotThrowAnyException();
+    }
+
+    @Test
+    void coinsAreAmountTimesRateWhenRateIsPositive() {
+        TopupProperties p = valid();
+        p.setCoinsPerTwd(100);
+        assertThat(p.coinsOf(pkg("TWD_50", 50))).isEqualTo(5000);
+    }
+
+    @Test
+    void zeroRateIsAllowedAndNegativeRateIsRejected() {
+        TopupProperties p = valid();
+        p.setCoinsPerTwd(0);
+        assertThatCode(p::afterPropertiesSet).doesNotThrowAnyException();
+        p.setCoinsPerTwd(-1);
+        assertThatThrownBy(p::afterPropertiesSet).isInstanceOf(IllegalStateException.class);
     }
 
     @Test

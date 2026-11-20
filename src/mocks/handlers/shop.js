@@ -13,10 +13,10 @@ export const shopHandlers = [
       bronzeBestBossesKilled: p.isSilverUnlocked ? null : p.bronzeBest
     })), adReward: adRewardStatus(p.playerId),
       topup: getDb().topupEnabled === false
-        ? { isEnabled: false, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: [], mode: 'AIO', donateUrl: null }
+        ? { isEnabled: false, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 0, packages: [], mode: 'AIO', donateUrl: null }
         : getDb().topupMode === 'DONATE'
-          ? { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: [], mode: 'DONATE', donateUrl: getDb().donateUrl || DONATE_URL }
-          : { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 100, packages: TOPUP_PACKAGES, mode: 'AIO', donateUrl: null } });
+          ? { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 0, packages: [], mode: 'DONATE', donateUrl: getDb().donateUrl || DONATE_URL }
+          : { isEnabled: true, requiresLogin: p.playerKind === 'GUEST', minAmountTwd: 10, coinsPerTwd: 0, packages: TOPUP_PACKAGES, mode: 'AIO', donateUrl: null } });
   }),
 
   route('purchaseShopItem', ({ request, params }) => {

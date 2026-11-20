@@ -9,7 +9,7 @@ const pad = n => String(n).padStart(2, '0');
 const when = iso => { const d = new Date(iso); return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 // AD_REWARD = 廣告獎勵 (AMB-A4 final ruling, AdSense wording); BUFF_PURCHASE falls through to 購買 <buff>
-const LEDGER_LABEL = { BOSS_REWARD: '對局獲得', MERGE_IN: '帳號合併', AD_REWARD: '廣告獎勵', TOPUP: '贊助儲值' };
+const LEDGER_LABEL = { BOSS_REWARD: '對局獲得', MERGE_IN: '帳號合併', AD_REWARD: '廣告獎勵', TOPUP: '贊助' };
 
 // D38 (AMB-S5=a): 賽季獎勵 NORMAL 第 N 名; the amount column carries +X
 const ledgerLabel = e => (e.ledgerSource === 'SEASON_REWARD'

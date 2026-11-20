@@ -1,7 +1,7 @@
 // 商店頁 (specs/ui/商店頁.md; prototype shop()). Items + prices from listShopItems, owned counts from
 // listMyBuffInventories, chip from getMyWallet. SPEC-01: api.yml returns no "約 N 次通關" value, so it is not shown.
 // The rewarded-ad card (D33-D35) sits on top and takes listShopItems.adReward; no other call is made for it.
-// D43: AD_REWARD_CARD_ENABLED=false (src/config.js) swaps it for the 贊助回饋 card (listShopItems.topup).
+// D43: AD_REWARD_CARD_ENABLED=false (src/config.js) swaps it for the 贊助 card (listShopItems.topup).
 import { useEffect, useState } from 'react';
 import { PageHeader, CoinChip, RetryBox, Skeletons, PrimaryButton, LoginBanner } from '../components/ui/Common.jsx';
 import { PixelCoin, BuffIcon } from '../components/ui/Icons.jsx';

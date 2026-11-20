@@ -91,7 +91,7 @@ export const playerHandlers = [
     // The mock "ECPay page" is this origin: mocks/browser.js turns a submit to it into a settlement + redirect to /?topup=<id>.
     return ok({ topupOrderId, packageId: pkg.packageId, amountTwd: pkg.amountTwd, coins: pkg.coins, status: 'CREATED',
       checkout: { actionUrl: db.topupActionUrl || location.origin + '/mock-ecpay', method: 'POST', fields: {
-        MerchantTradeNo: topupOrderId, TotalAmount: String(pkg.amountTwd), ItemName: 'DayWar 金幣 ' + pkg.coins,
+        MerchantTradeNo: topupOrderId, TotalAmount: String(pkg.amountTwd), ItemName: 'DayWar 贊助 NT$' + pkg.amountTwd,
         ClientBackURL: location.origin + '/?topup=' + topupOrderId, CheckMacValue: '0'.repeat(64) } } }, 201);
   }),
 

@@ -14,7 +14,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "topup")
 public class TopupProperties implements InitializingBean {
 
-    private int coinsPerTwd = 100;
+    // 0 = sponsorship pays no coins (user ruling 2026-11-20, ECPay review): only the sponsor total and frame change.
+    private int coinsPerTwd = 0;
     private List<TopupPackage> packages = new ArrayList<>();
     private int maxOpenOrders = 3;
     private Duration openOrderWindow = Duration.ofMinutes(30);
@@ -39,8 +40,8 @@ public class TopupProperties implements InitializingBean {
      */
     @Override
     public void afterPropertiesSet() {
-        if (coinsPerTwd < 1) {
-            throw new IllegalStateException("topup.coins-per-twd must be positive");
+        if (coinsPerTwd < 0) {
+            throw new IllegalStateException("topup.coins-per-twd must not be negative");
         }
         for (TopupPackage p : packages) {
             if (p.getId() == null || p.getId().isBlank() || p.getId().length() > 16) {

@@ -42,25 +42,33 @@ export function nextGoal(progress) {
   return null;
 }
 
-// D43-D52 贊助回饋 (ECPay top-up). Player-visible copy; error codes map to their own copy, backend messages are never shown.
+// D43-D52 贊助 (ECPay). Player-visible copy; error codes map to their own copy, backend messages are never shown.
+// User ruling 2026-11-20: sponsorship pays no coins, so no copy mentions coins, rewards or amounts beyond the price tag.
 export const TOPUP = {
-  name: '贊助回饋',
-  cardDesc: 'NT$10 起，經綠界付款，回饋金幣',
-  panelDesc: '每 NT$1 換 100 金幣，最低 NT$10。',
+  name: '贊助支持',
+  cardDesc: '為你製作專屬排行榜特效',
+  panelDesc: '選一個方案，請作者吃點東西。',
+  // One line per package id (application.yml topup.packages); an unknown id shows no line.
+  lines: {
+    TWD_10: '請作者喝杯麥香，續命一個下午。',
+    TWD_50: '1+1 自由配，作者今天不挨餓。',
+    TWD_120: '雞腿大便當一個。吃飽了，才有力氣修 bug。',
+    TWD_200: '你的 Token，會變成下一款遊戲。'
+  },
   pay: '前往綠界付款',
   redirecting: '前往綠界中…',
   payNote: '將開啟綠界（ECPay）付款頁面',
-  loginFirst: '贊助回饋需要先登入，金幣才不會跟著訪客身分消失',
+  loginFirst: '使用贊助功能請登入',
   checking: '正在確認付款…',
-  success: coins => '已收到贊助，獲得 ' + Number(coins).toLocaleString('en-US') + ' 金幣，謝謝你',
-  awaiting: at => '已取得繳費帳號，請在 ' + at + ' 前完成轉帳，入帳後金幣會自動加上',
-  slow: '付款結果還在確認，金幣入帳後會自動加上；可以稍後再回商店看看',
-  failed: '這次付款沒有完成，沒有扣款也沒有金幣',
-  expired: '這筆付款已逾期，沒有金幣',
+  success: packageId => '已收到贊助，謝謝你。' + (TOPUP.lines[packageId] ? TOPUP.lines[packageId] : '') + '排行榜特效已掛上',
+  awaiting: at => '已取得繳費帳號，請在 ' + at + ' 前完成轉帳，入帳後排行榜特效會自動掛上',
+  slow: '付款結果還在確認，確認後排行榜特效會自動掛上；可以稍後再回商店看看',
+  failed: '這次付款沒有完成，沒有扣款',
+  expired: '這筆付款已逾期',
   notFound: '找不到這筆付款，請用付款時的帳號登入',
-  ledger: '贊助儲值',
+  ledger: '贊助',
   // 實況主收款連結模式（DONATE）：卡片說明與提醒視窗。視窗只提醒兩件事，不多說。
-  donateCardDesc: 'NT$10 起，金額自訂，回饋金幣',
+  donateCardDesc: '為你製作專屬排行榜特效',
   donateTitle: '贊助前提醒',
   donateNameLine: nick => '請把暱稱「' + nick + '」填在「贊助者名稱」',
   donateNameLineNoNick: '請把您的暱稱填在「贊助者名稱」',
@@ -71,7 +79,7 @@ export const TOPUP = {
 };
 /** createTopupOrder error code -> panel message. */
 export function topupError(code) {
-  if (code === 'eco004') return '贊助回饋目前暫停';
+  if (code === 'eco004') return '贊助目前暫停';
   if (code === 'eco005') return TOPUP.loginFirst;
   if (code === 'eco006') return '未完成的付款太多了，請先完成或稍後再試';
   return NETWORK_MSG;
