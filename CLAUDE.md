@@ -59,7 +59,7 @@ bash integration-test/run.sh         # 全端整合測試：起獨立 docker sta
 
 ## 寫碼時的固定規則
 
-- 玩家可見文字：階層只稱 NORMAL / EXTRA（API 值仍 BRONZE/SILVER）；不得出現「經典、特殊、基本、進階、普通、困難」等分類形容詞，不得用「贊助、支持我們」等字樣誘導看廣告；「贊助回饋」功能（綠界付款換金幣，D43–D52）的按鈕、卡片、面板、付款結果與錯誤訊息可使用「贊助回饋」「贊助」字樣，並可顯示價格（NT$）與可得金幣數量；不透露系統機制。
+- 玩家可見文字：階層只稱 NORMAL / EXTRA（API 值仍 BRONZE/SILVER）；不得出現「經典、特殊、基本、進階、普通、困難」等分類形容詞，不得用「贊助、支持我們」等字樣誘導看廣告；不透露系統機制。
 - 排行榜暱稱只用玩家輸入或系統預設，不用 Google 名稱或 email；畫面不顯示 email。
 - build 產物不得含本機路徑、email、token；`data-adbreak-test` 只在非 production。
 - 不在 repo 內建 `.bak`；不主動 commit / push（push `main` 會直接部署）。

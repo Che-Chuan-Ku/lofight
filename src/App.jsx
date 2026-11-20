@@ -29,6 +29,7 @@ const SETTLE_INVALID_CODES = new Set(['gam003', 'gam004']);
 
 // D49: back from ECPay the URL carries ?topup=<order id>. It is read once at load (module scope, so StrictMode's double
 // render cannot see an already-cleaned URL) and the parameter is removed; a pending id from sessionStorage covers the back button.
+let topupFromUrl = false;   // the id came from ?topup= (ECPay sent the player back), not only from the pending marker
 function readTopupReturn() {
   if (typeof window === 'undefined') return null;
   const parts = window.location.search.replace(/^\?/, '').split('&').filter(Boolean);
@@ -38,7 +39,8 @@ function readTopupReturn() {
   const rest = parts.filter(p => p !== hit).join('&');
   window.history.replaceState(null, '', window.location.pathname + (rest ? '?' + rest : '') + window.location.hash);
   const id = decodeURIComponent(hit.slice(6));
-  return TOPUP_ID_RE.test(id) ? id : getPendingTopup();
+  topupFromUrl = TOPUP_ID_RE.test(id);
+  return topupFromUrl ? id : getPendingTopup();
 }
 const TOPUP_RETURN = readTopupReturn();
 
@@ -213,7 +215,7 @@ export default function App() {
   } else if (screen === 'wallet') page = <WalletPage onBack={() => go('home')} onShop={() => go('shop')} onCoins={setCoins} />;
   else if (screen === 'shop') {
     page = <ShopPage onBack={() => go('home')} coins={coins} onCoins={setCoins} banner={bannerFor('shop')}
-      onBuyIntercept={interceptBuy} onSponsorLogin={sponsorLogin} nickname={progress ? progress.nickname : null} returnTopupId={topupId} onBannerDone={() => setBanner(null)}
+      onBuyIntercept={interceptBuy} onSponsorLogin={sponsorLogin} nickname={progress ? progress.nickname : null} returnTopupId={topupId} topupFromBack={!topupFromUrl} onBannerDone={() => setBanner(null)}
       onBannerLogin={() => openLogin('shop')} onBannerClose={closeBanner} onBannerShown={bannerShown} />;
   } else if (screen === 'board') page = <LeaderboardPage onBack={() => go('home')} onPlay={() => go('home')} />;
   else if (screen === 'privacy') page = <PrivacyPage onBack={() => go('home')} />;

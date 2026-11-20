@@ -4,6 +4,13 @@
 // The page shows at most 20 lines (oldest drop first).
 export const CHANGELOG = [
   {
+    version: '19.3.3',
+    date: '2026-11-20',
+    items: [
+      '從綠界按上一頁回來，贊助視窗不會再卡住。沒付錢就直說沒付錢，取消也按得動。'
+    ]
+  },
+  {
     version: '19.3.2',
     date: '2026-11-20',
     items: [

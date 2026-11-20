@@ -4,17 +4,42 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { PrimaryButton } from './Common.jsx';
 import { IcClose } from './Icons.jsx';
-import { createTopupOrder } from '../../lib/api/index.js';
+import { createTopupOrder, getTopupOrder } from '../../lib/api/index.js';
 import { TOPUP, topupError, NETWORK_MSG } from '../../lib/labels.js';
-import { checkoutUrlAllowed, setPendingTopup, submitCheckout } from '../../lib/topup.js';
+import { checkoutUrlAllowed, clearPendingTopup, getPendingTopup, setPendingTopup, submitCheckout } from '../../lib/topup.js';
+
+// Back from ECPay through the browser history (the page comes back from bfcache, still "redirecting"): wait this long,
+// then look the order up once; anything but PAID / AWAITING_PAYMENT counts as not paid.
+const BACK_CHECK_MS = 5000;
 
 /** packages: listShopItems.topup.packages; host: the .page element the scrim covers (inside .v19 so the menu styles apply). */
 export default function TopupDialog({ packages, onClose, host }) {
   const [sel, setSel] = useState(null);            // package id; nothing is preselected
-  const [state, setState] = useState('select');    // select | creating | redirecting | error
+  const [state, setState] = useState('select');    // select | creating | redirecting | back | paid | awaiting | error
   const [err, setErr] = useState(null);
   const box = useRef(null), group = useRef(null);
   const busy = state === 'creating' || state === 'redirecting';
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  useEffect(() => {
+    let timer = 0, live = true;
+    const onShow = e => {
+      if (!e.persisted || stateRef.current !== 'redirecting') return;
+      setState('back'); setErr(null);
+      timer = setTimeout(async () => {
+        const id = getPendingTopup();
+        let r = null;
+        try { if (id) r = await getTopupOrder({ topupOrderId: id }); } catch (_) { /* treated as not paid */ }
+        if (!live) return;
+        if (r && r.status === 'PAID') { clearPendingTopup(); setState('paid'); return; }
+        if (r && r.status === 'AWAITING_PAYMENT') { setState('awaiting'); setErr(TOPUP.awaitingShort); return; }
+        clearPendingTopup(); setState('error'); setErr(TOPUP.failed);
+      }, BACK_CHECK_MS);
+    };
+    window.addEventListener('pageshow', onShow);
+    return () => { live = false; clearTimeout(timer); window.removeEventListener('pageshow', onShow); };
+  }, []);
 
   useEffect(() => {
     const first = group.current && group.current.querySelector('[role=radio]');
@@ -80,7 +105,12 @@ export default function TopupDialog({ packages, onClose, host }) {
         </div>
         <PrimaryButton className="full" busy={state === 'creating'} disabled={state === 'redirecting'}
           aria-disabled={!sel && !busy ? 'true' : undefined} onClick={pay}>{state === 'redirecting' ? TOPUP.redirecting : TOPUP.pay}</PrimaryButton>
-        <div className="msgline" aria-live="assertive">{state === 'error' && err && <span className="msg err">{err}</span>}</div>
+        <div className="msgline" aria-live="assertive">
+          {state === 'error' && err && <span className="msg err">{err}</span>}
+          {state === 'back' && <span className="msg info">{TOPUP.checking}</span>}
+          {state === 'paid' && <span className="msg ok">{TOPUP.success(sel)}</span>}
+          {state === 'awaiting' && err && <span className="msg info">{err}</span>}
+        </div>
         <p className="note">{TOPUP.payNote}</p>
         <button type="button" className="btn-secondary" disabled={busy} onClick={onClose}>取消</button>
       </div>
